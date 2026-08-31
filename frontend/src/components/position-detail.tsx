@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { cn } from "@/lib/utils"
-import type { Position } from "@/lib/mock-positions"
-import { isAssistantRole, openSpots } from "@/lib/mock-positions"
+import type { Position } from "@/lib/positions"
+import { isAssistantRole, openSpots } from "@/lib/positions"
 
 const articleClasses =
   "flex min-h-0 max-h-[min(72vh,46rem)] flex-col border-blue-chalk/15"

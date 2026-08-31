@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils"
-import type { Position } from "@/lib/mock-positions"
+import type { Position } from "@/lib/positions"
 import {
   groupPositionsByOffice,
   isAssistantRole,
   OFFICE_CODE,
   openSpots,
-} from "@/lib/mock-positions"
+} from "@/lib/positions"
 
 const listClasses =
   "panel-scroll flex max-h-[min(72vh,46rem)] flex-col gap-6 overflow-y-auto border-blue-chalk/15 p-4 lg:border-r"
