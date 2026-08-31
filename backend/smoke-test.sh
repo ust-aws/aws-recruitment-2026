@@ -27,11 +27,23 @@ check() {
   fi
 }
 
+check_positions_contract() {
+  if node -e 'const fs = require("fs"); const rows = JSON.parse(fs.readFileSync(process.argv[1], "utf8")); const stringFields = ["id", "title", "office", "committee", "committeeDescription", "description"]; const valid = Array.isArray(rows) && rows.length > 0 && rows.every((row) => stringFields.every((field) => typeof row[field] === "string") && Array.isArray(row.responsibilities) && row.responsibilities.every((item) => typeof item === "string") && row.isOpen === true); if (!valid) process.exit(1);' /tmp/smoke-test-body; then
+    echo "PASS  GET  /positions contract"
+    pass=$((pass + 1))
+  else
+    echo "FAIL  GET  /positions contract"
+    echo "      body: $(cat /tmp/smoke-test-body)"
+    fail=$((fail + 1))
+  fi
+}
+
 echo "Smoke testing $BASE_URL"
 echo
 
 check "GET  /health"                        GET   "/health"                  200
 check "GET  /positions"                     GET   "/positions"               200
+check_positions_contract
 check "GET  /applications"                  GET   "/applications"            200
 check "GET  /applications/:id"              GET   "/applications/test-id"    200
 check "POST /applications"                  POST  "/applications"            201 '{"name":"Test Applicant"}'
