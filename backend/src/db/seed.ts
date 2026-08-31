@@ -7,6 +7,7 @@ import {
   positions,
   users,
 } from "./schema";
+import { POSITION_SEEDS } from "./position-seeds";
 
 // Dev password for both seeded users is "password123" — local/dev only.
 const DEV_PASSWORD_HASH =
@@ -33,84 +34,52 @@ async function main() {
     ])
     .onConflictDoNothing({ target: users.email });
 
-  await db
-    .insert(committees)
-    .values([
+  const committeeSeeds = new Map(
+    POSITION_SEEDS.map((positionSeed) => [
+      positionSeed.committee,
       {
-        name: "Technical Committee",
-        description: "Builds and maintains AWS UST's software and infrastructure.",
+        name: positionSeed.committee,
+        description: positionSeed.committeeDescription,
       },
-      {
-        name: "Creatives Committee",
-        description: "Handles design, branding, and multimedia content.",
-      },
-      {
-        name: "Secretariat Committee",
-        description: "Manages documentation, scheduling, and internal communications.",
-      },
-    ])
-    .onConflictDoNothing({ target: committees.name });
+    ]),
+  );
+
+  for (const committeeSeed of committeeSeeds.values()) {
+    await db
+      .insert(committees)
+      .values(committeeSeed)
+      .onConflictDoUpdate({
+        target: committees.name,
+        set: { description: committeeSeed.description },
+      });
+  }
 
   const committeeRows = await db.select().from(committees);
   const committeeIdByName = new Map(committeeRows.map((c) => [c.name, c.id]));
 
-  const positionSeeds = [
-    {
-      committee: "Technical Committee",
-      name: "Web Developer",
-      description: "Builds and maintains the recruitment website.",
-      responsibilities: "Implement features, fix bugs, review PRs.",
-      isOpen: true,
-    },
-    {
-      committee: "Technical Committee",
-      name: "Cloud Engineer",
-      description: "Manages AWS infrastructure for club projects.",
-      responsibilities: "Provision resources, monitor costs, write IaC.",
-      isOpen: true,
-    },
-    {
-      committee: "Creatives Committee",
-      name: "Graphic Designer",
-      description: "Produces visual assets for events and campaigns.",
-      responsibilities: "Design posters, social media graphics, brand assets.",
-      isOpen: true,
-    },
-    {
-      committee: "Creatives Committee",
-      name: "Video Editor",
-      description: "Edits video content for events and promotions.",
-      responsibilities: "Cut footage, add captions, publish recaps.",
-      isOpen: false,
-    },
-    {
-      committee: "Secretariat Committee",
-      name: "Documentation Officer",
-      description: "Maintains meeting minutes and internal records.",
-      responsibilities: "Take minutes, organize files, track action items.",
-      isOpen: true,
-    },
-    {
-      committee: "Secretariat Committee",
-      name: "Scheduling Coordinator",
-      description: "Coordinates event and meeting schedules.",
-      responsibilities: "Book venues, send invites, manage calendars.",
-      isOpen: true,
-    },
-  ];
+  for (const positionSeed of POSITION_SEEDS) {
+    const values = {
+      committeeId: committeeIdByName.get(positionSeed.committee)!,
+      name: positionSeed.name,
+      office: positionSeed.office,
+      description: positionSeed.description,
+      responsibilities: positionSeed.responsibilities.join("\n"),
+      isOpen: positionSeed.isOpen,
+    };
 
-  await db
-    .insert(positions)
-    .values(
-      positionSeeds.map((p) => ({
-        committeeId: committeeIdByName.get(p.committee)!,
-        name: p.name,
-        description: p.description,
-        responsibilities: p.responsibilities,
-        isOpen: p.isOpen,
-      })),
-    )
-    .onConflictDoNothing();
+    await db
+      .insert(positions)
+      .values(values)
+      .onConflictDoUpdate({
+        target: [positions.committeeId, positions.name],
+        set: {
+          office: values.office,
+          description: values.description,
+          responsibilities: values.responsibilities,
+          isOpen: values.isOpen,
+        },
+      });
+  }
 
   const positionRows = await db.select().from(positions);
   const positionIdByName = new Map(positionRows.map((p) => [p.name, p.id]));
@@ -133,10 +102,10 @@ async function main() {
   const applicantIdByEmail = new Map(applicantRows.map((a) => [a.email, a.id]));
 
   const applicationSeeds = [
-    { email: "ana.cruz@example.com", status: "pending" as const, choices: ["Web Developer", "Cloud Engineer"] },
-    { email: "ben.santos@example.com", status: "approved" as const, choices: ["Cloud Engineer", "Web Developer"] },
-    { email: "carla.mendoza@example.com", status: "rejected" as const, choices: ["Graphic Designer", "Video Editor"] },
-    { email: "dario.aquino@example.com", status: "pending" as const, choices: ["Documentation Officer", "Scheduling Coordinator"] },
+    { email: "ana.cruz@example.com", status: "pending" as const, choices: ["Executive Assistant to the CEO", "Finance Committee Staff"] },
+    { email: "ben.santos@example.com", status: "approved" as const, choices: ["Development Committee Staff", "Technicals Committee Staff"] },
+    { email: "carla.mendoza@example.com", status: "rejected" as const, choices: ["Publicity Committee Staff", "Media Committee Staff"] },
+    { email: "dario.aquino@example.com", status: "pending" as const, choices: ["Human Resources Committee Staff", "Secretariat Committee Staff"] },
   ];
 
   const existingApplications = await db.select().from(applications);

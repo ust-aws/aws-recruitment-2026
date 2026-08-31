@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { eq } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import type { LambdaEvent, LambdaContext } from "hono/aws-lambda";
 import { db } from "./db";
 import { committees, positions } from "./db/schema";
@@ -21,19 +21,41 @@ app.use(
 
 app.get("/health", (c) => c.json({ ok: true, service: "aws-ust-api" }));
 
+function parseResponsibilities(value: string | null) {
+  return value
+    ? value
+        .split(/\r?\n/)
+        .map((responsibility) => responsibility.trim())
+        .filter(Boolean)
+    : [];
+}
+
 app.get("/positions", async (c) => {
   const rows = await db
     .select({
       id: positions.id,
-      committee: committees.name,
       title: positions.name,
+      office: positions.office,
+      committee: committees.name,
+      committeeDescription: committees.description,
       description: positions.description,
+      responsibilities: positions.responsibilities,
+      isOpen: positions.isOpen,
     })
     .from(positions)
     .innerJoin(committees, eq(positions.committeeId, committees.id))
-    .where(eq(positions.isOpen, true));
+    .where(eq(positions.isOpen, true))
+    .orderBy(asc(positions.office), asc(positions.name));
 
-  return c.json(rows);
+  return c.json(
+    rows.map((row) => ({
+      ...row,
+      office: row.office ?? row.committee,
+      committeeDescription: row.committeeDescription ?? "",
+      description: row.description ?? "",
+      responsibilities: parseResponsibilities(row.responsibilities),
+    })),
+  );
 });
 
 app.get("/applications", (c) => c.json({ applications: [], total: 0 }));
