@@ -10,18 +10,6 @@ type PositionDetailProps = {
   onDelete: (position: Position) => void
 }
 
-function responsibilityItems(text: string): string[] {
-  const lines = text
-    .split(/\n+/)
-    .map((line) => line.trim())
-    .filter(Boolean)
-  if (lines.length > 1) return lines
-  return text
-    .split(/(?<=\.)\s+/)
-    .map((item) => item.trim())
-    .filter(Boolean)
-}
-
 const panelClasses =
   "glass flex h-fit flex-col gap-5 rounded-[14px] border border-blue-chalk/15 bg-meteorite/55 p-5 lg:sticky lg:top-24"
 const emptyClasses = "font-sans text-sm leading-relaxed text-prelude"
@@ -53,8 +41,6 @@ export function PositionDetail({
     )
   }
 
-  const items = responsibilityItems(position.responsibilities)
-
   return (
     <aside className={panelClasses}>
       <div className="flex flex-col gap-2">
@@ -78,10 +64,10 @@ export function PositionDetail({
 
       <div className="flex flex-col gap-2">
         <p className={sectionLabelClasses}>Responsibilities</p>
-        {items.length > 0 ? (
+        {position.responsibilities.length > 0 ? (
           <ul className={listClasses}>
-            {items.map((item) => (
-              <li key={item}>{item}</li>
+            {position.responsibilities.map((item, index) => (
+              <li key={`${index}-${item}`}>{item}</li>
             ))}
           </ul>
         ) : (

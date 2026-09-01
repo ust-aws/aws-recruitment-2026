@@ -9,15 +9,15 @@ export type Position = {
   committeeId: string
   name: string
   description: string
-  responsibilities: string
+  responsibilities: string[]
 }
 
 export const MOCK_COMMITTEES: Committee[] = [
   {
-    id: "committee-executive-internal",
-    name: "Executive (Internal)",
+    id: "committee-sponsorship",
+    name: "Sponsorship",
     description:
-      "Manages the rights and welfare of the organization and its members, the membership process and records, as well as ensuring integrity and accountability within the organization.",
+      "Builds and maintains sponsor relationships, packages partnership offers, and coordinates sponsor deliverables for events.",
   },
   {
     id: "committee-external-affairs",
@@ -93,27 +93,26 @@ export const MOCK_COMMITTEES: Committee[] = [
   },
 ]
 
-function directorPosition(slug: string, committeeId: string, label: string): Position {
+function directorPosition(
+  slug: string,
+  committeeId: string,
+  label: string
+): Position {
   return {
     id: `position-director-${slug}`,
     committeeId,
     name: `Director for ${label}`,
     description: `Leads the ${label} and coordinates its members and deliverables.`,
-    responsibilities:
-      "Set committee direction. Coordinate members. Report to the department officer.",
+    responsibilities: [
+      "Set committee direction.",
+      "Coordinate members.",
+      "Report to the department officer.",
+    ],
   }
 }
 
 export const MOCK_POSITIONS: Position[] = [
-  {
-    id: "position-ea-ceo",
-    committeeId: "committee-executive-internal",
-    name: "Executive Assistant to the CEO",
-    description:
-      "Supports the Chief Executive Officer with scheduling, records, and internal coordination.",
-    responsibilities:
-      "Manage the CEO calendar. Prepare briefing notes. Track membership and integrity records.",
-  },
+  directorPosition("sponsorship", "committee-sponsorship", "Sponsorship"),
   directorPosition("external-affairs", "committee-external-affairs", "External Affairs"),
   directorPosition("marketing", "committee-marketing", "Marketing"),
   directorPosition("finance", "committee-finance", "Finance"),

@@ -14,6 +14,7 @@ const listClasses = "flex flex-col gap-8"
 const groupClasses = "flex flex-col gap-3"
 const groupTitleClasses =
   "font-mono text-xs font-medium uppercase tracking-wide text-aquamarine"
+const positionsGroupClasses = "flex flex-col gap-3 pl-5 sm:pl-6"
 const cardClasses =
   "glass w-full rounded-[14px] border border-blue-chalk/15 bg-meteorite/55 p-4 text-left transition-colors hover:border-biloba-flower/40"
 const cardSelectedClasses = "border-aquamarine/40 bg-meteorite/80"
@@ -37,9 +38,11 @@ export function PositionList({
             <h3 className={groupTitleClasses}>{committee.name}</h3>
 
             {group.length === 0 ? (
-              <p className={emptyClasses}>No positions in this committee.</p>
+              <p className={cn(emptyClasses, "pl-5 sm:pl-6")}>
+                No positions in this committee.
+              </p>
             ) : (
-              <ul className="flex flex-col gap-3">
+              <ul className={positionsGroupClasses}>
                 {group.map((position) => {
                   const selected = position.id === selectedId
 
