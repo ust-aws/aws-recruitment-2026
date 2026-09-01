@@ -3,13 +3,17 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "pnpm -r --parallel dev",
+    "dev": "docker compose up postgres & pnpm -r --parallel dev",
     "db:up": "docker compose up -d postgres",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d postgres",
     "db:push": "pnpm --filter backend db:push",
     "db:seed": "pnpm --filter backend db:seed",
     "test": "pnpm --filter backend test",
-    "deploy": "pnpm --filter backend deploy"
+    "deploy": "pnpm --filter backend deploy",
+    "doctor": "npx react-doctor@latest"
+  },
+  "dependencies": {
+    "react-doctor": "^0.9.12"
   }
 }

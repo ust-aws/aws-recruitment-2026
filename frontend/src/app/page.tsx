@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button"
 import { SectionHeader } from "@/components/section-header"
+import { Hero } from "@/components/hero"
+import { Committees } from "@/components/committees"
 import {
   Accordion,
   AccordionItem,
@@ -31,14 +33,17 @@ const FAQ_ITEMS = [
 
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-10 px-4 py-16">
-      <SectionHeader
-        eyebrow="// what we do · faqs"
-        title="No cloud background required. Just curiosity."
-        subtitle="You don't need a technical background to join AWS Builders – UST. We teach cloud computing and AI from the ground up — through workshops, build sessions, and a community that learns loudly and together."
-      />
+    <main className="mx-auto flex w-full max-w-[1180px] flex-1 flex-col gap-10 px-4 pb-4 pt-16">
+      <Hero />
+      <Committees />
+      <div className="flex flex-col gap-10 pt-[clamp(3rem,7vw,5.625rem)]">
+        <SectionHeader
+          eyebrow="// what we do · faqs"
+          title="No cloud background required. Just curiosity."
+          subtitle="You don't need a technical background to join AWS Builders – UST. We teach cloud computing and AI from the ground up — through workshops, build sessions, and a community that learns loudly and together."
+        />
 
-      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap items-center gap-4">
         <Button color="cyan">Apply now!</Button>
         <Button color="purple">Committee Directors</Button>
       </div>
@@ -51,6 +56,6 @@ export default function Home() {
           </AccordionItem>
         ))}
       </Accordion>
-    </main>
-  )
+      </div>
+    </main>  )
 }
