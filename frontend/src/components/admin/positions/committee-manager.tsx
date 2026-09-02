@@ -10,11 +10,10 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import type { Committee, Position } from "@/components/admin/positions/mock-data"
-import { CommitteeForm } from "@/components/admin/positions/committee-form"
-
-type CommitteeFormMode =
-  | { type: "create" }
-  | { type: "edit"; committee: Committee }
+import {
+  CommitteeForm,
+  type CommitteeFormMode,
+} from "@/components/admin/positions/committee-form"
 
 type CommitteeManagerProps = {
   open: boolean
@@ -124,21 +123,25 @@ export function CommitteeManager({
         </DialogContent>
       </Dialog>
 
-      <CommitteeForm
-        open={formMode !== null}
-        mode={formMode}
-        onOpenChange={(next) => {
-          if (!next) setFormMode(null)
-        }}
-        onCreate={(values) => {
-          onCreate(values)
-          setFormMode(null)
-        }}
-        onUpdate={(id, values) => {
-          onUpdate(id, values)
-          setFormMode(null)
-        }}
-      />
+      {formMode ? (
+        <CommitteeForm
+          key={
+            formMode.type === "edit" ? formMode.committee.id : "create"
+          }
+          mode={formMode}
+          onOpenChange={(next) => {
+            if (!next) setFormMode(null)
+          }}
+          onCreate={(values) => {
+            onCreate(values)
+            setFormMode(null)
+          }}
+          onUpdate={(id, values) => {
+            onUpdate(id, values)
+            setFormMode(null)
+          }}
+        />
+      ) : null}
     </>
   )
 }

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -15,13 +15,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { Committee } from "@/components/admin/positions/mock-data"
 
-type CommitteeFormMode =
+export type CommitteeFormMode =
   | { type: "create" }
   | { type: "edit"; committee: Committee }
 
 type CommitteeFormProps = {
-  open: boolean
-  mode: CommitteeFormMode | null
+  mode: CommitteeFormMode
   onOpenChange: (open: boolean) => void
   onCreate: (values: Omit<Committee, "id">) => void
   onUpdate: (id: string, values: Omit<Committee, "id">) => void
@@ -36,26 +35,23 @@ const emptyForm: FormState = { name: "", description: "" }
 const fieldStackClasses = "flex flex-col gap-4"
 const fieldClasses = "flex flex-col gap-2"
 
+function formStateFromMode(mode: CommitteeFormMode): FormState {
+  if (mode.type === "edit") {
+    return {
+      name: mode.committee.name,
+      description: mode.committee.description,
+    }
+  }
+  return emptyForm
+}
+
 export function CommitteeForm({
-  open,
   mode,
   onOpenChange,
   onCreate,
   onUpdate,
 }: CommitteeFormProps) {
-  const [form, setForm] = useState<FormState>(emptyForm)
-
-  useEffect(() => {
-    if (!open || !mode) return
-    if (mode.type === "edit") {
-      setForm({
-        name: mode.committee.name,
-        description: mode.committee.description,
-      })
-      return
-    }
-    setForm(emptyForm)
-  }, [open, mode])
+  const [form, setForm] = useState(() => formStateFromMode(mode))
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -67,17 +63,17 @@ export function CommitteeForm({
       description: form.description.trim(),
     }
 
-    if (mode?.type === "edit") {
+    if (mode.type === "edit") {
       onUpdate(mode.committee.id, values)
       return
     }
     onCreate(values)
   }
 
-  const isEdit = mode?.type === "edit"
+  const isEdit = mode.type === "edit"
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? "Edit committee" : "New committee"}</DialogTitle>

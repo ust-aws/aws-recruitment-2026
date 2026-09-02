@@ -4,9 +4,14 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+export type ResponsibilityItem = {
+  id: string
+  text: string
+}
+
 type ResponsibilityListFieldProps = {
-  items: string[]
-  onChange: (items: string[]) => void
+  items: ResponsibilityItem[]
+  onChange: (items: ResponsibilityItem[]) => void
 }
 
 const fieldClasses = "flex flex-col gap-2"
@@ -15,20 +20,42 @@ const rowClasses = "flex items-center gap-2"
 const removeButtonClasses =
   "shrink-0 border-blue-chalk/20 bg-transparent text-prelude hover:bg-haiti/50 hover:text-blue-chalk"
 
+export function responsibilityItemsFromStrings(texts: string[]): ResponsibilityItem[] {
+  if (texts.length === 0) {
+    return [{ id: crypto.randomUUID(), text: "" }]
+  }
+
+  return texts.map((text) => ({
+    id: crypto.randomUUID(),
+    text,
+  }))
+}
+
+export function stringsFromResponsibilityItems(
+  items: ResponsibilityItem[]
+): string[] {
+  return items.flatMap((item) => {
+    const trimmed = item.text.trim()
+    return trimmed ? [trimmed] : []
+  })
+}
+
 export function ResponsibilityListField({
   items,
   onChange,
 }: ResponsibilityListFieldProps) {
-  function updateItem(index: number, value: string) {
-    onChange(items.map((item, i) => (i === index ? value : item)))
+  function updateItem(id: string, value: string) {
+    onChange(
+      items.map((item) => (item.id === id ? { ...item, text: value } : item))
+    )
   }
 
-  function removeItem(index: number) {
-    onChange(items.filter((_, i) => i !== index))
+  function removeItem(id: string) {
+    onChange(items.filter((item) => item.id !== id))
   }
 
   function addItem() {
-    onChange([...items, ""])
+    onChange([...items, { id: crypto.randomUUID(), text: "" }])
   }
 
   return (
@@ -36,10 +63,10 @@ export function ResponsibilityListField({
       <Label>Responsibilities</Label>
       <div className={listClasses}>
         {items.map((item, index) => (
-          <div key={index} className={rowClasses}>
+          <div key={item.id} className={rowClasses}>
             <Input
-              value={item}
-              onChange={(e) => updateItem(index, e.target.value)}
+              value={item.text}
+              onChange={(e) => updateItem(item.id, e.target.value)}
               placeholder={`Responsibility ${index + 1}`}
               aria-label={`Responsibility ${index + 1}`}
             />
@@ -48,7 +75,7 @@ export function ResponsibilityListField({
               color="purple"
               size="sm"
               className={removeButtonClasses}
-              onClick={() => removeItem(index)}
+              onClick={() => removeItem(item.id)}
             >
               Remove
             </Button>

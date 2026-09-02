@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState, type FormEvent } from "react"
+import { useState, type FormEvent } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -21,13 +21,19 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { Committee, Position } from "@/components/admin/positions/mock-data"
-import { ResponsibilityListField } from "@/components/admin/positions/responsibility-list-field"
+import {
+  ResponsibilityListField,
+  responsibilityItemsFromStrings,
+  stringsFromResponsibilityItems,
+  type ResponsibilityItem,
+} from "@/components/admin/positions/responsibility-list-field"
 
-type FormMode = { type: "create" } | { type: "edit"; position: Position }
+export type PositionFormMode =
+  | { type: "create" }
+  | { type: "edit"; position: Position }
 
 type PositionFormProps = {
-  open: boolean
-  mode: FormMode | null
+  mode: PositionFormMode
   committees: Committee[]
   onOpenChange: (open: boolean) => void
   onCreate: (values: Omit<Position, "id">) => void
@@ -38,7 +44,7 @@ type FormState = {
   name: string
   committeeId: string
   description: string
-  responsibilities: string[]
+  responsibilities: ResponsibilityItem[]
 }
 
 const emptyForm: FormState = {
@@ -53,6 +59,22 @@ const fieldStackClasses = "flex flex-col gap-4"
 const fieldClasses = "flex flex-col gap-2"
 const errorListClasses =
   "flex list-disc flex-col gap-2 pl-4 font-sans text-sm text-prelude"
+
+function formStateFromMode(mode: PositionFormMode): FormState {
+  if (mode.type === "edit") {
+    return {
+      name: mode.position.name,
+      committeeId: mode.position.committeeId,
+      description: mode.position.description,
+      responsibilities: responsibilityItemsFromStrings(mode.position.responsibilities),
+    }
+  }
+
+  return {
+    ...emptyForm,
+    responsibilities: responsibilityItemsFromStrings([""]),
+  }
+}
 
 function collectValidationErrors(form: FormState): string[] {
   const errors: string[] = []
@@ -69,11 +91,7 @@ function collectValidationErrors(form: FormState): string[] {
     errors.push("Description is required.")
   }
 
-  const responsibilities = form.responsibilities
-    .map((item) => item.trim())
-    .filter(Boolean)
-
-  if (responsibilities.length === 0) {
+  if (stringsFromResponsibilityItems(form.responsibilities).length === 0) {
     errors.push("Add at least one responsibility.")
   }
 
@@ -81,38 +99,14 @@ function collectValidationErrors(form: FormState): string[] {
 }
 
 export function PositionForm({
-  open,
   mode,
   committees,
   onOpenChange,
   onCreate,
   onUpdate,
 }: PositionFormProps) {
-  const [form, setForm] = useState<FormState>(emptyForm)
+  const [form, setForm] = useState(() => formStateFromMode(mode))
   const [validationErrors, setValidationErrors] = useState<string[]>([])
-
-  useEffect(() => {
-    if (!open || !mode) return
-    setValidationErrors([])
-
-    if (mode.type === "edit") {
-      setForm({
-        name: mode.position.name,
-        committeeId: mode.position.committeeId,
-        description: mode.position.description,
-        responsibilities:
-          mode.position.responsibilities.length > 0
-            ? [...mode.position.responsibilities]
-            : [""],
-      })
-      return
-    }
-
-    setForm({
-      ...emptyForm,
-      responsibilities: [""],
-    })
-  }, [open, mode, committees])
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -123,29 +117,25 @@ export function PositionForm({
       return
     }
 
-    const responsibilities = form.responsibilities
-      .map((item) => item.trim())
-      .filter(Boolean)
-
     const values = {
       name: form.name.trim(),
       committeeId: form.committeeId,
       description: form.description.trim(),
-      responsibilities,
+      responsibilities: stringsFromResponsibilityItems(form.responsibilities),
     }
 
-    if (mode?.type === "edit") {
+    if (mode.type === "edit") {
       onUpdate(mode.position.id, values)
       return
     }
     onCreate(values)
   }
 
-  const isEdit = mode?.type === "edit"
+  const isEdit = mode.type === "edit"
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
+      <Dialog open onOpenChange={onOpenChange}>
         <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
           <DialogHeader>
             <DialogTitle>{isEdit ? "Edit position" : "New position"}</DialogTitle>
