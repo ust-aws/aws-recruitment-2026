@@ -31,6 +31,16 @@ class BackendStack extends cdk.Stack {
           ? { DATABASE_URL: process.env.DATABASE_URL }
           : {}),
         CORS_ORIGIN: process.env.CORS_ORIGIN ?? "*",
+        ...(process.env.HR_EMAIL ? { HR_EMAIL: process.env.HR_EMAIL } : {}),
+        ...(process.env.HR_PASSWORD
+          ? { HR_PASSWORD: process.env.HR_PASSWORD }
+          : {}),
+        ...(process.env.JWT_SECRET
+          ? { JWT_SECRET: process.env.JWT_SECRET }
+          : {}),
+        ...(process.env.JWT_EXPIRES_IN
+          ? { JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN }
+          : {}),
       },
     });
 
@@ -46,7 +56,7 @@ class BackendStack extends cdk.Stack {
           CorsHttpMethod.POST,
           CorsHttpMethod.PATCH,
         ],
-        allowHeaders: ["content-type"],
+        allowHeaders: ["content-type", "authorization"],
       },
     });
 

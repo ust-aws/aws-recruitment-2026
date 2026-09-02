@@ -6,6 +6,8 @@ set -uo pipefail
 BASE_URL="${1:-http://localhost:8787}"
 BASE_URL="${BASE_URL%/}"
 UNKNOWN_ID="00000000-0000-4000-8000-000000000000"
+HR_EMAIL="${HR_EMAIL:-hr@aws-ust.org}"
+HR_PASSWORD="${HR_PASSWORD:-changeme}"
 
 pass=0
 fail=0
@@ -13,9 +15,10 @@ LAST_STATUS=""
 LAST_BODY=""
 
 request() {
-  local method="$1" path="$2" data="${3:-}"
+  local method="$1" path="$2" data="${3:-}" auth="${4:-}"
   local args=(-s -o /tmp/smoke-test-body -w '%{http_code}' -X "$method")
   [[ -n "$data" ]] && args+=(-H 'content-type: application/json' -d "$data")
+  [[ -n "$auth" ]] && args+=(-H "Authorization: Bearer $auth")
 
   LAST_STATUS=$(curl "${args[@]}" "$BASE_URL$path")
   LAST_BODY=$(cat /tmp/smoke-test-body 2>/dev/null || true)
@@ -256,6 +259,30 @@ fi
 
 request POST "/uploads/presign"
 expect "POST /uploads/presign (stubbed)" 501
+
+request POST "/auth/login" '{"email":"wrong@example.com","password":"nope"}'
+expect "POST /auth/login (bad credentials)" 401
+
+request POST "/auth/logout"
+expect "POST /auth/logout (no token)" 401
+
+login_json="{\"email\":\"${HR_EMAIL}\",\"password\":\"${HR_PASSWORD}\"}"
+request POST "/auth/login" "$login_json"
+expect "POST /auth/login" 200
+
+token=""
+if [[ "$LAST_STATUS" == "200" ]]; then
+  token=$(json_field token || true)
+fi
+
+if [[ -z "$token" ]]; then
+  echo "FAIL  POST /auth/logout (extract token from login)"
+  echo "      body: $LAST_BODY"
+  fail=$((fail + 1))
+else
+  request POST "/auth/logout" "" "$token"
+  expect "POST /auth/logout" 204
+fi
 
 rm -f /tmp/smoke-test-body
 
