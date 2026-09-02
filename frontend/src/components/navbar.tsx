@@ -55,6 +55,10 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", updateScrolled)
   }, [])
 
+  if (pathname === "/login" || pathname.startsWith("/admin")) {
+    return null
+  }
+
   return (
     <header className={headerClasses}>
       <nav

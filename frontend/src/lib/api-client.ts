@@ -78,3 +78,39 @@ export function patchApplicationStatusRequest(
 export function listOpenPositions() {
   return apiFetch<Position[]>("/positions")
 }
+
+type LoginResponse = {
+  token: string
+  expiresAt: string
+}
+
+export async function login(
+  email: string,
+  password: string
+): Promise<LoginResponse> {
+  try {
+    return await apiFetch<LoginResponse>("/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    })
+  } catch (err) {
+    if (err instanceof TypeError) {
+      throw new ApiError(0, "Could not reach the API")
+    }
+    if (err instanceof ApiError && err.status === 401) {
+      throw new ApiError(401, "Invalid credentials")
+    }
+    throw err
+  }
+}
+
+export async function logout(token: string): Promise<void> {
+  try {
+    await apiFetch<void>("/auth/logout", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+  } catch {
+    // Client still drops the session even if the request fails.
+  }
+}
