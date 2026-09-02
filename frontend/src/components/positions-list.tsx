@@ -12,7 +12,7 @@ const listClasses =
 const officeLabelClasses =
   "font-mono text-[11px] uppercase tracking-wide text-aquamarine"
 const rowClasses =
-  "relative w-full rounded-[14px] border border-transparent px-3 py-2.5 text-left transition-colors hover:bg-biloba-flower/10"
+  "relative w-full cursor-pointer rounded-[14px] border border-transparent px-3 py-2.5 text-left transition-colors hover:bg-biloba-flower/10"
 const activeRowClasses =
   "border-aquamarine/35 bg-aquamarine/10 shadow-[inset_3px_0_0_0_var(--aquamarine)]"
 const titleRowClasses = "flex items-start justify-between gap-2"

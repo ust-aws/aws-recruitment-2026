@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { SectionHeader } from "@/components/section-header"
 import { Hero } from "@/components/hero"
@@ -44,7 +45,9 @@ export default function Home() {
         />
 
         <div className="flex flex-wrap items-center gap-4">
-        <Button color="cyan">Apply now!</Button>
+        <Button color="cyan" nativeButton={false} render={<Link href="/apply" />}>
+          Apply now!
+        </Button>
         <Button color="purple">Committee Directors</Button>
       </div>
 

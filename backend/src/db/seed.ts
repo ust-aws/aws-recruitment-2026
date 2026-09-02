@@ -1,3 +1,4 @@
+import { eq } from "drizzle-orm";
 import { db } from "./index";
 import {
   applicants,
@@ -133,22 +134,56 @@ async function main() {
   const applicantIdByEmail = new Map(applicantRows.map((a) => [a.email, a.id]));
 
   const applicationSeeds = [
-    { email: "ana.cruz@example.com", status: "pending" as const, choices: ["Web Developer", "Cloud Engineer"] },
-    { email: "ben.santos@example.com", status: "approved" as const, choices: ["Cloud Engineer", "Web Developer"] },
-    { email: "carla.mendoza@example.com", status: "rejected" as const, choices: ["Graphic Designer", "Video Editor"] },
-    { email: "dario.aquino@example.com", status: "pending" as const, choices: ["Documentation Officer", "Scheduling Coordinator"] },
+    {
+      email: "ana.cruz@example.com",
+      status: "pending" as const,
+      choices: ["Web Developer", "Cloud Engineer"],
+      motivation:
+        "I want to build real products with the technical committee and learn how AWS UST ships features.",
+    },
+    {
+      email: "ben.santos@example.com",
+      status: "approved" as const,
+      choices: ["Cloud Engineer", "Web Developer"],
+      motivation:
+        "Cloud infrastructure is what I want to get better at, and this org is where I'd actually use it.",
+    },
+    {
+      email: "carla.mendoza@example.com",
+      status: "rejected" as const,
+      choices: ["Graphic Designer", "Video Editor"],
+      motivation:
+        "I like turning events into posters and recaps people actually want to share.",
+    },
+    {
+      email: "dario.aquino@example.com",
+      status: "pending" as const,
+      choices: ["Documentation Officer", "Scheduling Coordinator"],
+      motivation:
+        "I'm organized and I want to keep meetings, files, and calendars from falling apart.",
+    },
   ];
 
   const existingApplications = await db.select().from(applications);
-  const applicantIdsWithApplication = new Set(existingApplications.map((a) => a.applicantId));
+  const applicationByApplicantId = new Map(
+    existingApplications.map((a) => [a.applicantId, a]),
+  );
 
   for (const seed of applicationSeeds) {
     const applicantId = applicantIdByEmail.get(seed.email)!;
-    if (applicantIdsWithApplication.has(applicantId)) continue;
+    const existing = applicationByApplicantId.get(applicantId);
+    if (existing) {
+      // Insert is skipped for existing apps; still fill motivation after the column lands.
+      await db
+        .update(applications)
+        .set({ motivation: seed.motivation })
+        .where(eq(applications.id, existing.id));
+      continue;
+    }
 
     const [application] = await db
       .insert(applications)
-      .values({ applicantId, status: seed.status })
+      .values({ applicantId, status: seed.status, motivation: seed.motivation })
       .returning();
 
     await db

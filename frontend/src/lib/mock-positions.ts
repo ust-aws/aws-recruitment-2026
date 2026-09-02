@@ -1,3 +1,5 @@
+// Still for /apply/positions. Apply + HR go through the API.
+
 export type Position = {
   id: string
   title: string
