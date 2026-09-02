@@ -21,12 +21,12 @@ import {
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import type { Committee, Position } from "@/components/admin/positions/mock-data"
+import { ResponsibilityListField } from "@/components/admin/positions/responsibility-list-field"
 import {
-  ResponsibilityListField,
   responsibilityItemsFromStrings,
   stringsFromResponsibilityItems,
   type ResponsibilityItem,
-} from "@/components/admin/positions/responsibility-list-field"
+} from "@/components/admin/positions/responsibility-items"
 
 export type PositionFormMode =
   | { type: "create" }

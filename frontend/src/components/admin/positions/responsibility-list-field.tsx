@@ -3,11 +3,7 @@
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-
-export type ResponsibilityItem = {
-  id: string
-  text: string
-}
+import type { ResponsibilityItem } from "@/components/admin/positions/responsibility-items"
 
 type ResponsibilityListFieldProps = {
   items: ResponsibilityItem[]
@@ -19,26 +15,6 @@ const listClasses = "flex flex-col gap-2"
 const rowClasses = "flex items-center gap-2"
 const removeButtonClasses =
   "shrink-0 border-blue-chalk/20 bg-transparent text-prelude hover:bg-haiti/50 hover:text-blue-chalk"
-
-export function responsibilityItemsFromStrings(texts: string[]): ResponsibilityItem[] {
-  if (texts.length === 0) {
-    return [{ id: crypto.randomUUID(), text: "" }]
-  }
-
-  return texts.map((text) => ({
-    id: crypto.randomUUID(),
-    text,
-  }))
-}
-
-export function stringsFromResponsibilityItems(
-  items: ResponsibilityItem[]
-): string[] {
-  return items.flatMap((item) => {
-    const trimmed = item.text.trim()
-    return trimmed ? [trimmed] : []
-  })
-}
 
 export function ResponsibilityListField({
   items,
