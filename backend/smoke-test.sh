@@ -69,11 +69,11 @@ positions_count=$(printf '%s' "$LAST_BODY" | node -e "
   const rows = JSON.parse(fs.readFileSync(0, 'utf8'));
   process.stdout.write(Array.isArray(rows) ? String(rows.length) : '0');
 " 2>/dev/null || echo "0")
-if [[ "$positions_count" -ge 6 ]]; then
-  echo "PASS  GET /positions returns at least 6 seeded rows ($positions_count)"
+if [[ "$positions_count" -ge 5 ]]; then
+  echo "PASS  GET /positions returns at least 5 open seeded rows ($positions_count)"
   pass=$((pass + 1))
 else
-  echo "FAIL  GET /positions expected at least 6 rows, got $positions_count"
+  echo "FAIL  GET /positions expected at least 5 open rows, got $positions_count"
   fail=$((fail + 1))
 fi
 
@@ -105,8 +105,6 @@ if [[ -n "$committee_id" ]]; then
   if [[ -n "$created_id" ]]; then
     request PATCH "/positions/$created_id" '{"title":"Smoke Test Role Updated"}'
     expect "PATCH /positions/:id" 200
-    request DELETE "/positions/$created_id"
-    expect "DELETE /positions/:id" 204
   else
     echo "FAIL  POST /positions did not return an id"
     fail=$((fail + 1))
@@ -114,10 +112,12 @@ if [[ -n "$committee_id" ]]; then
 
   request POST "/positions" '{"title":"Bad Committee","committee_id":"00000000-0000-0000-0000-000000000000"}'
   expect "POST /positions bad committee_id" 404
-  request PATCH "/positions/00000000-0000-0000-0000-000000000000" '{"title":"Ghost"}'
+  request POST "/positions" '{"title":123,"committee_id":"not-a-uuid"}'
+  expect "POST /positions invalid body" 400
+  request PATCH "/positions/not-a-uuid" '{"title":"Ghost"}'
+  expect "PATCH /positions/:id malformed id" 400
+  request PATCH "/positions/$UNKNOWN_ID" '{"title":"Ghost"}'
   expect "PATCH /positions/:id unknown id" 404
-  request DELETE "/positions/00000000-0000-0000-0000-000000000000"
-  expect "DELETE /positions/:id unknown id" 404
 else
   echo "FAIL  Could not read committee_id from GET /positions"
   fail=$((fail + 1))

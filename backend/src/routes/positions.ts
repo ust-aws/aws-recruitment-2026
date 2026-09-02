@@ -3,6 +3,13 @@ import { and, eq } from "drizzle-orm";
 import { db } from "../db";
 import { committees, positions } from "../db/schema";
 
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isUuid(value: string): boolean {
+  return UUID_RE.test(value);
+}
+
 type PositionPayload = {
   title: string;
   committee_id: string;
@@ -39,7 +46,7 @@ function toPositionResponse(row: PositionRow): PositionResponse {
   };
 }
 
-async function selectAllPositions() {
+async function selectOpenPositions() {
   return db
     .select({
       id: positions.id,
@@ -50,7 +57,8 @@ async function selectAllPositions() {
       responsibilities: positions.responsibilities,
     })
     .from(positions)
-    .innerJoin(committees, eq(positions.committeeId, committees.id));
+    .innerJoin(committees, eq(positions.committeeId, committees.id))
+    .where(eq(positions.isOpen, true));
 }
 
 async function selectPositionById(id: string) {
@@ -109,23 +117,29 @@ function parsePositionPayload(
         error: "committee_id is required and must be a string",
       };
     }
-    data.committee_id = record.committee_id.trim();
+    const committeeId = record.committee_id.trim();
+    if (!isUuid(committeeId)) {
+      return { ok: false, error: "committee_id must be a UUID." };
+    }
+    data.committee_id = committeeId;
   } else if (!partial) {
     return { ok: false, error: "committee_id is required" };
   }
 
   if ("description" in record) {
-    data.description =
-      typeof record.description === "string" ? record.description : "";
+    if (typeof record.description !== "string") {
+      return { ok: false, error: "description must be a string" };
+    }
+    data.description = record.description;
   } else if (!partial) {
     data.description = "";
   }
 
   if ("responsibilities" in record) {
-    data.responsibilities =
-      typeof record.responsibilities === "string"
-        ? record.responsibilities
-        : "";
+    if (typeof record.responsibilities !== "string") {
+      return { ok: false, error: "responsibilities must be a string" };
+    }
+    data.responsibilities = record.responsibilities;
   } else if (!partial) {
     data.responsibilities = "";
   }
@@ -151,7 +165,7 @@ async function hasDuplicateTitle(committeeId: string, title: string, excludeId?:
 export const positionsRoutes = new Hono();
 
 positionsRoutes.get("/", async (c) => {
-  const rows = await selectAllPositions();
+  const rows = await selectOpenPositions();
   return c.json(rows.map(toPositionResponse));
 });
 
@@ -191,6 +205,10 @@ positionsRoutes.post("/", async (c) => {
 
 positionsRoutes.patch("/:id", async (c) => {
   const id = c.req.param("id");
+  if (!isUuid(id)) {
+    return c.json({ error: "Invalid position id." }, 400);
+  }
+
   const existing = await selectPositionById(id);
   if (!existing) {
     return c.json({ error: "Position not found" }, 404);
@@ -235,18 +253,4 @@ positionsRoutes.patch("/:id", async (c) => {
 
   const row = await selectPositionById(id);
   return c.json(toPositionResponse(row));
-});
-
-positionsRoutes.delete("/:id", async (c) => {
-  const id = c.req.param("id");
-  const deleted = await db
-    .delete(positions)
-    .where(eq(positions.id, id))
-    .returning({ id: positions.id });
-
-  if (deleted.length === 0) {
-    return c.json({ error: "Position not found" }, 404);
-  }
-
-  return c.body(null, 204);
 });
