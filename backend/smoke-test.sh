@@ -80,25 +80,42 @@ fi
 POS1=""
 POS2=""
 committee_id=""
+smoke_position_id=""
+smoke_position_title=""
+smoke_position_committee_id=""
 if [[ "$LAST_STATUS" == "200" ]]; then
   POS_IDS=$(printf '%s' "$LAST_BODY" | node -e "
     const fs = require('fs');
     const rows = JSON.parse(fs.readFileSync(0, 'utf8'));
     if (!Array.isArray(rows) || rows.length < 2) process.exit(1);
+    const smokePosition =
+      rows.find((row) => row.title === 'Smoke Test Role Updated') ??
+      rows.find((row) => row.title === 'Smoke Test Role');
     console.log(rows[0].id);
     console.log(rows[1].id);
     console.log(rows[0].committee_id);
+    console.log(smokePosition?.id ?? '');
+    console.log(smokePosition?.title ?? '');
+    console.log(smokePosition?.committee_id ?? '');
   ") || true
   POS1=$(printf '%s\n' "$POS_IDS" | sed -n '1p')
   POS2=$(printf '%s\n' "$POS_IDS" | sed -n '2p')
   committee_id=$(printf '%s\n' "$POS_IDS" | sed -n '3p')
+  smoke_position_id=$(printf '%s\n' "$POS_IDS" | sed -n '4p')
+  smoke_position_title=$(printf '%s\n' "$POS_IDS" | sed -n '5p')
+  smoke_position_committee_id=$(printf '%s\n' "$POS_IDS" | sed -n '6p')
 fi
 
 if [[ -n "$committee_id" ]]; then
-  request POST "/positions" "{\"title\":\"Smoke Test Role\",\"committee_id\":\"$committee_id\",\"description\":\"Test\",\"responsibilities\":\"Test duties\"}"
-  expect "POST /positions" 201
-  created_id=""
-  if [[ "$LAST_STATUS" == "201" ]]; then
+  created_id="$smoke_position_id"
+  if [[ -n "$smoke_position_id" ]]; then
+    request POST "/positions" "{\"title\":\"$smoke_position_title\",\"committee_id\":\"$smoke_position_committee_id\",\"description\":\"Test\",\"responsibilities\":\"Test duties\"}"
+    expect "POST /positions duplicate smoke role" 409
+  else
+    request POST "/positions" "{\"title\":\"Smoke Test Role\",\"committee_id\":\"$committee_id\",\"description\":\"Test\",\"responsibilities\":\"Test duties\"}"
+    expect "POST /positions" 201
+  fi
+  if [[ -z "$created_id" && "$LAST_STATUS" == "201" ]]; then
     created_id=$(json_field id || true)
   fi
 
