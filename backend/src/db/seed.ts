@@ -1,3 +1,4 @@
+import { eq, inArray } from "drizzle-orm";
 import { db } from "./index";
 import {
   applicants,
@@ -12,6 +13,14 @@ import { POSITION_SEEDS } from "./position-seeds";
 // Dev password for both seeded users is "password123" — local/dev only.
 const DEV_PASSWORD_HASH =
   "$2b$10$CwTycUXWue0Thq9StjUM0uJ8yTaSGE3Va8p8V6b8Vqjc.gBFm9UhK";
+const LEGACY_POSITION_NAMES = [
+  "Web Developer",
+  "Cloud Engineer",
+  "Graphic Designer",
+  "Video Editor",
+  "Documentation Officer",
+  "Scheduling Coordinator",
+];
 
 async function main() {
   await db
@@ -56,6 +65,11 @@ async function main() {
 
   const committeeRows = await db.select().from(committees);
   const committeeIdByName = new Map(committeeRows.map((c) => [c.name, c.id]));
+
+  await db
+    .update(positions)
+    .set({ isOpen: false })
+    .where(inArray(positions.name, LEGACY_POSITION_NAMES));
 
   for (const positionSeed of POSITION_SEEDS) {
     const values = {
@@ -102,34 +116,78 @@ async function main() {
   const applicantIdByEmail = new Map(applicantRows.map((a) => [a.email, a.id]));
 
   const applicationSeeds = [
-    { email: "ana.cruz@example.com", status: "pending" as const, choices: ["Executive Assistant to the CEO", "Finance Committee Staff"] },
-    { email: "ben.santos@example.com", status: "approved" as const, choices: ["Development Committee Staff", "Technicals Committee Staff"] },
-    { email: "carla.mendoza@example.com", status: "rejected" as const, choices: ["Publicity Committee Staff", "Media Committee Staff"] },
-    { email: "dario.aquino@example.com", status: "pending" as const, choices: ["Human Resources Committee Staff", "Secretariat Committee Staff"] },
+    {
+      email: "ana.cruz@example.com",
+      status: "pending" as const,
+      choices: ["Executive Assistant to the CEO", "Finance Committee Staff"],
+      motivation:
+        "I want to support organization-wide initiatives and learn how executive and finance teams keep projects running.",
+    },
+    {
+      email: "ben.santos@example.com",
+      status: "approved" as const,
+      choices: ["Development Committee Staff", "Technicals Committee Staff"],
+      motivation:
+        "I want to improve my technical skills and help build and operate the organization's digital tools.",
+    },
+    {
+      email: "carla.mendoza@example.com",
+      status: "rejected" as const,
+      choices: ["Publicity Committee Staff", "Media Committee Staff"],
+      motivation:
+        "I like turning events into posters and recaps people actually want to share.",
+    },
+    {
+      email: "dario.aquino@example.com",
+      status: "pending" as const,
+      choices: ["Human Resources Committee Staff", "Secretariat Committee Staff"],
+      motivation:
+        "I'm organized and I want to keep meetings, files, and calendars from falling apart.",
+    },
   ];
 
   const existingApplications = await db.select().from(applications);
-  const applicantIdsWithApplication = new Set(existingApplications.map((a) => a.applicantId));
+  const applicationByApplicantId = new Map(
+    existingApplications.map((a) => [a.applicantId, a]),
+  );
 
   for (const seed of applicationSeeds) {
     const applicantId = applicantIdByEmail.get(seed.email)!;
-    if (applicantIdsWithApplication.has(applicantId)) continue;
+    const existing = applicationByApplicantId.get(applicantId);
+    const choices = seed.choices.map((positionName, i) => ({
+      positionId: positionIdByName.get(positionName)!,
+      preferenceRank: i + 1,
+    }));
+
+    if (existing) {
+      await db
+        .update(applications)
+        .set({ motivation: seed.motivation })
+        .where(eq(applications.id, existing.id));
+
+      await db
+        .delete(applicationChoices)
+        .where(eq(applicationChoices.applicationId, existing.id));
+      await db.insert(applicationChoices).values(
+        choices.map((choice) => ({
+          ...choice,
+          applicationId: existing.id,
+        })),
+      );
+      continue;
+    }
 
     const [application] = await db
       .insert(applications)
-      .values({ applicantId, status: seed.status })
+      .values({ applicantId, status: seed.status, motivation: seed.motivation })
       .returning();
 
-    await db
-      .insert(applicationChoices)
-      .values(
-        seed.choices.map((positionName, i) => ({
-          applicationId: application.id,
-          positionId: positionIdByName.get(positionName)!,
-          preferenceRank: i + 1,
-        })),
-      )
-      .onConflictDoNothing();
+    await db.insert(applicationChoices).values(
+      choices.map((choice) => ({
+        ...choice,
+        applicationId: application.id,
+      })),
+    );
   }
 
   console.log("Seed complete.");

@@ -2,9 +2,22 @@ import { connection } from "next/server"
 import { PositionsBrowser } from "@/components/positions-browser"
 import type { Position } from "@/lib/positions"
 
-const apiBaseUrl = process.env.API_BASE_URL ?? "http://localhost:8787"
+const apiBaseUrl =
+  process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8787"
 
-function isPosition(value: unknown): value is Position {
+type PositionResponse = {
+  id: string
+  title: string
+  office: string
+  committee_id: string
+  committee: string
+  committeeDescription: string
+  description: string
+  responsibilities: string
+  isOpen: boolean
+}
+
+function isPositionResponse(value: unknown): value is PositionResponse {
   if (!value || typeof value !== "object") return false
 
   const position = value as Record<string, unknown>
@@ -12,19 +25,33 @@ function isPosition(value: unknown): value is Position {
     "id",
     "title",
     "office",
+    "committee_id",
     "committee",
     "committeeDescription",
     "description",
+    "responsibilities",
   ]
 
   return (
     stringFields.every((field) => typeof position[field] === "string") &&
-    Array.isArray(position.responsibilities) &&
-    position.responsibilities.every(
-      (responsibility) => typeof responsibility === "string"
-    ) &&
     typeof position.isOpen === "boolean"
   )
+}
+
+function toPosition(response: PositionResponse): Position {
+  return {
+    id: response.id,
+    title: response.title,
+    office: response.office,
+    committee: response.committee,
+    committeeDescription: response.committeeDescription,
+    description: response.description,
+    responsibilities: response.responsibilities
+      .split(/\r?\n/)
+      .map((responsibility) => responsibility.trim())
+      .filter(Boolean),
+    isOpen: response.isOpen,
+  }
 }
 
 async function getOpenPositions() {
@@ -38,11 +65,11 @@ async function getOpenPositions() {
 
   const body: unknown = await response.json()
 
-  if (!Array.isArray(body) || !body.every(isPosition)) {
+  if (!Array.isArray(body) || !body.every(isPositionResponse)) {
     throw new Error("Positions API returned an invalid response")
   }
 
-  return body
+  return body.map(toPosition)
 }
 
 export default async function PositionsPage() {

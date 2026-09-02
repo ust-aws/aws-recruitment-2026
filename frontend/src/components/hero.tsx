@@ -1,7 +1,8 @@
 "use client"
 
 import Image from "next/image"
-import { useEffect, useRef } from "react"
+import Link from "next/link"
+import { useEffect, useEffectEvent, useRef } from "react"
 import { Button } from "@/components/ui/button"
 
 const heroClasses =
@@ -78,59 +79,7 @@ export function Hero() {
     }
   }
 
-  // Stable ref-only handler used by the window listener.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  function handlePointerMove(event: globalThis.PointerEvent) {
-    const reducedMotion = window.matchMedia(
-      "(prefers-reduced-motion: reduce)"
-    ).matches
-
-    if (event.pointerType === "touch" || reducedMotion) {
-      if (reducedMotion) resetFace()
-      return
-    }
-
-    const cloud = cloudRef.current
-    if (!cloud) return
-
-    const bounds = cloud.getBoundingClientRect()
-    const centerX = bounds.left + bounds.width / 2
-    const centerY = bounds.top + bounds.height / 2
-    const horizontalRatio =
-      (event.clientX - centerX) / (bounds.width * 0.5)
-    const verticalRatio =
-      (event.clientY - centerY) / (bounds.height * 0.5)
-    const horizontalLimit = Math.min(40, Math.max(25, bounds.width * 0.074))
-    const downwardLimit = Math.min(60, Math.max(30, bounds.width * 0.11))
-    const upwardLimit = Math.min(24, Math.max(14, bounds.width * 0.045))
-    const clampedHorizontal = Math.max(-1, Math.min(1, horizontalRatio))
-    const clampedVertical = Math.max(-1, Math.min(1, verticalRatio))
-    const isUpperRight = clampedHorizontal > 0 && clampedVertical < 0
-    const upperRightHorizontalLimit = Math.min(
-      28,
-      Math.max(18, bounds.width * 0.052)
-    )
-    const upperRightUpwardLimit = Math.min(
-      20,
-      Math.max(12, bounds.width * 0.038)
-    )
-
-    targetPositionRef.current = {
-      x:
-        clampedHorizontal *
-        (isUpperRight ? upperRightHorizontalLimit : horizontalLimit),
-      y:
-        clampedVertical < 0
-          ? clampedVertical *
-            (isUpperRight ? upperRightUpwardLimit : upwardLimit)
-          : clampedVertical * downwardLimit,
-    }
-    queueFaceAnimation()
-  }
-
-  // Stable ref-only handler used by the window listener.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  function resetFace() {
+  const resetFace = useEffectEvent(() => {
     targetPositionRef.current = { x: 0, y: 0 }
 
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
@@ -142,7 +91,57 @@ export function Hero() {
     }
 
     queueFaceAnimation()
-  }
+  })
+
+  const handlePointerMove = useEffectEvent(
+    (event: globalThis.PointerEvent) => {
+      const reducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches
+
+      if (event.pointerType === "touch" || reducedMotion) {
+        if (reducedMotion) resetFace()
+        return
+      }
+
+      const cloud = cloudRef.current
+      if (!cloud) return
+
+      const bounds = cloud.getBoundingClientRect()
+      const centerX = bounds.left + bounds.width / 2
+      const centerY = bounds.top + bounds.height / 2
+      const horizontalRatio =
+        (event.clientX - centerX) / (bounds.width * 0.5)
+      const verticalRatio =
+        (event.clientY - centerY) / (bounds.height * 0.5)
+      const horizontalLimit = Math.min(40, Math.max(25, bounds.width * 0.074))
+      const downwardLimit = Math.min(60, Math.max(30, bounds.width * 0.11))
+      const upwardLimit = Math.min(24, Math.max(14, bounds.width * 0.045))
+      const clampedHorizontal = Math.max(-1, Math.min(1, horizontalRatio))
+      const clampedVertical = Math.max(-1, Math.min(1, verticalRatio))
+      const isUpperRight = clampedHorizontal > 0 && clampedVertical < 0
+      const upperRightHorizontalLimit = Math.min(
+        28,
+        Math.max(18, bounds.width * 0.052)
+      )
+      const upperRightUpwardLimit = Math.min(
+        20,
+        Math.max(12, bounds.width * 0.038)
+      )
+
+      targetPositionRef.current = {
+        x:
+          clampedHorizontal *
+          (isUpperRight ? upperRightHorizontalLimit : horizontalLimit),
+        y:
+          clampedVertical < 0
+            ? clampedVertical *
+              (isUpperRight ? upperRightUpwardLimit : upwardLimit)
+            : clampedVertical * downwardLimit,
+      }
+      queueFaceAnimation()
+    }
+  )
 
   useEffect(() => {
     window.addEventListener("pointermove", handlePointerMove)
@@ -159,7 +158,7 @@ export function Hero() {
         cancelAnimationFrame(animationFrameRef.current)
       }
     }
-  }, [handlePointerMove, resetFace])
+  }, [])
   return (
     <section
       aria-labelledby="hero-title"
@@ -240,7 +239,12 @@ export function Hero() {
               >
                 Find your committee
               </Button>
-              <Button color="cyan" className={`${buttonClasses} ${cyanButtonEffectClasses}`}>
+              <Button
+                color="cyan"
+                className={`${buttonClasses} ${cyanButtonEffectClasses}`}
+                nativeButton={false}
+                render={<Link href="/apply" />}
+              >
                 Apply now!
               </Button>
               <Button color="purple" className={`${buttonClasses} ${purpleButtonEffectClasses}`}>
