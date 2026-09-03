@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { ApiError, login } from "@/lib/api"
+import { getSession } from "@/lib/api-client"
 import { getToken, setToken } from "@/lib/auth"
 
 const pageClasses =
@@ -28,7 +29,20 @@ export default function LoginPage() {
   const [pending, setPending] = useState(false)
 
   useEffect(() => {
-    if (getToken()) router.replace("/admin/hr")
+    if (!getToken()) return
+
+    let cancelled = false
+    getSession()
+      .then(() => {
+        if (!cancelled) router.replace("/admin/hr")
+      })
+      .catch(() => {
+        // Fake or expired token: stay on login.
+      })
+
+    return () => {
+      cancelled = true
+    }
   }, [router])
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {

@@ -4,6 +4,7 @@ import type {
   CreateApplicationInput,
   Position,
 } from "./application-types"
+import { clearToken, getToken } from "./auth"
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8787"
 
@@ -17,16 +18,30 @@ export class ApiError extends Error {
   }
 }
 
+function redirectToLogin(): void {
+  if (typeof window === "undefined") return
+  if (window.location.pathname === "/login") return
+  window.location.replace("/login")
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const token = getToken()
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       ...(init?.body ? { "content-type": "application/json" } : {}),
+      ...(token && path !== "/auth/login"
+        ? { Authorization: `Bearer ${token}` }
+        : {}),
       ...init?.headers,
     },
   })
 
   if (!response.ok) {
+    if (response.status === 401 && path !== "/auth/login") {
+      clearToken()
+      redirectToLogin()
+    }
     let message = `Request failed (${response.status})`
     try {
       const body: unknown = await response.json()
@@ -82,6 +97,10 @@ export function listOpenPositions() {
 type LoginResponse = {
   token: string
   expiresAt: string
+}
+
+export async function getSession(): Promise<{ email: string }> {
+  return apiFetch<{ email: string }>("/auth/me")
 }
 
 export async function login(

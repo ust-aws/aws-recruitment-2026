@@ -55,6 +55,7 @@ class BackendStack extends cdk.Stack {
           CorsHttpMethod.GET,
           CorsHttpMethod.POST,
           CorsHttpMethod.PATCH,
+          CorsHttpMethod.DELETE,
         ],
         allowHeaders: ["content-type", "authorization"],
       },

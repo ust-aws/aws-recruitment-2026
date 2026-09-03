@@ -42,6 +42,12 @@ app.post("/auth/login", async (c) => {
   }
 });
 
+app.get("/auth/me", requireAuth, (c) => {
+  const payload = c.get("jwtPayload") as { sub?: unknown };
+  const email = typeof payload.sub === "string" ? payload.sub : "";
+  return c.json({ email });
+});
+
 app.post("/auth/logout", requireAuth, (c) => c.body(null, 204));
 
 app.route("/positions", positionsRoutes);
