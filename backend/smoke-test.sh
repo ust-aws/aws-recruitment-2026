@@ -55,6 +55,39 @@ contains_id() {
   " "$id"
 }
 
+check_positions_contract() {
+  if printf '%s' "$LAST_BODY" | node -e '
+    const fs = require("fs");
+    const rows = JSON.parse(fs.readFileSync(0, "utf8"));
+    const stringFields = [
+      "id",
+      "title",
+      "office",
+      "committee_id",
+      "committee",
+      "committeeDescription",
+      "description",
+      "responsibilities",
+    ];
+    const valid =
+      Array.isArray(rows) &&
+      rows.length > 0 &&
+      rows.every(
+        (row) =>
+          stringFields.every((field) => typeof row[field] === "string") &&
+          row.isOpen === true,
+      );
+    if (!valid) process.exit(1);
+  '; then
+    echo "PASS  GET /positions contract"
+    pass=$((pass + 1))
+  else
+    echo "FAIL  GET /positions contract"
+    echo "      body: $LAST_BODY"
+    fail=$((fail + 1))
+  fi
+}
+
 echo "Smoke testing $BASE_URL"
 echo
 
@@ -63,23 +96,86 @@ expect "GET  /health" 200
 
 request GET "/positions"
 expect "GET  /positions" 200
+check_positions_contract
+
+positions_count=$(printf '%s' "$LAST_BODY" | node -e "
+  const fs = require('fs');
+  const rows = JSON.parse(fs.readFileSync(0, 'utf8'));
+  process.stdout.write(Array.isArray(rows) ? String(rows.length) : '0');
+" 2>/dev/null || echo "0")
+if [[ "$positions_count" -ge 21 ]]; then
+  echo "PASS  GET /positions returns at least 21 open seeded rows ($positions_count)"
+  pass=$((pass + 1))
+else
+  echo "FAIL  GET /positions expected at least 21 open rows, got $positions_count"
+  fail=$((fail + 1))
+fi
 
 POS1=""
 POS2=""
+committee_id=""
+smoke_position_id=""
+smoke_position_title=""
+smoke_position_committee_id=""
 if [[ "$LAST_STATUS" == "200" ]]; then
   POS_IDS=$(printf '%s' "$LAST_BODY" | node -e "
     const fs = require('fs');
     const rows = JSON.parse(fs.readFileSync(0, 'utf8'));
     if (!Array.isArray(rows) || rows.length < 2) process.exit(1);
+    const smokePosition =
+      rows.find((row) => row.title === 'Smoke Test Role Updated') ??
+      rows.find((row) => row.title === 'Smoke Test Role');
     console.log(rows[0].id);
     console.log(rows[1].id);
+    console.log(rows[0].committee_id);
+    console.log(smokePosition?.id ?? '');
+    console.log(smokePosition?.title ?? '');
+    console.log(smokePosition?.committee_id ?? '');
   ") || true
   POS1=$(printf '%s\n' "$POS_IDS" | sed -n '1p')
   POS2=$(printf '%s\n' "$POS_IDS" | sed -n '2p')
+  committee_id=$(printf '%s\n' "$POS_IDS" | sed -n '3p')
+  smoke_position_id=$(printf '%s\n' "$POS_IDS" | sed -n '4p')
+  smoke_position_title=$(printf '%s\n' "$POS_IDS" | sed -n '5p')
+  smoke_position_committee_id=$(printf '%s\n' "$POS_IDS" | sed -n '6p')
+fi
+
+if [[ -n "$committee_id" ]]; then
+  created_id="$smoke_position_id"
+  if [[ -n "$smoke_position_id" ]]; then
+    request POST "/positions" "{\"title\":\"$smoke_position_title\",\"committee_id\":\"$smoke_position_committee_id\",\"description\":\"Test\",\"responsibilities\":\"Test duties\"}"
+    expect "POST /positions duplicate smoke role" 409
+  else
+    request POST "/positions" "{\"title\":\"Smoke Test Role\",\"committee_id\":\"$committee_id\",\"description\":\"Test\",\"responsibilities\":\"Test duties\"}"
+    expect "POST /positions" 201
+  fi
+  if [[ -z "$created_id" && "$LAST_STATUS" == "201" ]]; then
+    created_id=$(json_field id || true)
+  fi
+
+  if [[ -n "$created_id" ]]; then
+    request PATCH "/positions/$created_id" '{"title":"Smoke Test Role Updated"}'
+    expect "PATCH /positions/:id" 200
+  else
+    echo "FAIL  POST /positions did not return an id"
+    fail=$((fail + 1))
+  fi
+
+  request POST "/positions" '{"title":"Bad Committee","committee_id":"00000000-0000-0000-0000-000000000000"}'
+  expect "POST /positions bad committee_id" 404
+  request POST "/positions" '{"title":123,"committee_id":"not-a-uuid"}'
+  expect "POST /positions invalid body" 400
+  request PATCH "/positions/not-a-uuid" '{"title":"Ghost"}'
+  expect "PATCH /positions/:id malformed id" 400
+  request PATCH "/positions/$UNKNOWN_ID" '{"title":"Ghost"}'
+  expect "PATCH /positions/:id unknown id" 404
+else
+  echo "FAIL  Could not read committee_id from GET /positions"
+  fail=$((fail + 1))
 fi
 
 if [[ -z "$POS1" || -z "$POS2" ]]; then
-  echo "FAIL  need two open positions from GET /positions to exercise applications"
+  echo "FAIL  need two positions from GET /positions to exercise applications"
   echo "      body: $LAST_BODY"
   fail=$((fail + 1))
 else

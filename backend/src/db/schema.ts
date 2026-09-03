@@ -88,6 +88,7 @@ export const positions = pgTable(
       .notNull()
       .references(() => committees.id, { onDelete: "cascade" }),
     name: varchar({ length: 150 }).notNull(),
+    office: varchar({ length: 150 }),
     description: text(),
     responsibilities: text(),
     isOpen: boolean("is_open").notNull().default(true),

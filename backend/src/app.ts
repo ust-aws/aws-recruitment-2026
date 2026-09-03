@@ -1,10 +1,8 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
-import { eq } from "drizzle-orm";
 import type { LambdaEvent, LambdaContext } from "hono/aws-lambda";
-import { db } from "./db";
-import { committees, positions } from "./db/schema";
 import { applicationsRoutes } from "./routes/applications";
+import { positionsRoutes } from "./routes/positions";
 
 type Bindings = {
   event: LambdaEvent;
@@ -22,20 +20,7 @@ app.use(
 
 app.get("/health", (c) => c.json({ ok: true, service: "aws-ust-api" }));
 
-app.get("/positions", async (c) => {
-  const rows = await db
-    .select({
-      id: positions.id,
-      committee: committees.name,
-      title: positions.name,
-      description: positions.description,
-    })
-    .from(positions)
-    .innerJoin(committees, eq(positions.committeeId, committees.id))
-    .where(eq(positions.isOpen, true));
-
-  return c.json(rows);
-});
+app.route("/positions", positionsRoutes);
 
 app.route("/applications", applicationsRoutes);
 

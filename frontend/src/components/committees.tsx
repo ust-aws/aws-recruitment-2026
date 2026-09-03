@@ -3,7 +3,7 @@ import Image from "next/image"
 import { SectionHeader } from "@/components/section-header"
 
 const committees = [
-  ["Internal Relations", "Executive (Internal)", "Manages the rights and welfare of the organization and its members, including programs and records, as well as ensuring integrity and accountability within the organization."],
+  ["PARTNERSHIPS", "Sponsorships", "Sources and secures sponsors, prepares proposals, negotiates terms, and manages sponsorship deliverables for the organization."],
   ["External Relations", "External Affairs", "Acts as the liaison between the members and the external partners of the organization."],
   ["Marketing", "Marketing", "Develops and implements comprehensive marketing plans and campaigns for events, while managing relationships with partners, sponsors, and the public."],
   ["Operations", "Logistics", "Plans and executes event production, including venue, equipment, and manpower needs."],
@@ -19,6 +19,7 @@ const committees = [
 ] as const
 const committeeIcons: Record<string, string> = {
   "Executive (Internal)": "executive-internal.png",
+  Sponsorships: "executive-internal.png",
   "External Affairs": "external-affairs.png",
   Marketing: "marketing.png",
   Logistics: "logistics.png",
@@ -72,7 +73,7 @@ export function Committees() {
                   height={48}
                   unoptimized
                   className={
-                    title === "Executive (Internal)" || title === "External Affairs"
+                    title === "Sponsorships" || title === "External Affairs"
                       ? "h-10 w-10 object-contain"
                       : "h-8 w-8 object-contain"
                   }
