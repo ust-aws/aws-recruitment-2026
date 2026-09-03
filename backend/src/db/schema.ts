@@ -88,6 +88,7 @@ export const positions = pgTable(
       .notNull()
       .references(() => committees.id, { onDelete: "cascade" }),
     name: varchar({ length: 150 }).notNull(),
+    office: varchar({ length: 150 }),
     description: text(),
     responsibilities: text(),
     isOpen: boolean("is_open").notNull().default(true),
@@ -114,6 +115,9 @@ export const applications = pgTable(
       .notNull()
       .references(() => applicants.id, { onDelete: "cascade" }),
     status: applicationStatus().notNull().default("pending"),
+    // Apply-form "Why do you want to join AWS Builders - UST?" — on the application, not the applicant.
+    // default("") is for drizzle-kit push against existing rows; seed and POST always send a real answer.
+    motivation: text().notNull().default(""),
     reviewedBy: uuid("reviewed_by").references(() => users.id, {
       onDelete: "set null",
     }),

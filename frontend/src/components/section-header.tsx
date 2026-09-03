@@ -13,6 +13,7 @@ type SectionHeaderProps = {
   title: ReactNode
   subtitle?: string
   className?: string
+  titleClassName?: string
 }
 
 export function SectionHeader({
@@ -20,11 +21,12 @@ export function SectionHeader({
   title,
   subtitle,
   className,
+  titleClassName,
 }: SectionHeaderProps) {
   return (
     <div className={cn("flex flex-col gap-3", className)}>
       <p className={eyebrowClasses}>{eyebrow}</p>
-      <h2 className={titleClasses}>{title}</h2>
+      <h2 className={cn(titleClasses, titleClassName)}>{title}</h2>
       {subtitle && <p className={subtitleClasses}>{subtitle}</p>}
     </div>
   )
