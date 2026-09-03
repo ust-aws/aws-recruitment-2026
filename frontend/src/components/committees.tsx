@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { SectionHeader } from "@/components/section-header"
@@ -89,7 +90,12 @@ export function Committees() {
 
       <div className={ctaClasses}>
         <p className={ctaTextClasses}>Not sure which one fits you?</p>
-        <Button color="cyan" className={ctaButtonClasses}>
+        <Button
+          color="cyan"
+          className={ctaButtonClasses}
+          nativeButton={false}
+          render={<Link href="/quiz" />}
+        >
           Take the committee quiz
         </Button>
       </div>
