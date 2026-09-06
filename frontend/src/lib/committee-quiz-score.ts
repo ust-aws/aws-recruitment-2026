@@ -15,7 +15,7 @@ const OFFICER_BY_COMMITTEE: Record<CommitteeId, string> = {
   sponsorships: "Chief Relations Officer",
   marketing: "Chief Relations Officer",
   secretariat: "Corporate Secretary",
-  documentation: "Corporate Secretary",
+  documentation: "Chief Creative Officer",
   development: "Chief Technology Officer",
   technicals: "Chief Technology Officer",
   finance: "Chief Finance Officer",

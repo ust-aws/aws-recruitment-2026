@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import Image from "next/image"
 import { SectionHeader } from "@/components/section-header"
 import { QuizQuestionCard } from "@/components/quiz-question"
@@ -25,16 +25,27 @@ const RESULT_CAPTION =
 
 export function CommitteeQuiz() {
   const [answers, setAnswers] = useState<string[]>([])
+  const [locked, setLocked] = useState(false)
+  const accepting = useRef(true)
   const complete = answers.length === QUESTIONS.length
   const step = complete ? QUESTIONS.length - 1 : answers.length
 
+  useEffect(() => {
+    accepting.current = true
+    setLocked(false)
+  }, [answers.length])
+
   function selectOption(optionId: string) {
-    if (complete) return
-    setAnswers((current) => [...current, optionId])
+    if (!accepting.current || complete) return
+    accepting.current = false
+    setLocked(true)
+    setAnswers((current) =>
+      current.length === QUESTIONS.length ? current : [...current, optionId]
+    )
   }
 
   return (
-    <section
+    <div
       id="committee-quiz"
       aria-labelledby="committee-quiz-title"
       className={sectionClasses}
@@ -79,13 +90,15 @@ export function CommitteeQuiz() {
           />
         ) : (
           <QuizQuestionCard
+            key={step}
             question={QUESTIONS[step]}
             index={step}
             total={QUESTIONS.length}
+            locked={locked}
             onSelect={selectOption}
           />
         )}
       </div>
-    </section>
+    </div>
   )
 }
