@@ -15,7 +15,7 @@ import {
   postApplication,
 } from "./api-client"
 
-export { ApiError }
+export { ApiError, getSession, login, logout } from "./api-client"
 
 export function useApplications() {
   const [applications, setApplications] = useState<Application[]>([])

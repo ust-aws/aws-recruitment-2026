@@ -13,10 +13,11 @@ const inputClasses = "sr-only"
 type FileDropProps = {
   label: string
   file: File | null
+  displayName?: string
   onFile: (file: File | null) => void
 }
 
-function FileDrop({ label, file, onFile }: FileDropProps) {
+function FileDrop({ label, file, displayName, onFile }: FileDropProps) {
   const id = useId()
   const [active, setActive] = useState(false)
 
@@ -43,9 +44,7 @@ function FileDrop({ label, file, onFile }: FileDropProps) {
           takeFile(event.dataTransfer.files)
         }}
       >
-        {file
-          ? file.name
-          : "drag and drop or click to browse (.pdf)"}
+        {file?.name ?? displayName ?? "drag and drop or click to browse (.pdf)"}
       </label>
       <input
         id={id}
@@ -61,6 +60,9 @@ function FileDrop({ label, file, onFile }: FileDropProps) {
 export type UploadValues = {
   resume: File | null
   transcript: File | null
+  /** Shown after refresh when the File object cannot be restored. */
+  resumeDisplayName?: string
+  transcriptDisplayName?: string
 }
 
 type UploadStepProps = {
@@ -74,12 +76,16 @@ export function UploadStep({ values, onChange }: UploadStepProps) {
       <FileDrop
         label="Resume"
         file={values.resume}
-        onFile={(resume) => onChange({ resume })}
+        displayName={values.resumeDisplayName}
+        onFile={(resume) => onChange({ resume, resumeDisplayName: undefined })}
       />
       <FileDrop
         label="Transcript of Records (TOR)"
         file={values.transcript}
-        onFile={(transcript) => onChange({ transcript })}
+        displayName={values.transcriptDisplayName}
+        onFile={(transcript) =>
+          onChange({ transcript, transcriptDisplayName: undefined })
+        }
       />
     </div>
   )

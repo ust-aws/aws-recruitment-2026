@@ -1,7 +1,9 @@
 "use client"
 
 import Link from "next/link"
-import { usePathname } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
+import { Button } from "@/components/ui/button"
+import { logout } from "@/lib/api"
 
 const headerClasses = "border-b border-biloba-flower/35"
 const innerClasses =
@@ -9,6 +11,7 @@ const innerClasses =
 const brandClasses = "font-sans text-sm font-semibold text-blue-chalk"
 const crumbClasses = "text-prelude/70"
 const slashClasses = "text-prelude/40"
+const logoutClasses = "ml-auto"
 
 function crumbsFor(pathname: string) {
   if (pathname.startsWith("/admin")) return ["admin", "hr"]
@@ -18,7 +21,14 @@ function crumbsFor(pathname: string) {
 
 export function ApplyAdminChrome() {
   const pathname = usePathname()
+  const router = useRouter()
   const crumbs = crumbsFor(pathname)
+  const isAdmin = pathname.startsWith("/admin")
+
+  async function onLogout() {
+    await logout()
+    router.replace("/login")
+  }
 
   return (
     <header className={headerClasses}>
@@ -32,6 +42,16 @@ export function ApplyAdminChrome() {
             {crumb}
           </span>
         ))}
+        {isAdmin ? (
+          <Button
+            type="button"
+            color="purple"
+            className={logoutClasses}
+            onClick={onLogout}
+          >
+            Logout
+          </Button>
+        ) : null}
       </div>
     </header>
   )

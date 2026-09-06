@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { committees, positions } from "../db/schema";
+import { requireAuth } from "../auth";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -185,7 +186,7 @@ positionsRoutes.get("/", async (c) => {
   return c.json(rows.map(toPositionResponse));
 });
 
-positionsRoutes.post("/", async (c) => {
+positionsRoutes.post("/", requireAuth, async (c) => {
   const body = await c.req.json().catch(() => null);
   const parsed = parsePositionPayload(body, false);
   if (!parsed.ok) {
@@ -219,7 +220,7 @@ positionsRoutes.post("/", async (c) => {
   return c.json(toPositionResponse(row), 201);
 });
 
-positionsRoutes.patch("/:id", async (c) => {
+positionsRoutes.patch("/:id", requireAuth, async (c) => {
   const id = c.req.param("id");
   if (!isUuid(id)) {
     return c.json({ error: "Invalid position id." }, 400);

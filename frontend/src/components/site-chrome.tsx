@@ -10,5 +10,6 @@ function isSlimPath(pathname: string) {
 
 export function SiteChrome() {
   const pathname = usePathname()
+
   return isSlimPath(pathname) ? <ApplyAdminChrome /> : <Navbar />
 }

@@ -5,7 +5,7 @@ import { SectionHeader } from "@/components/section-header"
 import { PositionsList } from "@/components/positions-list"
 import { PositionDetail } from "@/components/position-detail"
 import type { Position } from "@/lib/positions"
-import { groupPositionsByOffice } from "@/lib/positions"
+import { groupPositionsByOfficeHierarchy } from "@/lib/positions"
 
 const shellClasses = "relative flex flex-col gap-8"
 const glowLeftClasses =
@@ -30,7 +30,7 @@ export function PositionsBrowser({
   positions,
   loadError = false,
 }: PositionsBrowserProps) {
-  const officeCount = groupPositionsByOffice(positions).length
+  const officeCount = groupPositionsByOfficeHierarchy(positions).length
   const [selectedId, setSelectedId] = useState(positions[0]?.id ?? "")
   const selected =
     positions.find((position) => position.id === selectedId) ?? positions[0]
