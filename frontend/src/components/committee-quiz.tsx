@@ -22,18 +22,23 @@ const QUIZ_CAPTION =
   "I’m SOOOO excited to know what committee you’d belong!"
 const RESULT_CAPTION =
   "Told you I’d find you a stack. Now go ship it — or retake if you want a second opinion."
+const ANSWER_LOCK_MS = 400
 
 export function CommitteeQuiz() {
   const [answers, setAnswers] = useState<string[]>([])
   const [locked, setLocked] = useState(false)
   const accepting = useRef(true)
+  const unlockTimeout = useRef<ReturnType<typeof setTimeout> | null>(null)
   const complete = answers.length === QUESTIONS.length
   const step = complete ? QUESTIONS.length - 1 : answers.length
 
   useEffect(() => {
-    accepting.current = true
-    setLocked(false)
-  }, [answers.length])
+    return () => {
+      if (unlockTimeout.current !== null) {
+        clearTimeout(unlockTimeout.current)
+      }
+    }
+  }, [])
 
   function selectOption(optionId: string) {
     if (!accepting.current || complete) return
@@ -42,6 +47,21 @@ export function CommitteeQuiz() {
     setAnswers((current) =>
       current.length === QUESTIONS.length ? current : [...current, optionId]
     )
+    unlockTimeout.current = setTimeout(() => {
+      accepting.current = true
+      setLocked(false)
+      unlockTimeout.current = null
+    }, ANSWER_LOCK_MS)
+  }
+
+  function retakeQuiz() {
+    if (unlockTimeout.current !== null) {
+      clearTimeout(unlockTimeout.current)
+      unlockTimeout.current = null
+    }
+    accepting.current = true
+    setLocked(false)
+    setAnswers([])
   }
 
   return (
@@ -86,7 +106,7 @@ export function CommitteeQuiz() {
         {complete ? (
           <QuizResults
             result={scoreQuiz(answers)}
-            onRetake={() => setAnswers([])}
+            onRetake={retakeQuiz}
           />
         ) : (
           <QuizQuestionCard

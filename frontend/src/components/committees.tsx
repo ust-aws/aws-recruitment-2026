@@ -59,7 +59,10 @@ export function Committees() {
   const [quizOpen, setQuizOpen] = useState(false)
 
   useEffect(() => {
-    if (window.location.hash === "#committee-quiz") setQuizOpen(true)
+    if (window.location.hash !== "#committee-quiz") return
+
+    const frame = window.requestAnimationFrame(() => setQuizOpen(true))
+    return () => window.cancelAnimationFrame(frame)
   }, [])
 
   useEffect(() => {
