@@ -19,6 +19,11 @@ export const applicationStatus = pgEnum("application_status", [
   "approved",
   "rejected",
 ]);
+export const applicationChoiceStatus = pgEnum("application_choice_status", [
+  "pending",
+  "approved",
+  "rejected",
+]);
 export const documentType = pgEnum("document_type", ["resume", "transcript"]);
 
 export const users = pgTable(
@@ -111,6 +116,15 @@ export const applications = pgTable(
   "applications",
   {
     id: uuid().primaryKey().defaultRandom(),
+    applicationCode: varchar("application_code", { length: 24 })
+      .notNull()
+      .unique()
+      .default(
+        sql`'AP-' || extract(year from current_date)::text || '-' || upper(substr(replace(gen_random_uuid()::text, '-', ''), 1, 8))`,
+      ),
+    recruitmentYear: integer("recruitment_year")
+      .notNull()
+      .default(sql`extract(year from current_date)::integer`),
     applicantId: uuid("applicant_id")
       .notNull()
       .references(() => applicants.id, { onDelete: "cascade" }),
@@ -118,10 +132,25 @@ export const applications = pgTable(
     // Apply-form "Why do you want to join AWS Builders - UST?" — on the application, not the applicant.
     // default("") is for drizzle-kit push against existing rows; seed and POST always send a real answer.
     motivation: text().notNull().default(""),
+    finalPositionId: uuid("final_position_id").references(() => positions.id, {
+      onDelete: "restrict",
+    }),
     reviewedBy: uuid("reviewed_by").references(() => users.id, {
       onDelete: "set null",
     }),
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    resultsReleasedAt: timestamp("results_released_at", {
+      withTimezone: true,
+    }),
+    resultsReleasedBy: uuid("results_released_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    memberId: varchar("member_id", { length: 32 }).unique(),
+    archivedAt: timestamp("archived_at", { withTimezone: true }),
+    archivedBy: uuid("archived_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    archiveReason: text("archive_reason"),
     submittedAt: timestamp("submitted_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -131,8 +160,37 @@ export const applications = pgTable(
       .$onUpdate(() => new Date()),
   },
   (t) => [
+    check(
+      "applications_application_code_format_check",
+      sql`${t.applicationCode} ~ '^AP-[0-9]{4}-[A-Z0-9]{6,12}$'`,
+    ),
+    check(
+      "applications_application_code_year_check",
+      sql`substring(${t.applicationCode} from 4 for 4) = ${t.recruitmentYear}::text`,
+    ),
+    check(
+      "applications_recruitment_year_check",
+      sql`${t.recruitmentYear} BETWEEN 2000 AND 9999`,
+    ),
+    check(
+      "applications_results_release_audit_check",
+      sql`${t.resultsReleasedBy} IS NULL OR ${t.resultsReleasedAt} IS NOT NULL`,
+    ),
+    check(
+      "applications_archive_audit_check",
+      sql`(${t.archivedBy} IS NULL AND ${t.archiveReason} IS NULL) OR ${t.archivedAt} IS NOT NULL`,
+    ),
+    check(
+      "applications_member_id_not_blank_check",
+      sql`${t.memberId} IS NULL OR length(trim(${t.memberId})) > 0`,
+    ),
+    unique().on(t.applicantId, t.recruitmentYear),
     index("idx_applications_applicant").on(t.applicantId),
     index("idx_applications_status").on(t.status),
+    index("idx_applications_recruitment_year").on(t.recruitmentYear),
+    index("idx_applications_final_position").on(t.finalPositionId),
+    index("idx_applications_results_released_at").on(t.resultsReleasedAt),
+    index("idx_applications_archived_at").on(t.archivedAt),
     index("idx_applications_submitted_at").on(t.submittedAt),
     index("idx_applications_reviewed_by").on(t.reviewedBy),
   ],
@@ -149,6 +207,13 @@ export const applicationChoices = pgTable(
       .notNull()
       .references(() => positions.id, { onDelete: "restrict" }),
     preferenceRank: integer("preference_rank").notNull(),
+    decisionStatus: applicationChoiceStatus("decision_status")
+      .notNull()
+      .default("pending"),
+    decidedBy: uuid("decided_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    decidedAt: timestamp("decided_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -158,10 +223,16 @@ export const applicationChoices = pgTable(
       "application_choices_preference_rank_check",
       sql`${t.preferenceRank} IN (1, 2)`,
     ),
+    check(
+      "application_choices_decision_audit_check",
+      sql`(${t.decisionStatus} = 'pending' AND ${t.decidedAt} IS NULL AND ${t.decidedBy} IS NULL) OR (${t.decisionStatus} IN ('approved', 'rejected') AND ${t.decidedAt} IS NOT NULL)`,
+    ),
     unique().on(t.applicationId, t.preferenceRank),
     unique().on(t.applicationId, t.positionId),
     index("idx_application_choices_application").on(t.applicationId),
     index("idx_application_choices_position").on(t.positionId),
+    index("idx_application_choices_decision_status").on(t.decisionStatus),
+    index("idx_application_choices_decided_by").on(t.decidedBy),
   ],
 );
 
