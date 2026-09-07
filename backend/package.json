@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "tsx watch --env-file=../.env src/server.ts",
     "test": "./smoke-test.sh",
+    "test:db": "tsx --test --test-concurrency=1 src/db/schema.test.ts",
     "cdk": "cdk",
     "deploy": "cdk deploy",
     "synth": "cdk synth",
