@@ -4,9 +4,8 @@ import type {
   CreateApplicationInput,
   Position,
 } from "./application-types"
-import { clearToken, getToken } from "./auth"
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8787"
+const API_BASE = "/api"
 
 export class ApiError extends Error {
   readonly status: number
@@ -25,21 +24,17 @@ function redirectToLogin(): void {
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = getToken()
   const response = await fetch(`${API_BASE}${path}`, {
     ...init,
+    credentials: "include",
     headers: {
       ...(init?.body ? { "content-type": "application/json" } : {}),
-      ...(token && path !== "/auth/login"
-        ? { Authorization: `Bearer ${token}` }
-        : {}),
       ...init?.headers,
     },
   })
 
   if (!response.ok) {
     if (response.status === 401 && path !== "/auth/login") {
-      clearToken()
       redirectToLogin()
     }
     let message = `Request failed (${response.status})`
@@ -95,7 +90,7 @@ export function listOpenPositions() {
 }
 
 type LoginResponse = {
-  token: string
+  email: string
   expiresAt: string
 }
 
@@ -123,13 +118,12 @@ export async function login(
   }
 }
 
-export async function logout(token: string): Promise<void> {
+export async function logout(): Promise<void> {
   try {
     await apiFetch<void>("/auth/logout", {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
     })
   } catch {
-    // Client still drops the session even if the request fails.
+    // Client still navigates away even if the request fails.
   }
 }

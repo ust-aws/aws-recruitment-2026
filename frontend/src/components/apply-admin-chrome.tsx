@@ -4,7 +4,6 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { logout } from "@/lib/api"
-import { clearToken, getToken } from "@/lib/auth"
 
 const headerClasses = "border-b border-biloba-flower/35"
 const innerClasses =
@@ -27,9 +26,7 @@ export function ApplyAdminChrome() {
   const isAdmin = pathname.startsWith("/admin")
 
   async function onLogout() {
-    const token = getToken()
-    if (token) await logout(token)
-    clearToken()
+    await logout()
     router.replace("/login")
   }
 

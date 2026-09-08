@@ -1,3 +1,5 @@
+import { COMMITTEE_OFFICE_GROUPS } from "@/lib/committee-groups"
+
 export type Position = {
   id: string
   title: string
@@ -9,6 +11,49 @@ export type Position = {
   isOpen: boolean
 }
 
+export type PositionCommitteeGroup = {
+  committee: string
+  positions: Position[]
+}
+
+export type PositionOfficeGroup = {
+  office: string
+  committees: PositionCommitteeGroup[]
+}
+
+export function groupPositionsByOfficeHierarchy(positions: Position[]) {
+  const byCommittee = new Map<string, Position[]>()
+
+  for (const position of positions) {
+    const existing = byCommittee.get(position.committee)
+    if (existing) {
+      existing.push(position)
+    } else {
+      byCommittee.set(position.committee, [position])
+    }
+  }
+
+  const groups: PositionOfficeGroup[] = []
+
+  for (const group of COMMITTEE_OFFICE_GROUPS) {
+    const committees: PositionCommitteeGroup[] = []
+
+    for (const committee of group.committees) {
+      const committeePositions = byCommittee.get(committee) ?? []
+      if (committeePositions.length > 0) {
+        committees.push({ committee, positions: committeePositions })
+      }
+    }
+
+    if (committees.length > 0) {
+      groups.push({ office: group.office, committees })
+    }
+  }
+
+  return groups
+}
+
+/** @deprecated Use groupPositionsByOfficeHierarchy for the positions browser. */
 export function groupPositionsByOffice(positions: Position[]) {
   const groups: { office: string; positions: Position[] }[] = []
 

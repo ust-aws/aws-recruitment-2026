@@ -6,6 +6,11 @@ import {
   ApplicationFilters,
   type HrFilters,
 } from "@/components/hr/application-filters"
+import { ApplicationPagination } from "@/components/hr/application-pagination"
+import {
+  pageCount,
+  pageSlice,
+} from "@/components/hr/application-pagination-utils"
 import { ApplicationRow } from "@/components/hr/application-row"
 import { fullName, hasCommittee, useApplications } from "@/lib/api"
 import { pageShellClasses } from "@/lib/surface"
@@ -22,6 +27,7 @@ const emptyFilters: HrFilters = {
 export function HrApplicationList() {
   const { applications, loading, error } = useApplications()
   const [filters, setFilters] = useState(emptyFilters)
+  const [page, setPage] = useState(1)
 
   const visible = useMemo(() => {
     const query = filters.query.trim().toLowerCase()
@@ -35,6 +41,15 @@ export function HrApplicationList() {
     })
   }, [applications, filters])
 
+  const totalPages = pageCount(visible.length)
+  const safePage = Math.min(page, totalPages)
+  const pageItems = pageSlice(visible, safePage)
+
+  function onFiltersChange(patch: Partial<HrFilters>) {
+    setFilters((current) => ({ ...current, ...patch }))
+    setPage(1)
+  }
+
   return (
     <main className={pageShellClasses}>
       <SectionHeader
@@ -43,10 +58,7 @@ export function HrApplicationList() {
         subtitle="Every R101 application so far."
       />
       <div className="mt-8">
-        <ApplicationFilters
-          value={filters}
-          onChange={(patch) => setFilters((current) => ({ ...current, ...patch }))}
-        />
+        <ApplicationFilters value={filters} onChange={onFiltersChange} />
       </div>
       {loading ? (
         <p className={emptyClasses}>Loading applications…</p>
@@ -55,16 +67,23 @@ export function HrApplicationList() {
       ) : visible.length === 0 ? (
         <p className={emptyClasses}>No applications match those filters.</p>
       ) : (
-        <ul className={listClasses}>
-          {visible.map((application, index) => (
-            <li key={application.id}>
-              <ApplicationRow
-                application={application}
-                emphasized={index === 0}
-              />
-            </li>
-          ))}
-        </ul>
+        <>
+          <ul className={listClasses}>
+            {pageItems.map((application, index) => (
+              <li key={application.id}>
+                <ApplicationRow
+                  application={application}
+                  emphasized={safePage === 1 && index === 0}
+                />
+              </li>
+            ))}
+          </ul>
+          <ApplicationPagination
+            total={visible.length}
+            page={safePage}
+            onPageChange={setPage}
+          />
+        </>
       )}
     </main>
   )

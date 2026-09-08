@@ -1,9 +1,17 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { deleteCookie, setCookie } from "hono/cookie";
 import type { LambdaEvent, LambdaContext } from "hono/aws-lambda";
 import { applicationsRoutes } from "./routes/applications";
 import { positionsRoutes } from "./routes/positions";
-import { credentialsMatch, requireAuth, signToken } from "./auth";
+import {
+  AUTH_COOKIE_NAME,
+  authCookieOptions,
+  credentialsMatch,
+  expiresInSeconds,
+  requireAuth,
+  signToken,
+} from "./auth";
 
 type Bindings = {
   event: LambdaEvent;
@@ -17,6 +25,7 @@ app.use(
   cors({
     origin: process.env.CORS_ORIGIN ?? "http://localhost:3000",
     allowHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
   })
 );
 
@@ -35,8 +44,20 @@ app.post("/auth/login", async (c) => {
   }
 
   try {
-    const result = await signToken(email.trim().toLowerCase());
-    return c.json(result);
+    const subject = email.trim().toLowerCase();
+    const result = await signToken(subject);
+    setCookie(
+      c,
+      AUTH_COOKIE_NAME,
+      result.token,
+      authCookieOptions(expiresInSeconds())
+    );
+    return c.json({
+      email: subject,
+      expiresAt: result.expiresAt,
+      // Bearer token kept for non-browser API clients (e.g. smoke tests).
+      token: result.token,
+    });
   } catch {
     return c.json({ error: "auth not configured" }, 500);
   }
@@ -48,7 +69,10 @@ app.get("/auth/me", requireAuth, (c) => {
   return c.json({ email });
 });
 
-app.post("/auth/logout", requireAuth, (c) => c.body(null, 204));
+app.post("/auth/logout", requireAuth, (c) => {
+  deleteCookie(c, AUTH_COOKIE_NAME, { path: "/" });
+  return c.body(null, 204);
+});
 
 app.route("/positions", positionsRoutes);
 

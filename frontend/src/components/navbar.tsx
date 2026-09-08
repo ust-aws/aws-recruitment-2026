@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation"
 import Hamburger from "hamburger-react"
 import { X } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { DesktopNavLinks } from "@/components/desktop-nav-links"
 import { cn } from "@/lib/utils"
 
 const NAV_ITEMS = [
@@ -25,11 +26,6 @@ const topBarClasses = "border-transparent bg-transparent"
 const scrolledBarClasses = "glass border-blue-chalk/15 bg-haiti/70"
 const barInnerClasses =
   "mx-auto flex max-w-[1180px] items-center justify-between gap-4 px-4 py-2.5"
-const desktopLinksClasses =
-  "hidden items-center gap-1 rounded-pill font-mono text-sm text-prelude md:flex"
-const navLinkClasses =
-  "rounded-pill px-3 py-1.5 transition-colors hover:text-blue-chalk"
-const activeNavLinkClasses = "bg-aquamarine text-haiti hover:text-haiti"
 const mobileOverlayClasses =
   "fixed inset-0 z-40 transition-[opacity,visibility] duration-300 md:hidden"
 const mobileOverlayOpenClasses = "visible pointer-events-auto opacity-100"
@@ -41,6 +37,7 @@ const mobileCloseButtonClasses =
   "absolute top-4 right-4 inline-flex size-10 cursor-pointer items-center justify-center rounded-pill text-blue-chalk transition-colors hover:bg-biloba-flower/15 hover:text-aquamarine focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-aquamarine"
 const mobileNavLinkClasses =
   "rounded-pill px-5 py-2 transition-colors hover:bg-biloba-flower/15 hover:text-blue-chalk"
+const activeNavLinkClasses = "bg-aquamarine text-haiti hover:text-haiti"
 
 export function Navbar() {
   const [open, setOpen] = useState(false)
@@ -55,7 +52,7 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", updateScrolled)
   }, [])
 
-  if (pathname === "/login" || pathname.startsWith("/admin")) {
+  if (pathname.startsWith("/admin") || pathname === "/login") {
     return null
   }
 
@@ -71,20 +68,7 @@ export function Navbar() {
             <span className="hidden sm:inline">AWS Builders – UST</span>
           </Link>
 
-          <div className={desktopLinksClasses}>
-            {NAV_ITEMS.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  navLinkClasses,
-                  pathname === item.href && activeNavLinkClasses
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </div>
+          <DesktopNavLinks items={NAV_ITEMS} pathname={pathname} />
 
           <div className="hidden md:block">
             <Button color="cyan" nativeButton={false} render={<Link href="/apply" />}>
