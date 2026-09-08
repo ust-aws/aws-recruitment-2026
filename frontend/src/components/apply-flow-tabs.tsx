@@ -15,6 +15,7 @@ const inactiveTabClasses =
 const APPLY_FLOW_TABS = [
   { label: "Positions", href: "/apply/positions" },
   { label: "Apply", href: "/apply/form" },
+  { label: "Already applied?", href: "/apply/status" },
 ]
 
 export function ApplyFlowTabs() {
@@ -27,7 +28,7 @@ export function ApplyFlowTabs() {
           const isActive =
             tab.href === "/apply/positions"
               ? pathname === "/apply" || pathname.startsWith("/apply/positions")
-              : pathname.startsWith("/apply/form")
+              : pathname.startsWith(tab.href)
           return (
             <Link
               key={tab.href}
