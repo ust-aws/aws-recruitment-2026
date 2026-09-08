@@ -178,6 +178,10 @@ expect "POST /interview-slots (no token)" 401
 
 request GET "/applicant-auth/me"
 expect "GET  /applicant-auth/me (no session)" 401
+request GET "/applicant/application"
+expect "GET  /applicant/application (no session)" 401
+request PATCH "/applicant/application" '{}'
+expect "PATCH /applicant/application (no session)" 401
 request GET "/applicant/interview-slots"
 expect "GET  /applicant/interview-slots (no session)" 401
 request PUT "/applicant/interview-booking" '{"slotId":"00000000-0000-4000-8000-000000000000"}'

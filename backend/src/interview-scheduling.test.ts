@@ -32,6 +32,9 @@ if (!/(^|[_-])test([_-]|$)/i.test(databaseName)) {
 process.env.JWT_SECRET = "interview-scheduling-hr-secret-at-least-32-characters";
 process.env.APPLICANT_AUTH_SECRET =
   "interview-scheduling-applicant-secret-at-least-32";
+process.env.APPLICATION_EDIT_DEADLINE = new Date(
+  Date.now() + 30 * 24 * 60 * 60 * 1000,
+).toISOString();
 process.env.EMAIL_ENABLED = "false";
 
 const runId = randomUUID();
