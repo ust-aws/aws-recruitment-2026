@@ -27,31 +27,36 @@ export function applicantOtpTemplate(input: {
 }): RenderedEmail {
   const signatory = signatoryName();
   const subject = applicantOtpSubject(input.applicationCode);
-  const text = `Greetings from the Clouds!
+  const text = `Hi ${input.firstName},
 
-Hi ${input.firstName},
+Use this verification code to securely access your AWS Builders - UST application:
 
-Your verification code is: ${input.code}
+${input.code}
 
-This code expires in ${input.expiresInMinutes} minutes and can only be used once. Do not share it with anyone.
+This code expires in ${input.expiresInMinutes} minutes and can only be used once. For your security, do not share it with anyone.
 
 Application ID: ${input.applicationCode}
 
-If you did not request this code, you can ignore this email.
+If you did not request this code, you can safely ignore this email.
 
 Best regards,
 
-${signatory}`;
+${signatory}
+AWS Builders - UST Recruitment Team`;
 
   const html = wrapHtml(
-    `Greetings from the Clouds!<br><br>
-Hi ${escapeHtml(input.firstName)},<br><br>
-Your verification code is: <strong style="font-size:24px;letter-spacing:4px">${escapeHtml(input.code)}</strong><br><br>
-This code expires in ${input.expiresInMinutes} minutes and can only be used once. Do not share it with anyone.<br><br>
-Application ID: ${escapeHtml(input.applicationCode)}<br><br>
-If you did not request this code, you can ignore this email.<br><br>
+    `Hi ${escapeHtml(input.firstName)},<br><br>
+Use this verification code to securely access your AWS Builders - UST application:<br><br>
+<div style="display:inline-block;border:1px solid #d8d0ef;border-radius:12px;background:#f6f2ff;padding:18px 24px;text-align:center">
+<strong style="font-size:30px;letter-spacing:6px;color:#201047">${escapeHtml(input.code)}</strong><br>
+<span style="font-size:12px;color:#655c78">Expires in ${input.expiresInMinutes} minutes</span>
+</div><br><br>
+This code can only be used once. For your security, do not share it with anyone.<br><br>
+<strong>Application ID:</strong> ${escapeHtml(input.applicationCode)}<br><br>
+If you did not request this code, you can safely ignore this email.<br><br>
 Best regards,<br><br>
-${escapeHtml(signatory)}`,
+${escapeHtml(signatory)}<br>
+AWS Builders - UST Recruitment Team`,
   );
 
   return { subject, text, html };

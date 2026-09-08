@@ -75,11 +75,10 @@ export function ApplicantAccessForm() {
           </div>
           <div>
             <h2 className="text-2xl font-bold text-blue-chalk">
-              Identity verified
+              Verification successful
             </h2>
             <p className="mt-2 text-sm leading-relaxed text-prelude">
-              Your secure applicant session is active for{" "}
-              {identity.applicationCode}.
+              We confirmed your identity for {identity.applicationCode}.
             </p>
           </div>
         </div>
