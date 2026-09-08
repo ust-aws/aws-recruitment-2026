@@ -6,6 +6,7 @@ import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
 import {
   applicants,
+  applicantOtpChallenges,
   applicationChoices,
   applications,
   committees,
@@ -236,6 +237,46 @@ test("application foundation database constraints", async (t) => {
       archivedAt: new Date(),
       archivedBy: reviewerId,
       archiveReason: "Database test record",
+    });
+  });
+
+  await t.test("enforces OTP challenge security constraints", async () => {
+    const application = await createApplication();
+    const createdAt = new Date("2099-01-01T00:00:00.000Z");
+
+    await db.insert(applicantOtpChallenges).values({
+      applicationId: application.id,
+      codeHash: "a".repeat(64),
+      expiresAt: new Date("2099-01-01T00:10:00.000Z"),
+      createdAt,
+    });
+
+    await assert.rejects(async () => {
+      await db.insert(applicantOtpChallenges).values({
+        applicationId: application.id,
+        codeHash: "not-a-valid-hash",
+        expiresAt: new Date("2099-01-01T00:10:00.000Z"),
+        createdAt,
+      });
+    });
+
+    await assert.rejects(async () => {
+      await db.insert(applicantOtpChallenges).values({
+        applicationId: application.id,
+        codeHash: "b".repeat(64),
+        attempts: 6,
+        expiresAt: new Date("2099-01-01T00:10:00.000Z"),
+        createdAt,
+      });
+    });
+
+    await assert.rejects(async () => {
+      await db.insert(applicantOtpChallenges).values({
+        applicationId: application.id,
+        codeHash: "c".repeat(64),
+        expiresAt: new Date("2098-12-31T23:59:59.000Z"),
+        createdAt,
+      });
     });
   });
 });

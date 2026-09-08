@@ -172,6 +172,17 @@ expect "POST /positions (no token)" 401
 request PATCH "/positions/$UNKNOWN_ID" '{"title":"Ghost"}'
 expect "PATCH /positions/:id (no token)" 401
 
+request GET "/applicant-auth/me"
+expect "GET  /applicant-auth/me (no session)" 401
+request POST "/applicant-auth/request-code" '{"applicationCode":"invalid","email":"invalid"}'
+expect "POST /applicant-auth/request-code invalid body" 400
+request POST "/applicant-auth/verify-code" '{"applicationCode":"AP-2026-999999","email":"unknown@ust.edu.ph","code":"12"}'
+expect "POST /applicant-auth/verify-code invalid code" 400
+request POST "/applicant-auth/request-code" '{"applicationCode":"AP-2026-999999","email":"unknown@ust.edu.ph"}'
+expect "POST /applicant-auth/request-code unknown details" 202
+request POST "/applicant-auth/logout"
+expect "POST /applicant-auth/logout" 204
+
 request POST "/auth/login" '{"email":"wrong@example.com","password":"nope"}'
 expect "POST /auth/login (bad credentials)" 401
 request POST "/auth/logout"
