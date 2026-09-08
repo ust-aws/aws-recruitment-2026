@@ -7,6 +7,7 @@
     "dev": "tsx watch --env-file=../.env src/server.ts",
     "test": "./smoke-test.sh",
     "test:db": "tsx --test --test-concurrency=1 src/db/schema.test.ts",
+    "test:email": "tsx --test src/lib/email/templates.test.ts",
     "test:otp": "tsx --test --test-concurrency=1 src/applicant-auth.test.ts",
     "cdk": "cdk",
     "deploy": "cdk deploy",

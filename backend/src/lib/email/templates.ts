@@ -16,7 +16,7 @@ function escapeHtml(value: string): string {
 }
 
 function wrapHtml(body: string): string {
-  return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#111">${body.replace(/\n/g, "<br>")}</body></html>`;
+  return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#111">${body}</body></html>`;
 }
 
 export function applicantOtpTemplate(input: {
@@ -46,15 +46,11 @@ AWS Builders - UST Recruitment Team`;
 
   const html = wrapHtml(
     `Hi ${escapeHtml(input.firstName)},<br><br>
-Use this verification code to securely access your AWS Builders - UST application:<br><br>
-<div style="display:inline-block;border:1px solid #d8d0ef;border-radius:12px;background:#f6f2ff;padding:18px 24px;text-align:center">
-<strong style="font-size:30px;letter-spacing:6px;color:#201047">${escapeHtml(input.code)}</strong><br>
-<span style="font-size:12px;color:#655c78">Expires in ${input.expiresInMinutes} minutes</span>
-</div><br><br>
-This code can only be used once. For your security, do not share it with anyone.<br><br>
-<strong>Application ID:</strong> ${escapeHtml(input.applicationCode)}<br><br>
+Use this verification code to securely access your AWS Builders - UST application: <strong>${escapeHtml(input.code)}</strong><br><br>
+This code expires in ${input.expiresInMinutes} minutes and can only be used once. For your security, do not share it with anyone.<br><br>
+Application ID: <strong>${escapeHtml(input.applicationCode)}</strong><br><br>
 If you did not request this code, you can safely ignore this email.<br><br>
-Best regards,<br><br>
+Best regards,<br>
 ${escapeHtml(signatory)}<br>
 AWS Builders - UST Recruitment Team`,
   );
@@ -66,7 +62,7 @@ export function applicationSubmittedTemplate(input: {
   firstName: string;
   applicationCode: string;
 }): RenderedEmail {
-  const applyUrl = `${appBaseUrl()}/apply`;
+  const statusUrl = `${appBaseUrl()}/apply/status`;
   const signatory = signatoryName();
   const subject = applicationSubmittedSubject(input.applicationCode);
   const text = `Greetings from the Clouds!
@@ -77,20 +73,22 @@ Thank you for applying to AWS Builders - UST. We received your application.
 
 Please save your Application ID: ${input.applicationCode}
 
-You can return to ${applyUrl} later to check your application status once that feature is available.
+You can return to ${statusUrl} later to securely access and check your application.
 
 Best regards,
 
-${signatory}`;
+${signatory}
+AWS Builders - UST Recruitment Team`;
 
   const html = wrapHtml(
     `Greetings from the Clouds!<br><br>
 Hi ${escapeHtml(input.firstName)},<br><br>
 Thank you for applying to AWS Builders - UST. We received your application.<br><br>
-<strong>Please save your Application ID:</strong> ${escapeHtml(input.applicationCode)}<br><br>
-You can return to <a href="${escapeHtml(applyUrl)}">${escapeHtml(applyUrl)}</a> later to check your application status once that feature is available.<br><br>
-Best regards,<br><br>
-${escapeHtml(signatory)}`,
+Please save your Application ID: <strong>${escapeHtml(input.applicationCode)}</strong><br><br>
+You can return to <a href="${escapeHtml(statusUrl)}">${escapeHtml(statusUrl)}</a> later to securely access and check your application.<br><br>
+Best regards,<br>
+${escapeHtml(signatory)}<br>
+AWS Builders - UST Recruitment Team`,
   );
 
   return { subject, text, html };
