@@ -171,9 +171,17 @@ request POST "/positions" '{"title":"Unauth","committee_id":"00000000-0000-4000-
 expect "POST /positions (no token)" 401
 request PATCH "/positions/$UNKNOWN_ID" '{"title":"Ghost"}'
 expect "PATCH /positions/:id (no token)" 401
+request GET "/interview-slots"
+expect "GET  /interview-slots (no token)" 401
+request POST "/interview-slots" '{"committeeId":"00000000-0000-4000-8000-000000000000","startsAt":"2099-01-01T00:00:00.000Z"}'
+expect "POST /interview-slots (no token)" 401
 
 request GET "/applicant-auth/me"
 expect "GET  /applicant-auth/me (no session)" 401
+request GET "/applicant/interview-slots"
+expect "GET  /applicant/interview-slots (no session)" 401
+request PUT "/applicant/interview-booking" '{"slotId":"00000000-0000-4000-8000-000000000000"}'
+expect "PUT  /applicant/interview-booking (no session)" 401
 request POST "/applicant-auth/request-code" '{"applicationCode":"invalid","email":"invalid"}'
 expect "POST /applicant-auth/request-code invalid body" 400
 request POST "/applicant-auth/verify-code" '{"applicationCode":"AP-2026-999999","email":"unknown@ust.edu.ph","code":"12"}'
@@ -206,6 +214,12 @@ else
   expect "GET  /auth/me" 200
   request GET "/auth/me" "" "not-a-real-jwt"
   expect "GET  /auth/me (fake token)" 401
+  request GET "/interview-slots" "" "$token"
+  expect "GET  /interview-slots" 200
+  request POST "/interview-slots" '{"committeeId":"not-a-uuid","startsAt":"tomorrow"}' "$token"
+  expect "POST /interview-slots invalid body" 400
+  request PATCH "/interview-slots/not-a-uuid" '{"isOpen":false}' "$token"
+  expect "PATCH /interview-slots/:id malformed id" 400
 fi
 
 if [[ -n "$committee_id" ]]; then
