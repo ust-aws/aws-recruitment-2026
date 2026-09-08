@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { LazyMotion, domAnimation, m } from "motion/react"
-import { useCallback, useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useEffectEvent, useRef, useState } from "react"
 
 import { cn } from "@/lib/utils"
 
@@ -24,13 +24,13 @@ const navLinkClasses = "relative z-10 rounded-pill px-3 py-1.5 transition-colors
 const inactiveNavLinkClasses = "text-prelude hover:text-blue-chalk"
 const activeNavLinkClasses = "bg-aquamarine text-haiti hover:text-haiti"
 const hoverPillClasses =
-  "pointer-events-none absolute z-0 rounded-pill bg-aquamarine/20"
+  "pointer-events-none absolute top-0 left-0 z-0 rounded-pill bg-aquamarine/20"
 
 const layoutSpring = { type: "spring" as const, stiffness: 400, damping: 35 }
 const snapTransition = { duration: 0 }
 
 type DesktopNavLinksProps = {
-  items: DesktopNavItem[]
+  items: readonly DesktopNavItem[]
   pathname: string
 }
 
@@ -81,14 +81,14 @@ export function DesktopNavLinks({ items, pathname }: DesktopNavLinksProps) {
     return () => mediaQuery.removeEventListener("change", updateReducedMotion)
   }, [])
 
-  useEffect(() => {
-    const remeasure = () => {
-      if (hoveredHref) measureHover(hoveredHref)
-    }
+  const remeasureHover = useEffectEvent(() => {
+    if (hoveredHref) measureHover(hoveredHref)
+  })
 
-    window.addEventListener("resize", remeasure)
-    return () => window.removeEventListener("resize", remeasure)
-  }, [hoveredHref, measureHover])
+  useEffect(() => {
+    window.addEventListener("resize", remeasureHover)
+    return () => window.removeEventListener("resize", remeasureHover)
+  }, [])
 
   const transition = reducedMotion ? snapTransition : layoutSpring
   const showHoverPill =
@@ -108,11 +108,10 @@ export function DesktopNavLinks({ items, pathname }: DesktopNavLinksProps) {
           <m.span
             className={hoverPillClasses}
             initial={false}
+            style={{ width: hoverRect.width, height: hoverRect.height }}
             animate={{
-              left: hoverRect.left,
-              top: hoverRect.top,
-              width: hoverRect.width,
-              height: hoverRect.height,
+              x: hoverRect.left,
+              y: hoverRect.top,
               opacity: 1,
             }}
             exit={{ opacity: 0 }}
