@@ -313,6 +313,65 @@ export const applicationChoices = pgTable(
   ],
 );
 
+export const interviewSlots = pgTable(
+  "interview_slots",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    committeeId: uuid("committee_id")
+      .notNull()
+      .references(() => committees.id, { onDelete: "cascade" }),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    isOpen: boolean("is_open").notNull().default(true),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    check(
+      "interview_slots_half_hour_alignment_check",
+      sql`extract(minute from ${t.startsAt}) IN (0, 30) AND extract(second from ${t.startsAt}) = 0`,
+    ),
+    unique("interview_slots_committee_starts_at_unique").on(
+      t.committeeId,
+      t.startsAt,
+    ),
+    index("idx_interview_slots_committee_starts_at").on(
+      t.committeeId,
+      t.startsAt,
+    ),
+    index("idx_interview_slots_open_starts_at").on(t.isOpen, t.startsAt),
+  ],
+);
+
+export const interviewBookings = pgTable(
+  "interview_bookings",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    slotId: uuid("slot_id")
+      .notNull()
+      .references(() => interviewSlots.id, { onDelete: "restrict" }),
+    applicationId: uuid("application_id")
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    bookedAt: timestamp("booked_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    unique("interview_bookings_slot_unique").on(t.slotId),
+    unique("interview_bookings_application_unique").on(t.applicationId),
+    index("idx_interview_bookings_application").on(t.applicationId),
+  ],
+);
+
 export const applicationDocuments = pgTable(
   "application_documents",
   {
