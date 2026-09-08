@@ -1,6 +1,10 @@
+"use client"
+
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { SectionHeader } from "@/components/section-header"
+import { CommitteeQuiz } from "@/components/committee-quiz"
 
 const committees = [
   ["PARTNERSHIPS", "Sponsorships", "Sources and secures sponsors, prepares proposals, negotiates terms, and manages sponsorship deliverables for the organization."],
@@ -52,6 +56,27 @@ const ctaTextClasses = "text-base font-medium text-blue-chalk sm:text-lg"
 const ctaButtonClasses = "h-11 px-6 text-sm transition-[background-color,box-shadow,transform] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-[0_0_24px_rgba(90,240,192,0.45)] active:translate-y-0 motion-reduce:transition-none sm:h-12 sm:px-7 sm:text-base"
 
 export function Committees() {
+  const [quizOpen, setQuizOpen] = useState(false)
+
+  useEffect(() => {
+    if (window.location.hash !== "#committee-quiz") return
+
+    const frame = window.requestAnimationFrame(() => setQuizOpen(true))
+    return () => window.cancelAnimationFrame(frame)
+  }, [])
+
+  useEffect(() => {
+    if (!quizOpen) return
+    document.getElementById("committee-quiz")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    })
+  }, [quizOpen])
+
+  function startQuiz() {
+    setQuizOpen(true)
+  }
+
   return (
     <section id="committees" aria-labelledby="committees-title" className={`${sectionClasses} scroll-mt-20`}>
       <SectionHeader
@@ -89,10 +114,12 @@ export function Committees() {
 
       <div className={ctaClasses}>
         <p className={ctaTextClasses}>Not sure which one fits you?</p>
-        <Button color="cyan" className={ctaButtonClasses}>
+        <Button color="cyan" className={ctaButtonClasses} onClick={startQuiz}>
           Take the committee quiz
         </Button>
       </div>
+
+      {quizOpen ? <CommitteeQuiz /> : null}
     </section>
   )
 }

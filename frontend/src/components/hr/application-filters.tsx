@@ -4,17 +4,27 @@ import { Input } from "@/components/ui/input"
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
+import { groupedCommitteesForPicker } from "@/lib/committee-groups"
 import { fieldControlClasses } from "@/lib/surface"
 import { useOpenPositions } from "@/lib/api"
 import type { ApplicationStatus } from "@/lib/application-types"
 
 const rowClasses = "flex flex-col gap-3 md:flex-row md:items-center"
 const searchClasses = `${fieldControlClasses} md:flex-1`
-const selectClasses = `${fieldControlClasses} md:w-52`
+const statusSelectClasses = `${fieldControlClasses} md:w-52`
+const committeeSelectClasses = `${fieldControlClasses} md:min-w-[17rem] md:max-w-[20rem] *:data-[slot=select-value]:line-clamp-2 *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:text-left`
+const committeeMenuClasses =
+  "min-w-[22rem] w-max max-w-[min(100vw-2rem,28rem)]"
+const committeeItemClasses =
+  "[&_span]:shrink [&_span]:whitespace-normal [&_span]:break-words [&_span]:leading-snug"
+const committeeOfficeLabelClasses =
+  "px-2 pt-2 font-medium text-aquamarine/90"
 
 const STATUS_LABELS: Record<ApplicationStatus, string> = {
   pending: "Pending",
@@ -34,8 +44,8 @@ type ApplicationFiltersProps = {
 }
 
 export function ApplicationFilters({ value, onChange }: ApplicationFiltersProps) {
-  // Client-side by name. Query ?committee= is a UUID; we don't use it here.
   const { committees } = useOpenPositions()
+  const committeeGroups = groupedCommitteesForPicker(committees)
 
   return (
     <div className={rowClasses}>
@@ -52,17 +62,31 @@ export function ApplicationFilters({ value, onChange }: ApplicationFiltersProps)
           onChange({ committee: !next || next === "all" ? "" : next })
         }
       >
-        <SelectTrigger className={selectClasses}>
+        <SelectTrigger className={committeeSelectClasses}>
           <SelectValue placeholder="Committee: All">
             {value.committee || "Committee: All"}
           </SelectValue>
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent
+          className={committeeMenuClasses}
+          alignItemWithTrigger={false}
+        >
           <SelectItem value="all">Committee: All</SelectItem>
-          {committees.map((committee) => (
-            <SelectItem key={committee} value={committee}>
-              {committee}
-            </SelectItem>
+          {committeeGroups.map((group) => (
+            <SelectGroup key={group.office}>
+              <SelectLabel className={committeeOfficeLabelClasses}>
+                {group.office}
+              </SelectLabel>
+              {group.committees.map((committee) => (
+                <SelectItem
+                  key={committee}
+                  value={committee}
+                  className={committeeItemClasses}
+                >
+                  {committee}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           ))}
         </SelectContent>
       </Select>
@@ -74,7 +98,7 @@ export function ApplicationFilters({ value, onChange }: ApplicationFiltersProps)
           })
         }
       >
-        <SelectTrigger className={selectClasses}>
+        <SelectTrigger className={statusSelectClasses}>
           <SelectValue placeholder="Status: All">
             {value.status ? STATUS_LABELS[value.status] : "Status: All"}
           </SelectValue>

@@ -9,6 +9,7 @@ import {
   type CreateApplicationInput,
   type DocumentType,
 } from "../lib/applications";
+import { requireAuth } from "../auth";
 
 export const applicationsRoutes = new Hono();
 
@@ -131,7 +132,7 @@ function parseCreateBody(
   };
 }
 
-applicationsRoutes.get("/", async (c) => {
+applicationsRoutes.get("/", requireAuth, async (c) => {
   const committee = c.req.query("committee") ?? "";
   const position = c.req.query("position") ?? "";
   const section = c.req.query("section") ?? "";
@@ -169,7 +170,7 @@ applicationsRoutes.post("/", async (c) => {
   return c.json(created, 201);
 });
 
-applicationsRoutes.patch("/:id/status", async (c) => {
+applicationsRoutes.patch("/:id/status", requireAuth, async (c) => {
   const id = c.req.param("id");
   if (!isUuid(id)) {
     return c.json({ error: "Invalid application id." }, 400);
@@ -191,7 +192,7 @@ applicationsRoutes.patch("/:id/status", async (c) => {
   return c.json(updated);
 });
 
-applicationsRoutes.get("/:id", async (c) => {
+applicationsRoutes.get("/:id", requireAuth, async (c) => {
   const id = c.req.param("id");
   if (!isUuid(id)) {
     return c.json({ error: "Invalid application id." }, 400);
@@ -204,7 +205,7 @@ applicationsRoutes.get("/:id", async (c) => {
   return c.json(application);
 });
 
-applicationsRoutes.delete("/:id", async (c) => {
+applicationsRoutes.delete("/:id", requireAuth, async (c) => {
   const id = c.req.param("id");
   if (!isUuid(id)) {
     return c.json({ error: "Invalid application id." }, 400);

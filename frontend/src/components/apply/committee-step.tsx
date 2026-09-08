@@ -3,12 +3,18 @@
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { Field } from "@/components/field"
+import {
+  groupedCommitteesForPicker,
+  type CommitteeOfficeGroup,
+} from "@/lib/committee-groups"
 import { fieldControlClasses } from "@/lib/surface"
 import { useOpenPositions } from "@/lib/api"
 import type { Position } from "@/lib/application-types"
@@ -34,14 +40,14 @@ function CommitteeSelect({
   id,
   label,
   value,
-  committees,
+  groups,
   disabled,
   onValueChange,
 }: {
   id: string
   label: string
   value: string
-  committees: string[]
+  groups: CommitteeOfficeGroup[]
   disabled: boolean
   onValueChange: (value: string) => void
 }) {
@@ -56,10 +62,15 @@ function CommitteeSelect({
           <SelectValue placeholder="Select a committee" />
         </SelectTrigger>
         <SelectContent>
-          {committees.map((committee) => (
-            <SelectItem key={committee} value={committee}>
-              {committee}
-            </SelectItem>
+          {groups.map((group) => (
+            <SelectGroup key={group.office}>
+              <SelectLabel>{group.office}</SelectLabel>
+              {group.committees.map((committee) => (
+                <SelectItem key={committee} value={committee}>
+                  {committee}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           ))}
         </SelectContent>
       </Select>
@@ -113,6 +124,7 @@ function PositionSelect({
 
 export function CommitteeStep({ values, onChange }: CommitteeStepProps) {
   const { positions, committees, loading, error } = useOpenPositions()
+  const committeeGroups = groupedCommitteesForPicker(committees)
 
   return (
     <div className={stackClasses}>
@@ -121,7 +133,7 @@ export function CommitteeStep({ values, onChange }: CommitteeStepProps) {
         id="firstCommittee"
         label="First Choice - Committee"
         value={values.firstCommittee}
-        committees={committees}
+        groups={committeeGroups}
         disabled={loading}
         onValueChange={(firstCommittee) =>
           onChange({ firstCommittee, firstPositionId: "" })
@@ -140,7 +152,7 @@ export function CommitteeStep({ values, onChange }: CommitteeStepProps) {
         id="secondCommittee"
         label="Second Choice - Committee"
         value={values.secondCommittee}
-        committees={committees}
+        groups={committeeGroups}
         disabled={loading}
         onValueChange={(secondCommittee) =>
           onChange({ secondCommittee, secondPositionId: "" })
