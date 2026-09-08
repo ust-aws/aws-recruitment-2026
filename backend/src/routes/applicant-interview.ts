@@ -19,7 +19,9 @@ function isUuid(value: string): boolean {
 function schedulingError(error: unknown) {
   if (!(error instanceof InterviewScheduleError)) throw error;
   const status =
-    error.code === "application_not_found" || error.code === "slot_not_found"
+    error.code === "application_not_found" ||
+    error.code === "position_not_found" ||
+    error.code === "slot_not_found"
       ? 404
       : 409;
   return { body: { error: error.message }, status } as const;
@@ -30,10 +32,16 @@ export const applicantInterviewRoutes = new Hono();
 applicantInterviewRoutes.use("*", requireApplicantAuth);
 
 applicantInterviewRoutes.get("/interview-slots", async (c) => {
+  const positionId = c.req.query("positionId");
+  if (positionId && !isUuid(positionId)) {
+    return c.json({ error: "positionId must be a UUID." }, 400);
+  }
+
   const session = getApplicantSession(c);
   try {
     const schedule = await getApplicantInterviewSchedule(
       session.applicationId,
+      positionId || undefined,
     );
     return c.json(schedule);
   } catch (error) {

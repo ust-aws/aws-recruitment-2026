@@ -77,6 +77,9 @@ class BackendStack extends cdk.Stack {
         ...(process.env.RECRUITMENT_YEAR
           ? { RECRUITMENT_YEAR: process.env.RECRUITMENT_YEAR }
           : {}),
+        ...(process.env.APPLICATION_EDIT_DEADLINE
+          ? { APPLICATION_EDIT_DEADLINE: process.env.APPLICATION_EDIT_DEADLINE }
+          : {}),
       },
     });
 

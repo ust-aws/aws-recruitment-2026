@@ -9,6 +9,7 @@ import {
   interviewSlots,
   positions,
 } from "../db/schema";
+import { getApplicantEditEligibility } from "./applicant-edit-policy";
 
 export const INTERVIEW_SLOT_MINUTES = 30;
 const INTERVIEW_SLOT_MS = INTERVIEW_SLOT_MINUTES * 60 * 1000;
@@ -17,6 +18,7 @@ export type InterviewScheduleErrorCode =
   | "application_not_found"
   | "application_locked"
   | "committee_not_found"
+  | "position_not_found"
   | "slot_not_found"
   | "slot_conflict"
   | "slot_unavailable"
@@ -51,30 +53,6 @@ function isUniqueViolation(error: unknown): boolean {
     current = record.cause;
   }
   return false;
-}
-
-function lockReason(
-  application: {
-    status: "pending" | "approved" | "rejected";
-    archivedAt: Date | null;
-    resultsReleasedAt: Date | null;
-  },
-  decisions: { decisionStatus: "pending" | "approved" | "rejected" }[],
-): string | null {
-  if (application.archivedAt) return "This application is archived.";
-  if (application.resultsReleasedAt) {
-    return "Interview scheduling is closed because results were released.";
-  }
-  if (application.status !== "pending") {
-    return "Interview scheduling is closed for this application.";
-  }
-  if (
-    decisions.length === 0 ||
-    decisions.some((choice) => choice.decisionStatus !== "pending")
-  ) {
-    return "Interview scheduling is locked because review has started.";
-  }
-  return null;
 }
 
 export async function listInterviewSlotsForHr(filters: SlotFilters) {
@@ -245,25 +223,17 @@ export async function setInterviewSlotOpen(id: string, isOpen: boolean) {
   });
 }
 
-export async function getApplicantInterviewSchedule(applicationId: string) {
+export async function getApplicantInterviewSchedule(
+  applicationId: string,
+  positionId?: string,
+) {
   const [application] = await db
     .select({
       status: applications.status,
       archivedAt: applications.archivedAt,
       resultsReleasedAt: applications.resultsReleasedAt,
-      committeeId: committees.id,
-      committeeName: committees.name,
     })
     .from(applications)
-    .innerJoin(
-      applicationChoices,
-      and(
-        eq(applicationChoices.applicationId, applications.id),
-        eq(applicationChoices.preferenceRank, 1),
-      ),
-    )
-    .innerJoin(positions, eq(applicationChoices.positionId, positions.id))
-    .innerJoin(committees, eq(positions.committeeId, committees.id))
     .where(eq(applications.id, applicationId))
     .limit(1);
 
@@ -274,11 +244,49 @@ export async function getApplicantInterviewSchedule(applicationId: string) {
     );
   }
 
+  const [targetCommittee] = positionId
+    ? await db
+        .select({
+          id: committees.id,
+          name: committees.name,
+          isOpen: positions.isOpen,
+        })
+        .from(positions)
+        .innerJoin(committees, eq(positions.committeeId, committees.id))
+        .where(eq(positions.id, positionId))
+        .limit(1)
+    : await db
+        .select({
+          id: committees.id,
+          name: committees.name,
+          isOpen: positions.isOpen,
+        })
+        .from(applicationChoices)
+        .innerJoin(positions, eq(applicationChoices.positionId, positions.id))
+        .innerJoin(committees, eq(positions.committeeId, committees.id))
+        .where(
+          and(
+            eq(applicationChoices.applicationId, applicationId),
+            eq(applicationChoices.preferenceRank, 1),
+          ),
+        )
+        .limit(1);
+
+  if (!targetCommittee || !targetCommittee.isOpen) {
+    throw new InterviewScheduleError(
+      positionId ? "position_not_found" : "application_not_found",
+      positionId
+        ? "The selected position is not available."
+        : "The first-choice position could not be found.",
+    );
+  }
+
   const decisions = await db
     .select({ decisionStatus: applicationChoices.decisionStatus })
     .from(applicationChoices)
     .where(eq(applicationChoices.applicationId, applicationId));
-  const reason = lockReason(application, decisions);
+  const eligibility = getApplicantEditEligibility(application, decisions);
+  const reason = eligibility.lockReason;
 
   const [current] = await db
     .select({
@@ -306,7 +314,7 @@ export async function getApplicantInterviewSchedule(applicationId: string) {
         )
         .where(
           and(
-            eq(interviewSlots.committeeId, application.committeeId),
+            eq(interviewSlots.committeeId, targetCommittee.id),
             eq(interviewSlots.isOpen, true),
             gt(interviewSlots.startsAt, new Date()),
             isNull(interviewBookings.id),
@@ -316,8 +324,8 @@ export async function getApplicantInterviewSchedule(applicationId: string) {
 
   return {
     committee: {
-      id: application.committeeId,
-      name: application.committeeName,
+      id: targetCommittee.id,
+      name: targetCommittee.name,
     },
     canSchedule: reason === null,
     lockReason: reason,
@@ -376,7 +384,7 @@ export async function bookApplicantInterview(
         .select({ decisionStatus: applicationChoices.decisionStatus })
         .from(applicationChoices)
         .where(eq(applicationChoices.applicationId, applicationId));
-      const reason = lockReason(application, decisions);
+      const reason = getApplicantEditEligibility(application, decisions).lockReason;
       if (reason) {
         throw new InterviewScheduleError("application_locked", reason);
       }
