@@ -4,6 +4,8 @@ import { deleteCookie, setCookie } from "hono/cookie";
 import type { LambdaEvent, LambdaContext } from "hono/aws-lambda";
 import { applicationsRoutes } from "./routes/applications";
 import { applicantAuthRoutes } from "./routes/applicant-auth";
+import { applicantInterviewRoutes } from "./routes/applicant-interview";
+import { interviewSlotsRoutes } from "./routes/interview-slots";
 import { positionsRoutes } from "./routes/positions";
 import {
   AUTH_COOKIE_NAME,
@@ -78,8 +80,10 @@ app.post("/auth/logout", requireAuth, (c) => {
 app.route("/positions", positionsRoutes);
 
 app.route("/applicant-auth", applicantAuthRoutes);
+app.route("/applicant", applicantInterviewRoutes);
 
 app.route("/applications", applicationsRoutes);
+app.route("/interview-slots", interviewSlotsRoutes);
 
 app.post("/uploads/presign", (c) =>
   c.json({ error: "not implemented" }, 501)
