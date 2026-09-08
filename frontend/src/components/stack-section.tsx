@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 
 const STACK_LAYERS = [
@@ -12,16 +13,9 @@ const STACK_LAYERS = [
 ] as const
 
 type LayerId = (typeof STACK_LAYERS)[number]["id"]
-type StackSelections = Record<LayerId, string>
+type StackSelections = Partial<Record<LayerId, string>>
 const LOG_LAYER_IDS: LayerId[] = ["storage", "database", "compute", "ai", "networking"]
-
-const DEFAULT_SELECTIONS: StackSelections = {
-  storage: "Object Storage",
-  database: "NoSQL DB",
-  compute: "Container",
-  ai: "Foundation Model API",
-  networking: "Load Balancer",
-}
+const TOTAL_LAYERS = STACK_LAYERS.length
 
 const sectionClasses = "flex flex-col gap-8 pt-[clamp(3rem,7vw,5.625rem)] md:gap-10"
 const eyebrowClasses = "font-mono text-xs font-medium uppercase tracking-wide text-aquamarine"
@@ -42,13 +36,29 @@ const layerCountClasses = "text-aquamarine"
 const logsClasses = "flex flex-1 flex-col justify-center gap-3 py-7 font-mono text-xs leading-relaxed text-prelude sm:text-sm"
 const commandClasses = "text-aquamarine"
 const deploymentClasses = "rounded-[14px] border border-biloba-flower/30 bg-meteorite/30 p-4 text-sm leading-relaxed text-blue-chalk"
-const resetClasses = "mt-4 w-fit font-mono text-xs text-prelude underline decoration-biloba-flower/60 underline-offset-4 transition-colors hover:text-aquamarine focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-aquamarine"
+const actionsClasses = "mt-4 flex flex-wrap items-center gap-4"
+const resetClasses = "w-fit font-mono text-xs text-prelude underline decoration-biloba-flower/60 underline-offset-4 transition-colors hover:text-aquamarine focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-aquamarine"
 
 export function StackSection() {
-  const [selections, setSelections] = useState<StackSelections>(DEFAULT_SELECTIONS)
+  const [selections, setSelections] = useState<StackSelections>({})
+  const [isDeployed, setIsDeployed] = useState(false)
+  const selectedLayerCount = Object.keys(selections).length
+  const isComplete = selectedLayerCount === TOTAL_LAYERS
 
   function selectOption(layer: LayerId, option: string) {
     setSelections((current) => ({ ...current, [layer]: option }))
+    setIsDeployed(false)
+  }
+
+  function resetStack() {
+    setSelections({})
+    setIsDeployed(false)
+  }
+
+  function deployStack() {
+    if (isComplete) {
+      setIsDeployed(true)
+    }
   }
 
   return (
@@ -92,22 +102,35 @@ export function StackSection() {
         <div className={terminalClasses}>
           <div className={terminalHeaderClasses}>
             <span className={logTitleClasses}>stack.log</span>
-            <span className={layerCountClasses}>5/5 layers</span>
+            <span className={layerCountClasses}>
+              {selectedLayerCount}/{TOTAL_LAYERS} layers
+            </span>
           </div>
           <div className={logsClasses} aria-live="polite">
-            {LOG_LAYER_IDS.map((layer) => (
-              <p key={layer}>
-                <span className={commandClasses}>$ layer:{layer} ➜ </span>
-                {selections[layer]} ready
-              </p>
-            ))}
+            {LOG_LAYER_IDS.map((layer) => {
+              const selection = selections[layer]
+
+              return (
+                <p key={layer}>
+                  <span className={commandClasses}>$ layer:{layer} ➜ </span>
+                  {selection ? `${selection} ready` : "awaiting selection"}
+                </p>
+              )
+            })}
           </div>
-          <p className={deploymentClasses}>
-            Stack deployed. That&apos;s the exact loop we run in real build sessions — just with real AWS consoles instead of buttons on a webpage.
-          </p>
-          <button type="button" className={resetClasses} onClick={() => setSelections(DEFAULT_SELECTIONS)}>
-            reset stack
-          </button>
+          {isDeployed && (
+            <p className={deploymentClasses}>
+              Stack deployed. That&apos;s the exact loop we run in real build sessions — just with real AWS consoles instead of buttons on a webpage.
+            </p>
+          )}
+          <div className={actionsClasses}>
+            <Button type="button" color="cyan" onClick={deployStack} disabled={!isComplete}>
+              deploy stack
+            </Button>
+            <button type="button" className={resetClasses} onClick={resetStack}>
+              reset stack
+            </button>
+          </div>
         </div>
       </div>
     </section>
