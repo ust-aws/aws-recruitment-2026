@@ -68,7 +68,7 @@ export function Navbar() {
             <span className="hidden sm:inline">AWS Builders – UST</span>
           </Link>
 
-          <DesktopNavLinks items={NAV_ITEMS} pathname={pathname} />
+          <DesktopNavLinks key={pathname} items={NAV_ITEMS} pathname={pathname} />
 
           <div className="hidden md:block">
             <Button color="cyan" nativeButton={false} render={<Link href="/apply" />}>

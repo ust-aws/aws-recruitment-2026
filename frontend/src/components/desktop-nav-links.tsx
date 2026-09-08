@@ -87,8 +87,6 @@ export function DesktopNavLinks({ items, pathname }: DesktopNavLinksProps) {
 
   useEffect(() => {
     measureActive()
-    setHoveredHref(null)
-    setHoverRect(null)
 
     const frame = window.requestAnimationFrame(measureActive)
     window.addEventListener("resize", measureActive)

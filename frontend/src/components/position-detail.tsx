@@ -51,17 +51,17 @@ export function PositionDetail({ position }: PositionDetailProps) {
           </div>
 
           <section className="flex flex-col gap-2">
-            <h2 className={labelClasses}>// committee</h2>
+            <h2 className={labelClasses}>{"// committee"}</h2>
             <p className={copyClasses}>{position.committeeDescription}</p>
           </section>
 
           <section className="flex flex-col gap-2">
-            <h2 className={labelClasses}>// role</h2>
+            <h2 className={labelClasses}>{"// role"}</h2>
             <p className={copyClasses}>{position.description}</p>
           </section>
 
           <section className="flex flex-col gap-3">
-            <h2 className={labelClasses}>// responsibilities</h2>
+            <h2 className={labelClasses}>{"// responsibilities"}</h2>
             <ol className="flex flex-col gap-2.5">
               {position.responsibilities.map((duty, index) => (
                 <li key={duty} className={dutyRowClasses}>
