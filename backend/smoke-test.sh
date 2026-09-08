@@ -32,8 +32,6 @@ expect() {
   else
     echo "FAIL  $desc (expected $expected, got $LAST_STATUS)"
     echo "      body: $LAST_BODY"
-<<<<<<< HEAD
-=======
     fail=$((fail + 1))
   fi
 }
@@ -89,31 +87,8 @@ check_positions_contract() {
   else
     echo "FAIL  GET /positions contract"
     echo "      body: $LAST_BODY"
->>>>>>> 48bd77d4fd932f5f42a682bc8865030cfe5bd4ba
     fail=$((fail + 1))
   fi
-}
-
-json_field() {
-  local field="$1"
-  printf '%s' "$LAST_BODY" | node -e "
-    const fs = require('fs');
-    const data = JSON.parse(fs.readFileSync(0, 'utf8'));
-    const value = data[process.argv[1]];
-    if (value === undefined || value === null) process.exit(1);
-    process.stdout.write(String(value));
-  " "$field"
-}
-
-contains_id() {
-  local id="$1"
-  printf '%s' "$LAST_BODY" | node -e "
-    const fs = require('fs');
-    const id = process.argv[1];
-    const data = JSON.parse(fs.readFileSync(0, 'utf8'));
-    const apps = Array.isArray(data.applications) ? data.applications : [];
-    process.exit(apps.some((app) => app.id === id) ? 0 : 1);
-  " "$id"
 }
 
 echo "Smoke testing $BASE_URL"
@@ -124,11 +99,6 @@ expect "GET  /health" 200
 
 request GET "/positions"
 expect "GET  /positions" 200
-<<<<<<< HEAD
-
-POS1=""
-POS2=""
-=======
 check_positions_contract
 
 positions_count=$(printf '%s' "$LAST_BODY" | node -e "
@@ -150,23 +120,11 @@ committee_id=""
 smoke_position_id=""
 smoke_position_title=""
 smoke_position_committee_id=""
->>>>>>> 48bd77d4fd932f5f42a682bc8865030cfe5bd4ba
 if [[ "$LAST_STATUS" == "200" ]]; then
   POS_IDS=$(printf '%s' "$LAST_BODY" | node -e "
     const fs = require('fs');
     const rows = JSON.parse(fs.readFileSync(0, 'utf8'));
     if (!Array.isArray(rows) || rows.length < 2) process.exit(1);
-<<<<<<< HEAD
-    console.log(rows[0].id);
-    console.log(rows[1].id);
-  ") || true
-  POS1=$(printf '%s\n' "$POS_IDS" | sed -n '1p')
-  POS2=$(printf '%s\n' "$POS_IDS" | sed -n '2p')
-fi
-
-if [[ -z "$POS1" || -z "$POS2" ]]; then
-  echo "FAIL  need two open positions from GET /positions to exercise applications"
-=======
     const smokePosition =
       rows.find((row) => row.title === 'Smoke Test Role Updated') ??
       rows.find((row) => row.title === 'Smoke Test Role');
@@ -255,7 +213,6 @@ fi
 
 if [[ -z "$POS1" || -z "$POS2" ]]; then
   echo "FAIL  need two positions from GET /positions to exercise applications"
->>>>>>> 48bd77d4fd932f5f42a682bc8865030cfe5bd4ba
   echo "      body: $LAST_BODY"
   fail=$((fail + 1))
 else
