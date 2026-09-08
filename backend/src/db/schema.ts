@@ -233,6 +233,46 @@ export const emailNotifications = pgTable(
   ],
 );
 
+export const applicantOtpChallenges = pgTable(
+  "applicant_otp_challenges",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    applicationId: uuid("application_id")
+      .notNull()
+      .references(() => applications.id, { onDelete: "cascade" }),
+    codeHash: varchar("code_hash", { length: 64 }).notNull(),
+    attempts: integer().notNull().default(0),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    check(
+      "applicant_otp_challenges_code_hash_check",
+      sql`${t.codeHash} ~ '^[0-9a-f]{64}$'`,
+    ),
+    check(
+      "applicant_otp_challenges_attempts_check",
+      sql`${t.attempts} BETWEEN 0 AND 5`,
+    ),
+    check(
+      "applicant_otp_challenges_expiry_check",
+      sql`${t.expiresAt} > ${t.createdAt}`,
+    ),
+    check(
+      "applicant_otp_challenges_consumed_at_check",
+      sql`${t.consumedAt} IS NULL OR ${t.consumedAt} >= ${t.createdAt}`,
+    ),
+    index("idx_applicant_otp_application_created").on(
+      t.applicationId,
+      t.createdAt,
+    ),
+    index("idx_applicant_otp_expires_at").on(t.expiresAt),
+  ],
+);
+
 export const applicationChoices = pgTable(
   "application_choices",
   {

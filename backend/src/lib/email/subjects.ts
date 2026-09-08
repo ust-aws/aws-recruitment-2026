@@ -1,3 +1,8 @@
+/** Applicant access code — sent only after matching an Application ID and email. */
+export function applicantOtpSubject(applicationCode: string): string {
+  return `AWS Builders UST — Verification code (${applicationCode})`;
+}
+
 /** Application submitted — includes the public Application ID. */
 export function applicationSubmittedSubject(applicationCode: string): string {
   return `AWS Builders UST — Application received (${applicationCode})`;

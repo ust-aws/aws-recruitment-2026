@@ -1,6 +1,7 @@
 import type { RenderedEmail } from "./types";
 import { appBaseUrl, messengerGcLink, signatoryName } from "./config";
 import {
+  applicantOtpSubject,
   applicationSubmittedSubject,
   resultAcceptedSubject,
   resultRejectedSubject,
@@ -16,6 +17,44 @@ function escapeHtml(value: string): string {
 
 function wrapHtml(body: string): string {
   return `<!DOCTYPE html><html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#111">${body.replace(/\n/g, "<br>")}</body></html>`;
+}
+
+export function applicantOtpTemplate(input: {
+  firstName: string;
+  applicationCode: string;
+  code: string;
+  expiresInMinutes: number;
+}): RenderedEmail {
+  const signatory = signatoryName();
+  const subject = applicantOtpSubject(input.applicationCode);
+  const text = `Greetings from the Clouds!
+
+Hi ${input.firstName},
+
+Your verification code is: ${input.code}
+
+This code expires in ${input.expiresInMinutes} minutes and can only be used once. Do not share it with anyone.
+
+Application ID: ${input.applicationCode}
+
+If you did not request this code, you can ignore this email.
+
+Best regards,
+
+${signatory}`;
+
+  const html = wrapHtml(
+    `Greetings from the Clouds!<br><br>
+Hi ${escapeHtml(input.firstName)},<br><br>
+Your verification code is: <strong style="font-size:24px;letter-spacing:4px">${escapeHtml(input.code)}</strong><br><br>
+This code expires in ${input.expiresInMinutes} minutes and can only be used once. Do not share it with anyone.<br><br>
+Application ID: ${escapeHtml(input.applicationCode)}<br><br>
+If you did not request this code, you can ignore this email.<br><br>
+Best regards,<br><br>
+${escapeHtml(signatory)}`,
+  );
+
+  return { subject, text, html };
 }
 
 export function applicationSubmittedTemplate(input: {

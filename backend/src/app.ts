@@ -3,6 +3,7 @@ import { cors } from "hono/cors";
 import { deleteCookie, setCookie } from "hono/cookie";
 import type { LambdaEvent, LambdaContext } from "hono/aws-lambda";
 import { applicationsRoutes } from "./routes/applications";
+import { applicantAuthRoutes } from "./routes/applicant-auth";
 import { positionsRoutes } from "./routes/positions";
 import {
   AUTH_COOKIE_NAME,
@@ -75,6 +76,8 @@ app.post("/auth/logout", requireAuth, (c) => {
 });
 
 app.route("/positions", positionsRoutes);
+
+app.route("/applicant-auth", applicantAuthRoutes);
 
 app.route("/applications", applicationsRoutes);
 

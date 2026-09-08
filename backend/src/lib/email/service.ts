@@ -4,6 +4,7 @@ import { sendViaGmail } from "./gmail-client";
 import * as notifications from "./notifications";
 import { withRetry } from "./retry";
 import {
+  applicantOtpTemplate,
   applicationSubmittedTemplate,
   resultAcceptedTemplate,
   resultRejectedTemplate,
@@ -51,6 +52,28 @@ async function deliverEmail(input: {
     await notifications.markFailed(pending.id, message);
     throw err;
   }
+}
+
+export async function sendApplicantOtp(input: {
+  applicationId: string;
+  applicationCode: string;
+  firstName: string;
+  email: string;
+  code: string;
+  expiresInMinutes: number;
+}): Promise<void> {
+  const rendered = applicantOtpTemplate({
+    firstName: input.firstName,
+    applicationCode: input.applicationCode,
+    code: input.code,
+    expiresInMinutes: input.expiresInMinutes,
+  });
+  await deliverEmail({
+    applicationId: input.applicationId,
+    messageType: "applicant_otp",
+    recipient: input.email,
+    rendered,
+  });
 }
 
 export async function sendApplicationSubmitted(

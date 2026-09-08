@@ -41,6 +41,9 @@ class BackendStack extends cdk.Stack {
         ...(process.env.JWT_EXPIRES_IN
           ? { JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN }
           : {}),
+        ...(process.env.APPLICANT_AUTH_SECRET
+          ? { APPLICANT_AUTH_SECRET: process.env.APPLICANT_AUTH_SECRET }
+          : {}),
         ...(process.env.GOOGLE_CLIENT_ID
           ? { GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID }
           : {}),
