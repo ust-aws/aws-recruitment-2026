@@ -74,8 +74,9 @@ export function ApplicantChoiceEditor({
     secondPositions.find((position) => position.id === secondPositionId)?.title ??
     application.choices.find((choice) => choice.positionId === secondPositionId)
       ?.title
-  const committeeChanged =
-    Boolean(first?.committee) && firstCommittee !== first.committee
+  const committeeChanged = first
+    ? firstCommittee !== first.committee
+    : false
   const needsSlot = committeeChanged && Boolean(firstPositionId)
 
   useEffect(() => {
