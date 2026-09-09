@@ -1,10 +1,13 @@
 import type { ReactNode } from "react"
+import { displayTitleLeadingClasses } from "@/lib/surface"
 import { cn } from "@/lib/utils"
 
 const eyebrowClasses =
   "w-fit font-mono text-xs font-medium uppercase tracking-wide text-aquamarine"
-const titleClasses =
-  "max-w-[640px] font-sans text-4xl font-bold text-blue-chalk md:text-5xl"
+const titleClasses = cn(
+  "max-w-[640px] font-sans text-4xl font-bold text-blue-chalk md:text-5xl",
+  displayTitleLeadingClasses
+)
 const subtitleClasses =
   "max-w-[680px] font-sans text-base leading-relaxed text-prelude"
 

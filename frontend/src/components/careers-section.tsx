@@ -78,7 +78,7 @@ export function CareersSection() {
           color="cyan"
           className={ctaButtonClasses}
           nativeButton={false}
-          render={<Link href="/apply/form" />}
+          render={<Link href="/apply/positions" />}
         >
           Start application
         </Button>

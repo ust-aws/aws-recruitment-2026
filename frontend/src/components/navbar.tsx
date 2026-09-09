@@ -71,7 +71,7 @@ export function Navbar() {
           <DesktopNavLinks items={NAV_ITEMS} pathname={pathname} />
 
           <div className="hidden md:block">
-            <Button color="cyan" nativeButton={false} render={<Link href="/apply/form" />}>
+            <Button color="cyan" nativeButton={false} render={<Link href="/apply/positions" />}>
               Apply now!
             </Button>
           </div>
@@ -129,7 +129,7 @@ export function Navbar() {
             className="mt-2"
             nativeButton={false}
             render={
-              <Link href="/apply/form" onClick={() => setOpen(false)} />
+              <Link href="/apply/positions" onClick={() => setOpen(false)} />
             }
           >
             Apply now!

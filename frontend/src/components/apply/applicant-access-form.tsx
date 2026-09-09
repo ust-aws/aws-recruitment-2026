@@ -1,7 +1,7 @@
 "use client"
 
-import { type FormEvent, useState } from "react"
-import { Check } from "lucide-react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { ApplicantCodeForm } from "@/components/apply/applicant-code-form"
 import { Field } from "@/components/field"
 import { Button } from "@/components/ui/button"
@@ -22,10 +22,7 @@ const emailInputClasses =
 const domainClasses = "flex shrink-0 items-center pr-4 text-sm text-prelude"
 const submitClasses = "mt-2 h-10 px-5 text-xs"
 const messageClasses = "text-sm leading-relaxed text-prelude"
-const errorClasses = "text-sm text-aquamarine"
-const verifiedClasses = "flex flex-col items-center gap-4 text-center"
-const checkClasses =
-  "flex size-12 items-center justify-center rounded-full bg-aquamarine text-haiti"
+const errorClasses = "text-sm text-rose-glow"
 
 type Identity = {
   applicationCode: string
@@ -33,9 +30,8 @@ type Identity = {
 }
 
 export function ApplicantAccessForm() {
-  const [stage, setStage] = useState<"identity" | "code" | "verified">(
-    "identity"
-  )
+  const router = useRouter()
+  const [stage, setStage] = useState<"identity" | "code">("identity")
   const [applicationCode, setApplicationCode] = useState("")
   const [emailLocal, setEmailLocal] = useState("")
   const [message, setMessage] = useState("")
@@ -47,8 +43,7 @@ export function ApplicantAccessForm() {
     email: `${emailLocal.trim().toLowerCase()}${UST_EMAIL_DOMAIN}`,
   }
 
-  async function requestCode(event?: FormEvent<HTMLFormElement>) {
-    event?.preventDefault()
+  async function requestCode() {
     setError("")
     setPending(true)
     try {
@@ -66,26 +61,6 @@ export function ApplicantAccessForm() {
     }
   }
 
-  if (stage === "verified") {
-    return (
-      <section className={panelClasses} aria-live="polite">
-        <div className={verifiedClasses}>
-          <div className={checkClasses}>
-            <Check className="size-6" strokeWidth={3} />
-          </div>
-          <div>
-            <h2 className="text-2xl font-bold text-blue-chalk">
-              Verification successful
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-prelude">
-              We confirmed your identity for {identity.applicationCode}.
-            </p>
-          </div>
-        </div>
-      </section>
-    )
-  }
-
   if (stage === "code") {
     return (
       <ApplicantCodeForm
@@ -95,18 +70,23 @@ export function ApplicantAccessForm() {
           setError("")
           setStage("identity")
         }}
-        onVerified={() => setStage("verified")}
+        onVerified={() => router.replace("/apply/dashboard")}
       />
     )
   }
 
   return (
     <section className={panelClasses}>
-      <form className={formClasses} onSubmit={requestCode}>
+      <form
+        className={formClasses}
+        onSubmit={(event) => {
+          event.preventDefault()
+          void requestCode()
+        }}
+      >
         <Field label="Application ID" htmlFor="applicationCode" required>
           <Input
             id="applicationCode"
-            name="applicationCode"
             autoComplete="off"
             required
             pattern="AP-[0-9]{4}-[0-9]{6}"
@@ -123,7 +103,6 @@ export function ApplicantAccessForm() {
           <div className={emailWrapClasses}>
             <Input
               id="applicantEmail"
-              name="applicantEmail"
               autoComplete="email"
               required
               placeholder="juan.delacruz"
@@ -142,10 +121,11 @@ export function ApplicantAccessForm() {
           </p>
         ) : null}
         <Button
-          type="submit"
+          type="button"
           color="cyan"
           className={submitClasses}
           disabled={pending}
+          onClick={() => void requestCode()}
         >
           {pending ? "Sending…" : "Send verification code"}
         </Button>

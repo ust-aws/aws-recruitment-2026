@@ -10,7 +10,7 @@ import {
   interviewSlots,
   positions,
 } from "../db/schema";
-import { getApplicantEditEligibility } from "./applicant-edit-policy";
+import { resolveApplicantEditEligibility } from "./applicant-edit-policy";
 
 export type ApplicantChoiceInput = {
   positionId: string;
@@ -18,11 +18,6 @@ export type ApplicantChoiceInput = {
 };
 
 export type UpdateApplicantApplicationInput = {
-  firstName: string;
-  lastName: string;
-  age: number;
-  section: string;
-  motivation: string;
   choices: ApplicantChoiceInput[];
   slotId?: string;
 };
@@ -101,7 +96,7 @@ export async function getApplicantEditableApplication(applicationId: string) {
     .from(applicationDocuments)
     .where(eq(applicationDocuments.applicationId, applicationId));
 
-  const eligibility = getApplicantEditEligibility(application, choices);
+  const eligibility = await resolveApplicantEditEligibility(application, choices);
 
   return {
     applicationCode: application.applicationCode,
@@ -135,7 +130,6 @@ export async function updateApplicantApplication(
     await db.transaction(async (tx) => {
       const [application] = await tx
         .select({
-          applicantId: applications.applicantId,
           status: applications.status,
           archivedAt: applications.archivedAt,
           resultsReleasedAt: applications.resultsReleasedAt,
@@ -164,7 +158,7 @@ export async function updateApplicantApplication(
         .where(eq(applicationChoices.applicationId, applicationId))
         .for("update");
 
-      const eligibility = getApplicantEditEligibility(
+      const eligibility = await resolveApplicantEditEligibility(
         application,
         currentChoices,
       );
@@ -288,21 +282,6 @@ export async function updateApplicantApplication(
             .values({ applicationId, slotId: input.slotId });
         }
       }
-
-      await tx
-        .update(applicants)
-        .set({
-          firstName: input.firstName,
-          lastName: input.lastName,
-          age: input.age,
-          section: input.section,
-        })
-        .where(eq(applicants.id, application.applicantId));
-
-      await tx
-        .update(applications)
-        .set({ motivation: input.motivation })
-        .where(eq(applications.id, applicationId));
 
       await tx
         .delete(applicationChoices)

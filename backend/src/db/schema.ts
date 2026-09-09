@@ -372,6 +372,31 @@ export const interviewBookings = pgTable(
   ],
 );
 
+export const recruitmentWindows = pgTable(
+  "recruitment_windows",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    singleton: integer().notNull().default(1),
+    startsAt: timestamp("starts_at", { withTimezone: true }).notNull(),
+    endsAt: timestamp("ends_at", { withTimezone: true }).notNull(),
+    updatedBy: uuid("updated_by").references(() => users.id, {
+      onDelete: "set null",
+    }),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+      .notNull()
+      .defaultNow()
+      .$onUpdate(() => new Date()),
+  },
+  (t) => [
+    unique("recruitment_windows_singleton_unique").on(t.singleton),
+    check("recruitment_windows_singleton_check", sql`${t.singleton} = 1`),
+    check(
+      "recruitment_windows_range_check",
+      sql`${t.endsAt} > ${t.startsAt}`,
+    ),
+  ],
+);
+
 export const applicationDocuments = pgTable(
   "application_documents",
   {

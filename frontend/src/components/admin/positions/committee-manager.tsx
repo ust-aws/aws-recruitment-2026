@@ -31,8 +31,6 @@ const rowClasses =
 const nameClasses = "font-sans text-sm font-semibold text-blue-chalk"
 const descriptionClasses = "mt-1 font-sans text-sm text-prelude"
 const actionsClasses = "flex flex-wrap gap-2"
-const deleteButtonClasses =
-  "border-blue-chalk/20 bg-transparent text-prelude hover:bg-haiti/50 hover:text-blue-chalk"
 const errorClasses = "font-sans text-sm text-destructive"
 
 export function CommitteeManager({
@@ -108,9 +106,8 @@ export function CommitteeManager({
                       Edit
                     </Button>
                     <Button
-                      color="purple"
+                      color="danger"
                       size="sm"
-                      className={deleteButtonClasses}
                       onClick={() => handleDelete(committee)}
                     >
                       Delete

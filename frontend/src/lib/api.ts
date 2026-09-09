@@ -8,6 +8,7 @@ import type {
 } from "./application-types"
 import {
   ApiError,
+  deleteApplicationRequest,
   getApplicationById,
   listApplications,
   listOpenPositions,
@@ -15,7 +16,16 @@ import {
   postApplication,
 } from "./api-client"
 
-export { ApiError, getSession, login, logout, listOpenPositions } from "./api-client"
+export {
+  ApiError,
+  getSession,
+  login,
+  logout,
+  listOpenPositions,
+  getRecruitmentWindow,
+  patchRecruitmentWindow,
+} from "./api-client"
+export type { RecruitmentWindow } from "./api-client"
 
 export function useApplications() {
   const [applications, setApplications] = useState<Application[]>([])
@@ -43,7 +53,11 @@ export function useApplications() {
     }
   }, [])
 
-  return { applications, loading, error }
+  function removeApplication(id: string) {
+    setApplications((current) => current.filter((app) => app.id !== id))
+  }
+
+  return { applications, loading, error, removeApplication }
 }
 
 export function useApplication(id: string | undefined) {
@@ -150,6 +164,10 @@ export async function createApplication(
 
 export function patchApplicationStatus(id: string, status: ApplicationStatus) {
   return patchApplicationStatusRequest(id, status)
+}
+
+export function deleteApplication(id: string) {
+  return deleteApplicationRequest(id)
 }
 
 export function fullName(app: Application) {

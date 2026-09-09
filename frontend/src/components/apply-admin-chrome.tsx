@@ -4,6 +4,7 @@ import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { logout } from "@/lib/api"
+import { logoutApplicant } from "@/lib/applicant-api"
 import { chromeBarClasses } from "@/lib/surface"
 
 const headerClasses = `sticky top-0 z-50 ${chromeBarClasses}`
@@ -28,10 +29,16 @@ export function ApplyAdminChrome() {
   const crumbs = crumbsFor(pathname)
   const isAdmin = pathname.startsWith("/admin")
   const isApplyFlow = pathname.startsWith("/apply")
+  const isApplicantDashboard = pathname.startsWith("/apply/dashboard")
 
   async function onLogout() {
     await logout()
     router.replace("/login")
+  }
+
+  async function onApplicantSignOut() {
+    await logoutApplicant()
+    router.replace("/apply/status")
   }
 
   return (
@@ -52,12 +59,21 @@ export function ApplyAdminChrome() {
               type="button"
               color="purple"
               className={trailingActionClasses}
-              onClick={onLogout}
+              onClick={() => void onLogout()}
             >
               Logout
             </Button>
           ) : null}
-          {isApplyFlow ? (
+          {isApplicantDashboard ? (
+            <Button
+              type="button"
+              color="purple"
+              className={trailingActionClasses}
+              onClick={() => void onApplicantSignOut()}
+            >
+              Sign out
+            </Button>
+          ) : isApplyFlow ? (
             <Button
               color="purple"
               className={trailingActionClasses}

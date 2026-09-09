@@ -21,6 +21,10 @@ const APPLY_FLOW_TABS = [
 export function ApplyFlowTabs() {
   const pathname = usePathname()
 
+  if (pathname.startsWith("/apply/dashboard")) {
+    return null
+  }
+
   return (
     <div className={shellClasses}>
       <nav aria-label="Apply flow" className={tabListClasses}>
@@ -28,7 +32,9 @@ export function ApplyFlowTabs() {
           const isActive =
             tab.href === "/apply/positions"
               ? pathname === "/apply" || pathname.startsWith("/apply/positions")
-              : pathname.startsWith(tab.href)
+              : tab.href === "/apply/status"
+                ? pathname.startsWith("/apply/status")
+                : pathname.startsWith(tab.href)
           return (
             <Link
               key={tab.href}

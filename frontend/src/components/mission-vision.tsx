@@ -32,7 +32,7 @@ const pillarClasses = "flex flex-col items-start gap-3"
 const pillClasses =
   "rounded-pill border border-biloba-flower/30 bg-daisy-bush/35 px-4 py-1 font-mono text-[0.65rem] font-medium uppercase tracking-[0.14em] text-blue-chalk"
 const pillarBodyClasses =
-  "border-l border-biloba-flower/25 pl-4 text-base leading-relaxed text-prelude"
+  "border-l border-biloba-flower/25 pl-4 text-base leading-relaxed text-pretty text-justify text-prelude"
 
 export function MissionVision() {
   return (

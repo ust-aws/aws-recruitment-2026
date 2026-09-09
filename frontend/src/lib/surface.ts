@@ -1,3 +1,6 @@
+/** Multi-line display headings — slightly open so stacked lines don't collide. */
+export const displayTitleLeadingClasses = "leading-[1.15]"
+
 export const pageShellClasses =
   "mx-auto flex w-full max-w-[1180px] flex-1 flex-col px-4 py-10 md:px-10"
 

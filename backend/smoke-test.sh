@@ -184,6 +184,10 @@ request GET "/applicant/application"
 expect "GET  /applicant/application (no session)" 401
 request PATCH "/applicant/application" '{}'
 expect "PATCH /applicant/application (no session)" 401
+request GET "/recruitment-window"
+expect "GET  /recruitment-window (no token)" 401
+request PATCH "/recruitment-window" '{"startsAt":"2099-01-01T00:00:00.000Z","endsAt":"2099-01-08T00:00:00.000Z"}'
+expect "PATCH /recruitment-window (no token)" 401
 request GET "/applicant/interview-slots"
 expect "GET  /applicant/interview-slots (no session)" 401
 request PUT "/applicant/interview-booking" '{"slotId":"00000000-0000-4000-8000-000000000000"}'

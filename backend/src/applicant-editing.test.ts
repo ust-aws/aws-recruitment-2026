@@ -17,6 +17,7 @@ import {
   interviewBookings,
   interviewSlots,
   positions,
+  recruitmentWindows,
 } from "./db/schema";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -34,8 +35,28 @@ process.env.APPLICANT_AUTH_SECRET =
 process.env.EMAIL_ENABLED = "false";
 
 const futureDeadline = () =>
-  new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-process.env.APPLICATION_EDIT_DEADLINE = futureDeadline();
+  new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+
+async function setRecruitmentWindow(startsAt: Date, endsAt: Date) {
+  await db
+    .insert(recruitmentWindows)
+    .values({ singleton: 1, startsAt, endsAt })
+    .onConflictDoUpdate({
+      target: recruitmentWindows.singleton,
+      set: { startsAt, endsAt },
+    });
+}
+
+async function clearRecruitmentWindow() {
+  await db.delete(recruitmentWindows);
+}
+
+async function openRecruitmentWindow() {
+  await setRecruitmentWindow(
+    new Date(Date.now() - 60 * 1000),
+    futureDeadline(),
+  );
+}
 
 const committeeAId = randomUUID();
 const committeeBId = randomUUID();
@@ -90,13 +111,8 @@ async function responseError(response: Response): Promise<string> {
   return payload.error;
 }
 
-function baseEditBody(overrides: Record<string, unknown> = {}) {
+function choicesEditBody(overrides: Record<string, unknown> = {}) {
   return {
-    firstName: "Original",
-    lastName: "Applicant",
-    age: 20,
-    section: "TEST-1",
-    motivation: "Original motivation",
     choices: [
       { positionId: positionA1Id, preferenceRank: 1 },
       { positionId: positionB1Id, preferenceRank: 2 },
@@ -105,8 +121,19 @@ function baseEditBody(overrides: Record<string, unknown> = {}) {
   };
 }
 
+function baseEditBody(overrides: Record<string, unknown> = {}) {
+  return {
+    firstName: "Original",
+    lastName: "Applicant",
+    age: 20,
+    section: "TEST-1",
+    motivation: "Original motivation",
+    ...choicesEditBody(overrides),
+  };
+}
+
 async function resetApplication() {
-  process.env.APPLICATION_EDIT_DEADLINE = futureDeadline();
+  await openRecruitmentWindow();
   await db
     .delete(interviewBookings)
     .where(eq(interviewBookings.applicationId, applicationId));
@@ -294,10 +321,18 @@ test("applicant editing", async (t) => {
     const emailEdit = await applicantRequest(
       "/applicant/application",
       "PATCH",
-      baseEditBody({ email: "changed@ust.edu.ph" }),
+      choicesEditBody({ email: "changed@ust.edu.ph" }),
     );
     assert.equal(emailEdit.status, 400);
     assert.match(await responseError(emailEdit), /cannot be changed/i);
+
+    const profileEdit = await applicantRequest(
+      "/applicant/application",
+      "PATCH",
+      baseEditBody(),
+    );
+    assert.equal(profileEdit.status, 400);
+    assert.match(await responseError(profileEdit), /committee choices/i);
   });
 
   await t.test("returns safe prefill data and edit eligibility", async () => {
@@ -340,14 +375,12 @@ test("applicant editing", async (t) => {
     assert.equal(invalid.status, 400);
   });
 
-  await t.test("updates allowed fields without replacing locked data", async () => {
+  await t.test("updates committee choices without replacing locked data", async () => {
     await resetApplication();
     const response = await applicantRequest(
       "/applicant/application",
       "PATCH",
-      baseEditBody({
-        firstName: "Updated",
-        motivation: "Updated motivation",
+      choicesEditBody({
         choices: [
           { positionId: positionA2Id, preferenceRank: 1 },
           { positionId: positionB1Id, preferenceRank: 2 },
@@ -357,8 +390,8 @@ test("applicant editing", async (t) => {
     assert.equal(response.status, 200);
 
     const state = await currentState();
-    assert.equal(state.applicant.firstName, "Updated");
-    assert.equal(state.application.motivation, "Updated motivation");
+    assert.equal(state.applicant.firstName, "Original");
+    assert.equal(state.application.motivation, "Original motivation");
     assert.equal(state.applicant.email, `editing-${applicationId}@ust.edu.ph`);
     assert.equal(state.choices[0].positionId, positionA2Id);
     assert.equal(state.booking.slotId, slotAId);
@@ -382,7 +415,7 @@ test("applicant editing", async (t) => {
     const missingSlot = await applicantRequest(
       "/applicant/application",
       "PATCH",
-      baseEditBody({ choices }),
+      choicesEditBody({ choices }),
     );
     assert.equal(missingSlot.status, 409);
     assert.match(await responseError(missingSlot), /new interview slot/i);
@@ -394,7 +427,7 @@ test("applicant editing", async (t) => {
     const updated = await applicantRequest(
       "/applicant/application",
       "PATCH",
-      baseEditBody({ choices, slotId: slotBId }),
+      choicesEditBody({ choices, slotId: slotBId }),
     );
     assert.equal(updated.status, 200);
     const changed = await currentState();
@@ -411,9 +444,7 @@ test("applicant editing", async (t) => {
     const wrongCommittee = await applicantRequest(
       "/applicant/application",
       "PATCH",
-      baseEditBody({
-        firstName: "Should Roll Back",
-        motivation: "Should roll back",
+      choicesEditBody({
         choices,
         slotId: slotAId,
       }),
@@ -423,7 +454,7 @@ test("applicant editing", async (t) => {
     const occupied = await applicantRequest(
       "/applicant/application",
       "PATCH",
-      baseEditBody({ choices, slotId: occupiedSlotBId }),
+      choicesEditBody({ choices, slotId: occupiedSlotBId }),
     );
     assert.equal(occupied.status, 409);
 
@@ -434,18 +465,19 @@ test("applicant editing", async (t) => {
     assert.equal(state.booking.slotId, slotAId);
   });
 
-  await t.test("locks edits after the deadline or HR review", async () => {
+  await t.test("locks edits after the recruitment week or HR review", async () => {
     await resetApplication();
-    process.env.APPLICATION_EDIT_DEADLINE = new Date(
-      Date.now() - 60 * 1000,
-    ).toISOString();
+    await setRecruitmentWindow(
+      new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      new Date(Date.now() - 60 * 1000),
+    );
     const expired = await applicantRequest("/applicant/application");
     const expiredPayload = (await expired.json()) as {
       canEdit: boolean;
       lockReason: string;
     };
     assert.equal(expiredPayload.canEdit, false);
-    assert.match(expiredPayload.lockReason, /deadline has passed/i);
+    assert.match(expiredPayload.lockReason, /recruitment week has ended/i);
     const expiredSchedule = await applicantRequest(
       "/applicant/interview-slots",
     );
@@ -454,13 +486,13 @@ test("applicant editing", async (t) => {
       lockReason: string;
     };
     assert.equal(schedulePayload.canSchedule, false);
-    assert.match(schedulePayload.lockReason, /deadline has passed/i);
+    assert.match(schedulePayload.lockReason, /recruitment week has ended/i);
     assert.equal(
       (
         await applicantRequest(
           "/applicant/application",
           "PATCH",
-          baseEditBody(),
+          choicesEditBody(),
         )
       ).status,
       409,
@@ -479,15 +511,15 @@ test("applicant editing", async (t) => {
     const reviewed = await applicantRequest(
       "/applicant/application",
       "PATCH",
-      baseEditBody(),
+      choicesEditBody(),
     );
     assert.equal(reviewed.status, 409);
     assert.match(await responseError(reviewed), /review has started/i);
   });
 
-  await t.test("fails closed when the deadline is not configured", async () => {
+  await t.test("fails closed when the recruitment window is not configured", async () => {
     await resetApplication();
-    delete process.env.APPLICATION_EDIT_DEADLINE;
+    await clearRecruitmentWindow();
     const view = await applicantRequest("/applicant/application");
     const payload = (await view.json()) as {
       canEdit: boolean;
@@ -499,7 +531,7 @@ test("applicant editing", async (t) => {
     const update = await applicantRequest(
       "/applicant/application",
       "PATCH",
-      baseEditBody(),
+      choicesEditBody(),
     );
     assert.equal(update.status, 503);
   });

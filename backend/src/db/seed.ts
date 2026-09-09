@@ -6,6 +6,7 @@ import {
   applications,
   committees,
   positions,
+  recruitmentWindows,
   users,
 } from "./schema";
 import { POSITION_SEEDS } from "./position-seeds";
@@ -42,6 +43,16 @@ async function main() {
       },
     ])
     .onConflictDoNothing({ target: users.email });
+
+  const startsAt = new Date();
+  const endsAt = new Date(startsAt.getTime() + 7 * 24 * 60 * 60 * 1000);
+  await db
+    .insert(recruitmentWindows)
+    .values({ singleton: 1, startsAt, endsAt })
+    .onConflictDoUpdate({
+      target: recruitmentWindows.singleton,
+      set: { startsAt, endsAt },
+    });
 
   const [seedReviewer] = await db
     .select({ id: users.id })

@@ -242,7 +242,23 @@ export function Hero() {
               </Button>
               <Button
                 color="purple"
-                render={<a href="#committees" aria-label="Find your committee" />}
+                render={
+                  <a
+                    href="#committees"
+                    aria-label="Find your committee"
+                    onClick={(event) => {
+                      event.preventDefault()
+                      document.getElementById("committees")?.scrollIntoView({
+                        behavior: window.matchMedia(
+                          "(prefers-reduced-motion: reduce)"
+                        ).matches
+                          ? "instant"
+                          : "smooth",
+                        block: "start",
+                      })
+                    }}
+                  />
+                }
                 nativeButton={false}
                 className={`${buttonClasses} ${purpleButtonEffectClasses}`}
               >

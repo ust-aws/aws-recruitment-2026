@@ -1,3 +1,5 @@
+import { getRecruitmentWindow, type RecruitmentWindow } from "./recruitment-window";
+
 type ApplicationState = {
   status: "pending" | "approved" | "rejected";
   archivedAt: Date | null;
@@ -15,6 +17,7 @@ export type ApplicantEditBlockCode =
   | "review_started"
   | "choices_incomplete"
   | "deadline_unavailable"
+  | "recruitment_not_started"
   | "deadline_passed";
 
 export type ApplicantEditEligibility = {
@@ -24,20 +27,13 @@ export type ApplicantEditEligibility = {
   blockCode: ApplicantEditBlockCode | null;
 };
 
-function configuredDeadline(): Date | null {
-  const raw = process.env.APPLICATION_EDIT_DEADLINE?.trim();
-  if (!raw) return null;
-  const deadline = new Date(raw);
-  return Number.isNaN(deadline.getTime()) ? null : deadline;
-}
-
 export function getApplicantEditEligibility(
   application: ApplicationState,
   choices: ChoiceState[],
+  window: RecruitmentWindow | null,
   now = new Date(),
 ): ApplicantEditEligibility {
-  const deadline = configuredDeadline();
-  const editDeadline = deadline?.toISOString() ?? null;
+  const editDeadline = window?.endsAt.toISOString() ?? null;
   const blocked = (
     blockCode: ApplicantEditBlockCode,
     lockReason: string,
@@ -75,16 +71,22 @@ export function getApplicantEditEligibility(
       "Application editing is locked because HR review has started.",
     );
   }
-  if (!deadline) {
+  if (!window) {
     return blocked(
       "deadline_unavailable",
       "Application editing is not configured.",
     );
   }
-  if (now.getTime() >= deadline.getTime()) {
+  if (now.getTime() < window.startsAt.getTime()) {
+    return blocked(
+      "recruitment_not_started",
+      "Recruitment has not started.",
+    );
+  }
+  if (now.getTime() >= window.endsAt.getTime()) {
     return blocked(
       "deadline_passed",
-      "The application editing deadline has passed.",
+      "Recruitment week has ended. You can no longer edit your application.",
     );
   }
 
@@ -94,4 +96,17 @@ export function getApplicantEditEligibility(
     lockReason: null,
     blockCode: null,
   };
+}
+
+export async function resolveApplicantEditEligibility(
+  application: ApplicationState,
+  choices: ChoiceState[],
+  now = new Date(),
+) {
+  return getApplicantEditEligibility(
+    application,
+    choices,
+    await getRecruitmentWindow(),
+    now,
+  );
 }

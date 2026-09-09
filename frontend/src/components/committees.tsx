@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import Image from "next/image"
 import { SectionHeader } from "@/components/section-header"
 import { CommitteeQuiz } from "@/components/committee-quiz"
+import { cn } from "@/lib/utils"
 
 const committees = [
   ["PARTNERSHIPS", "Sponsorships", "Sources and secures sponsors, prepares proposals, negotiates terms, and manages sponsorship deliverables for the organization."],
@@ -86,8 +87,15 @@ export function Committees() {
       />
 
       <div className={cardsClasses}>
-        {committees.map(([category, title, description]) => (
-          <article key={title} className={cardClasses}>
+        {committees.map(([category, title, description], index) => (
+          <article
+            key={title}
+            className={cn(
+              cardClasses,
+              index === committees.length - 1 &&
+                "sm:col-span-2 sm:mx-auto sm:w-[calc(50%-0.625rem)] lg:col-span-1 lg:mx-0 lg:w-auto lg:col-start-2"
+            )}
+          >
             <p className={categoryClasses}>{category}</p>
             <h3 className={titleClasses}>
               <span className={iconClasses}>
@@ -119,7 +127,7 @@ export function Committees() {
         </Button>
       </div>
 
-      {quizOpen ? <CommitteeQuiz /> : null}
+      {quizOpen ? <CommitteeQuiz className="-mt-2" /> : null}
     </section>
   )
 }

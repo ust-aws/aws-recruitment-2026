@@ -387,9 +387,27 @@ export async function updateApplicationStatus(
 }
 
 export async function deleteApplication(id: string): Promise<boolean> {
-  const deleted = await db
-    .delete(applications)
-    .where(eq(applications.id, id))
-    .returning({ id: applications.id });
-  return deleted.length > 0;
+  return db.transaction(async (tx) => {
+    const [row] = await tx
+      .select({
+        id: applications.id,
+        applicantId: applications.applicantId,
+      })
+      .from(applications)
+      .where(eq(applications.id, id))
+      .limit(1);
+    if (!row) return false;
+
+    await tx.delete(applications).where(eq(applications.id, id));
+
+    const remaining = await tx
+      .select({ id: applications.id })
+      .from(applications)
+      .where(eq(applications.applicantId, row.applicantId))
+      .limit(1);
+    if (remaining.length === 0) {
+      await tx.delete(applicants).where(eq(applicants.id, row.applicantId));
+    }
+    return true;
+  });
 }

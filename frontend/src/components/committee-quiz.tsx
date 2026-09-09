@@ -7,6 +7,7 @@ import { QuizQuestionCard } from "@/components/quiz-question"
 import { QuizResults } from "@/components/quiz-results"
 import { QUESTIONS } from "@/lib/committee-quiz-data"
 import { scoreQuiz } from "@/lib/committee-quiz-score"
+import { cn } from "@/lib/utils"
 
 const sectionClasses = "flex w-full flex-col gap-[clamp(2rem,4vw,3.5rem)]"
 const headerWidthClasses = "[&>h2]:max-w-[46rem] [&>p:last-child]:max-w-[60rem]"
@@ -24,7 +25,11 @@ const RESULT_CAPTION =
   "Told you I’d find you a stack. Now go ship it — or retake if you want a second opinion."
 const ANSWER_LOCK_MS = 400
 
-export function CommitteeQuiz() {
+type CommitteeQuizProps = {
+  className?: string
+}
+
+export function CommitteeQuiz({ className }: CommitteeQuizProps) {
   const [answers, setAnswers] = useState<string[]>([])
   const [locked, setLocked] = useState(false)
   const accepting = useRef(true)
@@ -68,7 +73,7 @@ export function CommitteeQuiz() {
     <div
       id="committee-quiz"
       aria-labelledby="committee-quiz-title"
-      className={sectionClasses}
+      className={cn(sectionClasses, className)}
     >
       <SectionHeader
         className={headerWidthClasses}

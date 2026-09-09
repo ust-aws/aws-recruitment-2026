@@ -1,4 +1,6 @@
 import { SectionHeader } from "@/components/section-header"
+import { displayTitleLeadingClasses } from "@/lib/surface"
+import { cn } from "@/lib/utils"
 import {
   Accordion,
   AccordionContent,
@@ -51,10 +53,12 @@ const FAQ_ITEMS = [
 ]
 
 const sectionClasses =
-  "flex flex-col gap-8 pt-[clamp(3rem,7vw,5.625rem)] md:gap-10"
+  "faq-section flex flex-col gap-8 pt-[clamp(3rem,7vw,5.625rem)] md:gap-10"
 const headerClasses = "[&>h2]:max-w-[720px] [&>p:last-child]:max-w-[1080px]"
-const headingClasses =
-  "text-5xl leading-[1.02] sm:text-6xl lg:text-[3.75rem]"
+const headingClasses = cn(
+  "text-5xl sm:text-6xl lg:text-[3.75rem]",
+  displayTitleLeadingClasses
+)
 const layoutClasses =
   "grid gap-8 lg:grid-cols-[1.1fr_1fr] lg:gap-14"
 const cardListClasses = "flex flex-col gap-4"

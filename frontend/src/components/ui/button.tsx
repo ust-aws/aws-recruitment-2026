@@ -12,6 +12,9 @@ const cyanGlowClasses =
 const purpleGlowClasses =
   "relative isolate overflow-visible before:pointer-events-none before:absolute before:-inset-px before:-z-10 before:rounded-[inherit] before:opacity-0 before:shadow-[0_0_28px_rgba(183,140,240,0.5)] before:transition-opacity before:duration-500 before:ease-in-out before:content-[''] hover:before:opacity-100"
 
+const dangerGlowClasses =
+  "relative isolate overflow-visible before:pointer-events-none before:absolute before:-inset-px before:-z-10 before:rounded-[inherit] before:opacity-0 before:shadow-[0_0_28px_rgba(232,136,152,0.4)] before:transition-opacity before:duration-500 before:ease-in-out before:content-[''] hover:before:opacity-100"
+
 const cyanButtonClasses = cn(
   "glass rounded-[14px] border border-aquamarine/40 bg-aquamarine/85 text-haiti font-mono",
   cyanGlowClasses,
@@ -24,6 +27,13 @@ const purpleButtonClasses = cn(
   purpleGlowClasses,
   coloredButtonMotion,
   "hover:border-biloba-flower/55 hover:bg-daisy-bush/70"
+)
+
+const dangerButtonClasses = cn(
+  "glass rounded-[14px] border border-rose-blush/45 bg-rose-deep/55 text-rose-glow font-mono",
+  dangerGlowClasses,
+  coloredButtonMotion,
+  "hover:border-rose-blush/65 hover:bg-rose-deep/70 hover:text-blue-chalk"
 )
 
 const buttonVariants = cva(
@@ -58,6 +68,7 @@ const buttonVariants = cva(
       color: {
         cyan: cyanButtonClasses,
         purple: purpleButtonClasses,
+        danger: dangerButtonClasses,
       },
     },
     defaultVariants: {

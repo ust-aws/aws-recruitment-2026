@@ -1,13 +1,12 @@
 "use client"
 
-import { FormEvent, useState } from "react"
+import { useActionState, useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { ApiError, login } from "@/lib/api"
+import { loginAction, type LoginState } from "./actions"
 
 const pageClasses =
   "relative flex min-h-svh flex-1 flex-col items-center justify-center px-4 py-12 md:py-16"
@@ -32,31 +31,12 @@ const submitClasses = "mt-6 h-11 w-full"
 const backHomeClasses =
   "mt-4 block text-center font-sans text-sm text-prelude underline-offset-4 transition-colors hover:text-blue-chalk hover:underline"
 
+const initialState: LoginState = {}
+
 export function LoginForm() {
-  const router = useRouter()
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [state, formAction, pending] = useActionState(loginAction, initialState)
   const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [pending, setPending] = useState(false)
-
-  const hasError = error !== null
-
-  async function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault()
-    setError(null)
-    setPending(true)
-    try {
-      await login(email, password)
-      router.push("/admin/hr")
-    } catch (err) {
-      setError(
-        err instanceof ApiError ? err.message : "Could not sign in"
-      )
-    } finally {
-      setPending(false)
-    }
-  }
+  const hasError = Boolean(state.error)
 
   return (
     <main className={pageClasses}>
@@ -92,7 +72,7 @@ export function LoginForm() {
         </svg>
       </div>
 
-      <form className={cardClasses} onSubmit={onSubmit} noValidate>
+      <form action={formAction} className={cardClasses} noValidate>
         <p className={eyebrowClasses}>$ auth login</p>
         <h1 className={titleClasses}>HR Sign In</h1>
         <p className={subtitleClasses}>
@@ -107,8 +87,6 @@ export function LoginForm() {
             name="email"
             autoComplete="username"
             placeholder="Enter your email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
             aria-invalid={hasError}
             required
           />
@@ -123,8 +101,6 @@ export function LoginForm() {
               name="password"
               autoComplete="current-password"
               placeholder="Enter your password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
               className={passwordInputClasses}
               aria-invalid={hasError}
               required
@@ -144,8 +120,10 @@ export function LoginForm() {
           </div>
         </div>
 
-        {error ? (
-          <p className={errorPanelClasses} role="alert">{error}</p>
+        {state.error ? (
+          <p className={errorPanelClasses} role="alert">
+            {state.error}
+          </p>
         ) : null}
 
         <Button

@@ -22,8 +22,6 @@ const bodyClasses = "font-sans text-sm leading-relaxed text-prelude"
 const listClasses =
   "flex list-disc flex-col gap-2 pl-4 font-sans text-sm text-prelude"
 const actionsClasses = "flex flex-wrap gap-2 pt-2"
-const deleteButtonClasses =
-  "border-blue-chalk/20 bg-transparent text-prelude hover:bg-haiti/50 hover:text-blue-chalk"
 
 export function PositionDetail({
   position,
@@ -79,11 +77,7 @@ export function PositionDetail({
         <Button color="purple" onClick={() => onEdit(position)}>
           Edit
         </Button>
-        <Button
-          color="purple"
-          className={deleteButtonClasses}
-          onClick={() => onDelete(position)}
-        >
+        <Button color="danger" onClick={() => onDelete(position)}>
           Delete
         </Button>
       </div>

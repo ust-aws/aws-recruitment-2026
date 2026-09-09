@@ -2,16 +2,24 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { useParams } from "next/navigation"
+import { useParams, useRouter } from "next/navigation"
+import { ActionFeedback } from "@/components/action-feedback"
 import { Button } from "@/components/ui/button"
 import { StatusPill } from "@/components/hr/status-pill"
 import { ChoiceCards } from "@/components/hr/choice-cards"
+import { HrDeleteApplicantDialog } from "@/components/hr/hr-delete-applicant-dialog"
+import { HR_DELETE_NOTICE_KEY } from "@/components/hr/application-list"
 import {
   formatAppliedDate,
   patchApplicationStatus,
   useApplication,
 } from "@/lib/api"
-import { glassPanelClasses, pageShellClasses } from "@/lib/surface"
+import {
+  displayTitleLeadingClasses,
+  glassPanelClasses,
+  pageShellClasses,
+} from "@/lib/surface"
+import { deleteOutlineActionClasses } from "@/lib/delete-button-classes"
 import type { Application, ApplicationDocument } from "@/lib/application-types"
 
 const eyebrowClasses =
@@ -19,8 +27,7 @@ const eyebrowClasses =
 const backClasses =
   "mb-3 mt-3 inline-flex font-mono text-xs text-prelude hover:text-blue-chalk"
 const headingRowClasses = "flex flex-wrap items-center gap-3"
-const titleClasses =
-  "max-w-[640px] font-sans text-4xl font-bold text-blue-chalk md:text-5xl"
+const titleClasses = `max-w-[640px] font-sans text-4xl font-bold text-blue-chalk md:text-5xl ${displayTitleLeadingClasses}`
 const panelClasses = `${glassPanelClasses} mt-8 px-6 py-8 md:px-10`
 const metaRowClasses =
   "flex flex-wrap gap-x-8 gap-y-3 font-sans text-sm text-blue-chalk"
@@ -47,12 +54,15 @@ function documentFor(
 
 export function HrApplicationDetail() {
   const { id } = useParams<{ id: string }>()
+  const router = useRouter()
   const { application, setApplication, loading, error, notFound } =
     useApplication(id)
   const [actionError, setActionError] = useState("")
+  const [actionSuccess, setActionSuccess] = useState("")
   const [pendingStatus, setPendingStatus] = useState<"approved" | "rejected" | null>(
     null
   )
+  const [deleteOpen, setDeleteOpen] = useState(false)
 
   if (loading) {
     return (
@@ -95,10 +105,14 @@ export function HrApplicationDetail() {
 
   async function setStatus(status: "approved" | "rejected") {
     setActionError("")
+    setActionSuccess("")
     setPendingStatus(status)
     try {
       const updated = await patchApplicationStatus(applicationId, status)
       setApplication(updated)
+      setActionSuccess(
+        status === "approved" ? "Application approved." : "Application rejected."
+      )
     } catch (err) {
       setActionError(
         err instanceof Error ? err.message : "Could not update status."
@@ -178,9 +192,28 @@ export function HrApplicationDetail() {
           >
             Reject
           </Button>
+          <Button
+            color="danger"
+            className={deleteOutlineActionClasses}
+            disabled={pendingStatus !== null}
+            onClick={() => setDeleteOpen(true)}
+          >
+            Delete
+          </Button>
         </div>
-        {actionError ? <p className={missingClasses}>{actionError}</p> : null}
+        {actionSuccess ? (
+          <ActionFeedback type="success" message={actionSuccess} />
+        ) : null}
+        {actionError ? <ActionFeedback type="error" message={actionError} /> : null}
       </div>
+      <HrDeleteApplicantDialog
+        application={deleteOpen ? application : null}
+        onOpenChange={setDeleteOpen}
+        onDeleted={() => {
+          sessionStorage.setItem(HR_DELETE_NOTICE_KEY, "1")
+          router.replace("/admin/hr")
+        }}
+      />
     </main>
   )
 }

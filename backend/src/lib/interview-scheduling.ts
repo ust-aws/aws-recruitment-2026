@@ -9,7 +9,7 @@ import {
   interviewSlots,
   positions,
 } from "../db/schema";
-import { getApplicantEditEligibility } from "./applicant-edit-policy";
+import { resolveApplicantEditEligibility } from "./applicant-edit-policy";
 
 export const INTERVIEW_SLOT_MINUTES = 30;
 const INTERVIEW_SLOT_MS = INTERVIEW_SLOT_MINUTES * 60 * 1000;
@@ -285,7 +285,7 @@ export async function getApplicantInterviewSchedule(
     .select({ decisionStatus: applicationChoices.decisionStatus })
     .from(applicationChoices)
     .where(eq(applicationChoices.applicationId, applicationId));
-  const eligibility = getApplicantEditEligibility(application, decisions);
+  const eligibility = await resolveApplicantEditEligibility(application, decisions);
   const reason = eligibility.lockReason;
 
   const [current] = await db
@@ -384,7 +384,8 @@ export async function bookApplicantInterview(
         .select({ decisionStatus: applicationChoices.decisionStatus })
         .from(applicationChoices)
         .where(eq(applicationChoices.applicationId, applicationId));
-      const reason = getApplicantEditEligibility(application, decisions).lockReason;
+      const reason = (await resolveApplicantEditEligibility(application, decisions))
+        .lockReason;
       if (reason) {
         throw new InterviewScheduleError("application_locked", reason);
       }

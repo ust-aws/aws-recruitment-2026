@@ -1,0 +1,21 @@
+"use client"
+
+import { usePathname } from "next/navigation"
+import { SiteFooter } from "@/components/site-footer"
+
+function shouldHideFooter(pathname: string) {
+  return (
+    pathname.startsWith("/apply/dashboard") ||
+    pathname.startsWith("/admin/hr")
+  )
+}
+
+export function SiteFooterGate() {
+  const pathname = usePathname()
+
+  if (shouldHideFooter(pathname)) {
+    return null
+  }
+
+  return <SiteFooter />
+}

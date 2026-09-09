@@ -32,8 +32,6 @@ const headerActionsClasses = "flex flex-wrap gap-2"
 const pathClasses =
   "font-mono text-xs font-medium uppercase tracking-wide text-prelude/70"
 const layoutClasses = "grid gap-8 lg:grid-cols-2 lg:items-start"
-const deleteButtonClasses =
-  "border-blue-chalk/20 bg-transparent text-prelude hover:bg-haiti/50 hover:text-blue-chalk"
 
 export function PositionsManager() {
   const [committees, setCommittees] = useState<Committee[]>(MOCK_COMMITTEES)
@@ -172,8 +170,7 @@ export function PositionsManager() {
               Cancel
             </Button>
             <Button
-              color="purple"
-              className={deleteButtonClasses}
+              color="danger"
               onClick={handleDeleteConfirm}
             >
               Delete

@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
+import { displayTitleLeadingClasses } from "@/lib/surface"
 import { cn } from "@/lib/utils"
 
 const STACK_LAYERS = [
@@ -19,7 +20,10 @@ const TOTAL_LAYERS = STACK_LAYERS.length
 
 const sectionClasses = "flex flex-col gap-8 pt-[clamp(3rem,7vw,5.625rem)] md:gap-10"
 const eyebrowClasses = "font-mono text-xs font-medium uppercase tracking-wide text-aquamarine"
-const titleClasses = "max-w-[720px] text-5xl font-bold leading-[1.02] text-blue-chalk sm:text-6xl lg:text-[3.75rem]"
+const titleClasses = cn(
+  "max-w-[720px] text-5xl font-bold text-blue-chalk sm:text-6xl lg:text-[3.75rem]",
+  displayTitleLeadingClasses
+)
 const descriptionClasses = "max-w-[680px] text-base leading-relaxed text-prelude"
 const panelClasses = "grid overflow-hidden rounded-[28px] border border-biloba-flower/25 bg-meteorite/45 shadow-[0_0_36px_rgba(23,15,51,0.28)] lg:grid-cols-2"
 const builderClasses = "flex flex-col gap-5 bg-daisy-bush/35 p-5 sm:p-7"

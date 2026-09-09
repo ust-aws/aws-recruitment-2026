@@ -17,6 +17,7 @@ import {
   interviewBookings,
   interviewSlots,
   positions,
+  recruitmentWindows,
 } from "./db/schema";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -32,9 +33,6 @@ if (!/(^|[_-])test([_-]|$)/i.test(databaseName)) {
 process.env.JWT_SECRET = "interview-scheduling-hr-secret-at-least-32-characters";
 process.env.APPLICANT_AUTH_SECRET =
   "interview-scheduling-applicant-secret-at-least-32";
-process.env.APPLICATION_EDIT_DEADLINE = new Date(
-  Date.now() + 30 * 24 * 60 * 60 * 1000,
-).toISOString();
 process.env.EMAIL_ENABLED = "false";
 
 const runId = randomUUID();
@@ -124,6 +122,20 @@ async function createSlot(committeeId: string, startsAt: Date) {
 }
 
 test("interview scheduling backend", async (t) => {
+  const windowStart = new Date(Date.now() - 60 * 1000);
+  const windowEnd = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
+  await db
+    .insert(recruitmentWindows)
+    .values({
+      singleton: 1,
+      startsAt: windowStart,
+      endsAt: windowEnd,
+    })
+    .onConflictDoUpdate({
+      target: recruitmentWindows.singleton,
+      set: { startsAt: windowStart, endsAt: windowEnd },
+    });
+
   await db.insert(committees).values([
     { id: committeeAId, name: `Scheduling A ${runId}` },
     { id: committeeBId, name: `Scheduling B ${runId}` },

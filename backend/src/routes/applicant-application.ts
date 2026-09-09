@@ -12,19 +12,7 @@ import {
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const EDITABLE_FIELDS = new Set([
-  "firstName",
-  "lastName",
-  "age",
-  "section",
-  "motivation",
-  "choices",
-  "slotId",
-]);
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0;
-}
+const EDITABLE_FIELDS = new Set(["choices", "slotId"]);
 
 function parseEditBody(
   body: unknown,
@@ -39,25 +27,20 @@ function parseEditBody(
   if ("email" in input || "documents" in input) {
     return { ok: false, error: "Email and documents cannot be changed." };
   }
-  if (Object.keys(input).some((field) => !EDITABLE_FIELDS.has(field))) {
-    return { ok: false, error: "The request contains a non-editable field." };
-  }
   if (
-    !isNonEmptyString(input.firstName) ||
-    input.firstName.trim().length > 100 ||
-    !isNonEmptyString(input.lastName) ||
-    input.lastName.trim().length > 100 ||
-    !isNonEmptyString(input.section) ||
-    input.section.trim().length > 50 ||
-    !isNonEmptyString(input.motivation)
+    "firstName" in input ||
+    "lastName" in input ||
+    "age" in input ||
+    "section" in input ||
+    "motivation" in input
   ) {
     return {
       ok: false,
-      error: "firstName, lastName, section, and motivation are required.",
+      error: "Only committee choices can be changed.",
     };
   }
-  if (!Number.isInteger(input.age) || (input.age as number) <= 0) {
-    return { ok: false, error: "age must be a positive integer." };
+  if (Object.keys(input).some((field) => !EDITABLE_FIELDS.has(field))) {
+    return { ok: false, error: "The request contains a non-editable field." };
   }
   if (!Array.isArray(input.choices) || input.choices.length !== 2) {
     return { ok: false, error: "choices must contain exactly two items." };
@@ -100,11 +83,6 @@ function parseEditBody(
   return {
     ok: true,
     value: {
-      firstName: input.firstName.trim(),
-      lastName: input.lastName.trim(),
-      age: input.age as number,
-      section: input.section.trim(),
-      motivation: input.motivation.trim(),
       choices,
       ...(typeof input.slotId === "string" ? { slotId: input.slotId } : {}),
     },

@@ -85,8 +85,28 @@ export function patchApplicationStatusRequest(
   })
 }
 
+export function deleteApplicationRequest(id: string) {
+  return apiFetch<void>(`/applications/${id}`, { method: "DELETE" })
+}
+
 export function listOpenPositions() {
   return apiFetch<Position[]>("/positions")
+}
+
+export type RecruitmentWindow = {
+  startsAt: string | null
+  endsAt: string | null
+}
+
+export function getRecruitmentWindow() {
+  return apiFetch<RecruitmentWindow>("/recruitment-window")
+}
+
+export function patchRecruitmentWindow(startsAt: string, endsAt: string) {
+  return apiFetch<RecruitmentWindow>("/recruitment-window", {
+    method: "PATCH",
+    body: JSON.stringify({ startsAt, endsAt }),
+  })
 }
 
 type LoginResponse = {
