@@ -11,6 +11,7 @@
     "test:editing": "tsx --test --test-concurrency=1 src/applicant-editing.test.ts",
     "test:otp": "tsx --test --test-concurrency=1 src/applicant-auth.test.ts",
     "test:scheduling": "tsx --test --test-concurrency=1 src/interview-scheduling.test.ts",
+    "test:results": "tsx --test --test-concurrency=1 src/results-preview.test.ts",
     "cdk": "cdk",
     "deploy": "cdk deploy",
     "synth": "cdk synth",

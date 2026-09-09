@@ -167,6 +167,8 @@ request GET "/auth/me"
 expect "GET  /auth/me (no token)" 401
 request GET "/applications"
 expect "GET  /applications (no token)" 401
+request GET "/results/preview"
+expect "GET  /results/preview (no token)" 401
 request POST "/positions" '{"title":"Unauth","committee_id":"00000000-0000-4000-8000-000000000000"}'
 expect "POST /positions (no token)" 401
 request PATCH "/positions/$UNKNOWN_ID" '{"title":"Ghost"}'
@@ -220,6 +222,8 @@ else
   expect "GET  /auth/me (fake token)" 401
   request GET "/interview-slots" "" "$token"
   expect "GET  /interview-slots" 200
+  request GET "/results/preview" "" "$token"
+  expect "GET  /results/preview" 200
   request POST "/interview-slots" '{"committeeId":"not-a-uuid","startsAt":"tomorrow"}' "$token"
   expect "POST /interview-slots invalid body" 400
   request PATCH "/interview-slots/not-a-uuid" '{"isOpen":false}' "$token"
