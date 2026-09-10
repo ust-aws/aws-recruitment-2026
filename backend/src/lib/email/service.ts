@@ -9,7 +9,49 @@ import {
   resultAcceptedTemplate,
   resultRejectedTemplate,
 } from "./templates";
-import type { EmailMessageType, RenderedEmail } from "./types";
+import type {
+  EmailDeliveryStatus,
+  EmailMessageType,
+  RenderedEmail,
+} from "./types";
+
+async function deliverNotification(input: {
+  notificationId: string;
+  messageType: EmailMessageType;
+  recipient: string;
+  rendered: RenderedEmail;
+}): Promise<EmailDeliveryStatus> {
+  const enabled = emailEnabled();
+  const configured = hasGmailCredentials();
+  const canSend = enabled && configured;
+  if (!canSend) {
+    const reason = !enabled ? "EMAIL_ENABLED=false" : "missing Gmail credentials";
+    console.info(
+      `[email] skipped ${input.messageType} to ${input.recipient} (${reason})`,
+      input.rendered.subject,
+    );
+    await notifications.markFailed(input.notificationId, reason);
+    return "failed";
+  }
+
+  try {
+    const result = await withRetry(async () => {
+      await notifications.incrementAttempts(input.notificationId);
+      return sendViaGmail({
+        to: input.recipient,
+        subject: input.rendered.subject,
+        text: input.rendered.text,
+        html: input.rendered.html,
+      });
+    });
+    await notifications.markSent(input.notificationId, result.providerMessageId);
+    return "sent";
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    await notifications.markFailed(input.notificationId, message);
+    throw err;
+  }
+}
 
 async function deliverEmail(input: {
   applicationId?: string | null;
@@ -22,36 +64,12 @@ async function deliverEmail(input: {
     messageType: input.messageType,
     recipient: input.recipient,
   });
-
-  const enabled = emailEnabled();
-  const configured = hasGmailCredentials();
-  const canSend = enabled && configured;
-  if (!canSend) {
-    const reason = !enabled ? "EMAIL_ENABLED=false" : "missing Gmail credentials";
-    console.info(
-      `[email] skipped ${input.messageType} to ${input.recipient} (${reason})`,
-      input.rendered.subject,
-    );
-    await notifications.markFailed(pending.id, reason);
-    return;
-  }
-
-  try {
-    const result = await withRetry(async () => {
-      await notifications.incrementAttempts(pending.id);
-      return sendViaGmail({
-        to: input.recipient,
-        subject: input.rendered.subject,
-        text: input.rendered.text,
-        html: input.rendered.html,
-      });
-    });
-    await notifications.markSent(pending.id, result.providerMessageId);
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    await notifications.markFailed(pending.id, message);
-    throw err;
-  }
+  await deliverNotification({
+    notificationId: pending.id,
+    messageType: input.messageType,
+    recipient: input.recipient,
+    rendered: input.rendered,
+  });
 }
 
 export async function sendApplicantOtp(input: {
@@ -119,6 +137,28 @@ export async function sendResultRejected(input: {
     applicationId: input.applicationId,
     messageType: "result_rejected",
     recipient: input.email,
+    rendered,
+  });
+}
+
+export function deliverQueuedResultEmail(input: {
+  notificationId: string;
+  messageType: "result_accepted" | "result_rejected";
+  recipient: string;
+  lastName: string;
+  position: string | null;
+}): Promise<EmailDeliveryStatus> {
+  const rendered =
+    input.messageType === "result_accepted"
+      ? resultAcceptedTemplate({
+          lastName: input.lastName,
+          position: input.position ?? "",
+        })
+      : resultRejectedTemplate({ lastName: input.lastName });
+  return deliverNotification({
+    notificationId: input.notificationId,
+    messageType: input.messageType,
+    recipient: input.recipient,
     rendered,
   });
 }
