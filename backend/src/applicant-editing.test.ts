@@ -162,6 +162,8 @@ async function resetApplication() {
       archiveReason: null,
       resultsReleasedAt: null,
       resultsReleasedBy: null,
+      finalPositionId: null,
+      memberId: null,
       reviewedAt: null,
       reviewedBy: null,
     })
@@ -345,12 +347,80 @@ test("applicant editing", async (t) => {
       editDeadline: string | null;
       choices: { positionId: string }[];
       documents: Record<string, unknown>[];
+      result: unknown;
     };
     assert.equal(payload.applicationCode, applicationCode);
     assert.equal(payload.canEdit, true);
     assert.ok(payload.editDeadline);
     assert.equal(payload.choices[0].positionId, positionA1Id);
     assert.ok(payload.documents.every((document) => !("s3Key" in document)));
+    assert.equal(payload.result, null);
+    assert.doesNotMatch(JSON.stringify(payload), /decisionStatus|memberId/);
+  });
+
+  await t.test("reveals decisions only after results are released", async () => {
+    await resetApplication();
+    const releasedAt = new Date("2096-09-30T12:00:00.000Z");
+    await db
+      .update(applicationChoices)
+      .set({ decisionStatus: "rejected", decidedAt: releasedAt })
+      .where(eq(applicationChoices.applicationId, applicationId));
+    await db
+      .update(applicationChoices)
+      .set({ decisionStatus: "approved", decidedAt: releasedAt })
+      .where(
+        and(
+          eq(applicationChoices.applicationId, applicationId),
+          eq(applicationChoices.preferenceRank, 1),
+        ),
+      );
+    await db
+      .update(applications)
+      .set({
+        status: "approved",
+        finalPositionId: positionA1Id,
+        memberId: "AWS-2096-0001",
+        resultsReleasedAt: releasedAt,
+      })
+      .where(eq(applications.id, applicationId));
+
+    const response = await applicantRequest("/applicant/application");
+    assert.equal(response.status, 200);
+    const payload = (await response.json()) as {
+      canEdit: boolean;
+      result: {
+        status: string;
+        releasedAt: string;
+        memberId: string | null;
+        finalPlacement: {
+          positionId: string;
+          title: string;
+          committeeId: string;
+          committee: string;
+        } | null;
+        choices: {
+          preferenceRank: number;
+          decisionStatus: string;
+        }[];
+      } | null;
+    };
+    assert.equal(payload.canEdit, false);
+    assert.deepEqual(payload.result, {
+      status: "approved",
+      releasedAt: releasedAt.toISOString(),
+      memberId: "AWS-2096-0001",
+      finalPlacement: {
+        positionId: positionA1Id,
+        title: "Editing A1",
+        committeeId: committeeAId,
+        committee: `Editing Committee A ${applicationId}`,
+      },
+      choices: [
+        { preferenceRank: 1, decisionStatus: "approved" },
+        { preferenceRank: 2, decisionStatus: "rejected" },
+      ],
+    });
+    assert.doesNotMatch(JSON.stringify(payload.result), /decidedAt|decidedBy/);
   });
 
   await t.test("previews slots for a proposed first choice", async () => {

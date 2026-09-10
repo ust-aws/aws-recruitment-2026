@@ -3,6 +3,8 @@ import test from "node:test";
 import {
   applicantOtpTemplate,
   applicationSubmittedTemplate,
+  resultAcceptedTemplate,
+  resultRejectedTemplate,
 } from "./templates";
 
 test("applicant email templates use compact, plain formatting", async (t) => {
@@ -33,5 +35,19 @@ test("applicant email templates use compact, plain formatting", async (t) => {
     assert.match(email.html, /http:\/\/localhost:3000\/apply\/status/);
     assert.doesNotMatch(email.html, /once that feature is available/);
     assert.doesNotMatch(email.html, /<br><br><br>/);
+  });
+
+  await t.test("personalizes accepted and rejected result emails", () => {
+    const accepted = resultAcceptedTemplate({
+      lastName: "Dela Cruz",
+      position: "Development Committee Staff",
+    });
+    const rejected = resultRejectedTemplate({ lastName: "Dela Cruz" });
+
+    assert.match(accepted.text, /Mx\. Dela Cruz/);
+    assert.match(accepted.text, /Development Committee Staff/);
+    assert.match(accepted.html, /Development Committee Staff/);
+    assert.match(rejected.text, /Mx\. Dela Cruz/);
+    assert.match(rejected.text, /were not selected/);
   });
 });

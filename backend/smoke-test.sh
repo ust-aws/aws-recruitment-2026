@@ -169,6 +169,10 @@ request GET "/applications"
 expect "GET  /applications (no token)" 401
 request GET "/results/preview"
 expect "GET  /results/preview (no token)" 401
+request POST "/results/release"
+expect "POST /results/release (no token)" 401
+request POST "/results/emails/retry-failed"
+expect "POST /results/emails/retry-failed (no token)" 401
 request POST "/positions" '{"title":"Unauth","committee_id":"00000000-0000-4000-8000-000000000000"}'
 expect "POST /positions (no token)" 401
 request PATCH "/positions/$UNKNOWN_ID" '{"title":"Ghost"}'
@@ -228,6 +232,10 @@ else
   expect "GET  /interview-slots" 200
   request GET "/results/preview" "" "$token"
   expect "GET  /results/preview" 200
+  request POST "/results/release" "" "$token"
+  expect "POST /results/release incomplete batch" 409
+  request POST "/results/emails/retry-failed" "" "$token"
+  expect "POST /results/emails/retry-failed" 200
   request POST "/interview-slots" '{"committeeId":"not-a-uuid","startsAt":"tomorrow"}' "$token"
   expect "POST /interview-slots invalid body" 400
   request PATCH "/interview-slots/not-a-uuid" '{"isOpen":false}' "$token"

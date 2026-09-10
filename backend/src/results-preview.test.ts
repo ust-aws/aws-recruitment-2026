@@ -59,6 +59,20 @@ function hrRequest() {
   });
 }
 
+function releaseRequest() {
+  return app.request("/results/release", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${hrToken}` },
+  });
+}
+
+function retryFailedEmailsRequest() {
+  return app.request("/results/emails/retry-failed", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${hrToken}` },
+  });
+}
+
 function decisionValues(
   applicationId: string,
   first: "pending" | "approved" | "rejected",
@@ -172,6 +186,22 @@ test("results release preview", async (t) => {
 
   await t.test("requires HR authentication", async () => {
     assert.equal((await app.request("/results/preview")).status, 401);
+    assert.equal(
+      (
+        await app.request("/results/release", {
+          method: "POST",
+        })
+      ).status,
+      401,
+    );
+    assert.equal(
+      (
+        await app.request("/results/emails/retry-failed", {
+          method: "POST",
+        })
+      ).status,
+      401,
+    );
   });
 
   await t.test("classifies the pending release batch", async () => {
@@ -294,6 +324,29 @@ test("results release preview", async (t) => {
     assert.deepEqual(afterNotifications, beforeNotifications);
   });
 
+  await t.test("refuses to release an incomplete batch", async () => {
+    const response = await releaseRequest();
+    assert.equal(response.status, 409);
+
+    const payload = (await response.json()) as {
+      error: string;
+      incomplete: number;
+    };
+    assert.match(payload.error, /incomplete/i);
+    assert.equal(payload.incomplete, 3);
+
+    const unchanged = await db
+      .select({
+        id: applications.id,
+        memberId: applications.memberId,
+        resultsReleasedAt: applications.resultsReleasedAt,
+      })
+      .from(applications)
+      .where(inArray(applications.id, applicationIds.slice(0, 5)));
+    assert.ok(unchanged.every((row) => row.memberId === null));
+    assert.ok(unchanged.every((row) => row.resultsReleasedAt === null));
+  });
+
   await t.test("allows release only after all blocking records are fixed", async () => {
     await db
       .update(applicationChoices)
@@ -378,5 +431,206 @@ test("results release preview", async (t) => {
       archived: 1,
       canRelease: true,
     });
+  });
+
+  await t.test("releases results and generates stable member IDs", async () => {
+    const response = await releaseRequest();
+    assert.equal(response.status, 200);
+
+    const payload = (await response.json()) as {
+      released: number;
+      accepted: number;
+      rejected: number;
+      memberIdsGenerated: number;
+      releasedAt: string;
+      emailDelivery: {
+        queued: number;
+        sent: number;
+        failed: number;
+      };
+    };
+    assert.deepEqual(
+      {
+        released: payload.released,
+        accepted: payload.accepted,
+        rejected: payload.rejected,
+        memberIdsGenerated: payload.memberIdsGenerated,
+      },
+      {
+        released: 5,
+        accepted: 4,
+        rejected: 1,
+        memberIdsGenerated: 4,
+      },
+    );
+    assert.ok(Number.isFinite(Date.parse(payload.releasedAt)));
+    assert.deepEqual(payload.emailDelivery, {
+      queued: 5,
+      sent: 0,
+      failed: 5,
+    });
+
+    const released = await db
+      .select({
+        id: applications.id,
+        status: applications.status,
+        memberId: applications.memberId,
+        resultsReleasedAt: applications.resultsReleasedAt,
+      })
+      .from(applications)
+      .where(inArray(applications.id, applicationIds.slice(0, 5)));
+    const releasedById = new Map(released.map((row) => [row.id, row]));
+
+    const acceptedIds = [
+      applicationIds[0],
+      applicationIds[2],
+      applicationIds[3],
+      applicationIds[4],
+    ];
+    const generatedMemberIds = acceptedIds.map(
+      (id) => releasedById.get(id)?.memberId,
+    );
+    assert.ok(
+      generatedMemberIds.every(
+        (memberId) =>
+          typeof memberId === "string" && /^AWS-2095-\d{4}$/.test(memberId),
+      ),
+    );
+    assert.equal(new Set(generatedMemberIds).size, acceptedIds.length);
+    assert.ok(
+      acceptedIds.every(
+        (id) => releasedById.get(id)?.status === "approved",
+      ),
+    );
+    assert.equal(releasedById.get(applicationIds[1])?.status, "rejected");
+    assert.equal(releasedById.get(applicationIds[1])?.memberId, null);
+    assert.ok(released.every((row) => row.resultsReleasedAt instanceof Date));
+
+    const resultNotifications = await db
+      .select({
+        id: emailNotifications.id,
+        applicationId: emailNotifications.applicationId,
+        messageType: emailNotifications.messageType,
+        recipient: emailNotifications.recipient,
+        status: emailNotifications.status,
+      })
+      .from(emailNotifications)
+      .where(
+        inArray(emailNotifications.applicationId, applicationIds.slice(0, 5)),
+      );
+    assert.equal(resultNotifications.length, 5);
+    assert.ok(resultNotifications.every((row) => row.status === "failed"));
+    assert.deepEqual(
+      new Map(
+        resultNotifications.map((row) => [row.applicationId, row.messageType]),
+      ),
+      new Map([
+        [applicationIds[0], "result_accepted"],
+        [applicationIds[1], "result_rejected"],
+        [applicationIds[2], "result_accepted"],
+        [applicationIds[3], "result_accepted"],
+        [applicationIds[4], "result_accepted"],
+      ]),
+    );
+
+    const repeat = await releaseRequest();
+    assert.equal(repeat.status, 200);
+    assert.deepEqual(await repeat.json(), {
+      released: 0,
+      accepted: 0,
+      rejected: 0,
+      memberIdsGenerated: 0,
+      releasedAt: null,
+      emailDelivery: {
+        queued: 0,
+        sent: 0,
+        failed: 0,
+      },
+    });
+
+    const afterRepeat = await db
+      .select({ id: applications.id, memberId: applications.memberId })
+      .from(applications)
+      .where(inArray(applications.id, acceptedIds));
+    assert.deepEqual(
+      new Map(afterRepeat.map((row) => [row.id, row.memberId])),
+      new Map(
+        acceptedIds.map((id) => [id, releasedById.get(id)?.memberId ?? null]),
+      ),
+    );
+
+    assert.equal(
+      (
+        await db
+          .select({ id: emailNotifications.id })
+          .from(emailNotifications)
+          .where(
+            inArray(
+              emailNotifications.applicationId,
+              applicationIds.slice(0, 5),
+            ),
+          )
+      ).length,
+      5,
+    );
+  });
+
+  await t.test("retries only failed result emails", async () => {
+    const [sentNotification] = await db
+      .select({ id: emailNotifications.id })
+      .from(emailNotifications)
+      .where(eq(emailNotifications.messageType, "result_accepted"))
+      .limit(1);
+    await db
+      .update(emailNotifications)
+      .set({
+        status: "sent",
+        providerMessageId: "already-sent",
+        sentAt: new Date(),
+      })
+      .where(eq(emailNotifications.id, sentNotification.id));
+    const [nonResultNotification] = await db
+      .insert(emailNotifications)
+      .values({
+        applicationId: applicationIds[0],
+        messageType: "application_submitted",
+        recipient: "non-result@example.com",
+        status: "failed",
+        lastError: "test failure",
+      })
+      .returning({ id: emailNotifications.id });
+
+    const response = await retryFailedEmailsRequest();
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      retried: 4,
+      sent: 0,
+      failed: 4,
+    });
+
+    const [stillSent] = await db
+      .select({ status: emailNotifications.status })
+      .from(emailNotifications)
+      .where(eq(emailNotifications.id, sentNotification.id));
+    const [stillNonResult] = await db
+      .select({ status: emailNotifications.status })
+      .from(emailNotifications)
+      .where(eq(emailNotifications.id, nonResultNotification.id));
+    assert.equal(stillSent.status, "sent");
+    assert.equal(stillNonResult.status, "failed");
+    assert.equal(
+      (
+        await db
+          .select({ id: emailNotifications.id })
+          .from(emailNotifications)
+          .where(
+            inArray(
+              emailNotifications.applicationId,
+              applicationIds.slice(0, 5),
+            ),
+          )
+      ).length,
+      6,
+    );
   });
 });
