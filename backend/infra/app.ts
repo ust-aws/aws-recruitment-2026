@@ -13,6 +13,16 @@ class BackendStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const databaseUrl = process.env.DATABASE_URL;
+    if (!databaseUrl) {
+      throw new Error(
+        "DATABASE_URL must be set before synthesizing the backend stack",
+      );
+    }
+
+    const corsOrigin =
+      process.env.FRONTEND_URL ?? process.env.CORS_ORIGIN ?? "*";
+
     const fn = new NodejsFunction(this, "ApiFunction", {
       entry: path.join(__dirname, "../src/lambda.ts"),
       handler: "handler",
@@ -27,10 +37,8 @@ class BackendStack extends cdk.Stack {
         sourceMap: true,
       },
       environment: {
-        ...(process.env.DATABASE_URL
-          ? { DATABASE_URL: process.env.DATABASE_URL }
-          : {}),
-        CORS_ORIGIN: process.env.CORS_ORIGIN ?? "*",
+        DATABASE_URL: databaseUrl,
+        CORS_ORIGIN: corsOrigin,
         ...(process.env.HR_EMAIL ? { HR_EMAIL: process.env.HR_EMAIL } : {}),
         ...(process.env.HR_PASSWORD
           ? { HR_PASSWORD: process.env.HR_PASSWORD }
@@ -84,12 +92,9 @@ class BackendStack extends cdk.Stack {
     });
 
     const httpApi = new HttpApi(this, "HttpApi", {
-      defaultIntegration: new HttpLambdaIntegration(
-        "DefaultIntegration",
-        fn
-      ),
+      defaultIntegration: new HttpLambdaIntegration("DefaultIntegration", fn),
       corsPreflight: {
-        allowOrigins: [process.env.CORS_ORIGIN ?? "*"],
+        allowOrigins: [corsOrigin],
         allowMethods: [
           CorsHttpMethod.GET,
           CorsHttpMethod.POST,

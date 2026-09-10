@@ -11,7 +11,7 @@ pnpm dev
 
 That starts Postgres, the Hono API on [http://localhost:8787](http://localhost:8787), and this app on [http://localhost:3000](http://localhost:3000).
 
-Copy `NEXT_PUBLIC_API_URL` from the repo `.env.example` into `frontend/.env.local` if you don't already have it. Next only reads env from this folder.
+Copy `NEXT_PUBLIC_API_BASE_URL` from the repo `.env.example` into `frontend/.env.local` if you don't already have it. Next only reads env from this folder.
 
 `/admin/hr` should list Ana Cruz, Ben Santos, Carla Mendoza, and Dario Aquino from the seed. If you see Lyka/Carl instead, the UI is still on mocks. Open a row: the "Why do you want to join…" block should be a paragraph from seed, not —. If it's missing, `pnpm db:push && pnpm db:seed` (the answer lives on `applications.motivation`).
 

@@ -14,6 +14,8 @@
     "doctor": "npx react-doctor@latest"
   },
   "dependencies": {
+    "@neon/config": "^1.2.0",
+    "@neon/env": "^1.2.0",
     "react-doctor": "^0.9.12"
   }
 }
