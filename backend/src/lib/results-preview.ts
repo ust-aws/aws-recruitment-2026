@@ -98,9 +98,14 @@ function classifyApplication(
   return { classification: "accepted", blockingReason: null };
 }
 
-export async function getResultsPreview() {
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+
+async function queryResultsPreview(
+  database: typeof db | DbTransaction,
+  lockRows: boolean,
+) {
   const recruitmentYear = recruitmentYearInt();
-  const rows = await db
+  const rowsQuery = database
     .select({
       id: applications.id,
       applicationCode: applications.applicationCode,
@@ -118,6 +123,7 @@ export async function getResultsPreview() {
     .innerJoin(applicants, eq(applications.applicantId, applicants.id))
     .where(eq(applications.recruitmentYear, recruitmentYear))
     .orderBy(desc(applications.submittedAt));
+  const rows = lockRows ? await rowsQuery.for("update") : await rowsQuery;
 
   const archived = rows.filter((row) => row.archivedAt !== null).length;
   const alreadyReleased = rows.filter(
@@ -128,23 +134,26 @@ export async function getResultsPreview() {
   );
   const pendingIds = pendingRows.map((row) => row.id);
 
+  const choiceQuery = database
+    .select({
+      applicationId: applicationChoices.applicationId,
+      preferenceRank: applicationChoices.preferenceRank,
+      positionId: applicationChoices.positionId,
+      title: positions.name,
+      committeeId: committees.id,
+      committee: committees.name,
+      decisionStatus: applicationChoices.decisionStatus,
+    })
+    .from(applicationChoices)
+    .innerJoin(positions, eq(applicationChoices.positionId, positions.id))
+    .innerJoin(committees, eq(positions.committeeId, committees.id))
+    .where(inArray(applicationChoices.applicationId, pendingIds));
   const choiceRows =
     pendingIds.length === 0
       ? []
-      : await db
-          .select({
-            applicationId: applicationChoices.applicationId,
-            preferenceRank: applicationChoices.preferenceRank,
-            positionId: applicationChoices.positionId,
-            title: positions.name,
-            committeeId: committees.id,
-            committee: committees.name,
-            decisionStatus: applicationChoices.decisionStatus,
-          })
-          .from(applicationChoices)
-          .innerJoin(positions, eq(applicationChoices.positionId, positions.id))
-          .innerJoin(committees, eq(positions.committeeId, committees.id))
-          .where(inArray(applicationChoices.applicationId, pendingIds));
+      : lockRows
+        ? await choiceQuery.for("update")
+        : await choiceQuery;
 
   const choicesByApplication = new Map<string, ResultPreviewChoice[]>();
   for (const row of choiceRows) {
@@ -217,4 +226,12 @@ export async function getResultsPreview() {
     },
     applications: previewApplications,
   };
+}
+
+export function getResultsPreview() {
+  return queryResultsPreview(db, false);
+}
+
+export function getResultsPreviewForUpdate(transaction: DbTransaction) {
+  return queryResultsPreview(transaction, true);
 }

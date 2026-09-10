@@ -60,6 +60,8 @@ export async function getApplicantEditableApplication(applicationId: string) {
       status: applications.status,
       archivedAt: applications.archivedAt,
       resultsReleasedAt: applications.resultsReleasedAt,
+      finalPositionId: applications.finalPositionId,
+      memberId: applications.memberId,
       firstName: applicants.firstName,
       lastName: applicants.lastName,
       email: applicants.email,
@@ -97,6 +99,12 @@ export async function getApplicantEditableApplication(applicationId: string) {
     .where(eq(applicationDocuments.applicationId, applicationId));
 
   const eligibility = await resolveApplicantEditEligibility(application, choices);
+  const sortedChoices = [...choices].sort(
+    (a, b) => a.preferenceRank - b.preferenceRank,
+  );
+  const finalPlacement = sortedChoices.find(
+    (choice) => choice.positionId === application.finalPositionId,
+  );
 
   return {
     applicationCode: application.applicationCode,
@@ -106,19 +114,36 @@ export async function getApplicantEditableApplication(applicationId: string) {
     age: application.age,
     section: application.section,
     motivation: application.motivation,
-    choices: choices
-      .map((choice) => ({
-        preferenceRank: choice.preferenceRank as 1 | 2,
-        positionId: choice.positionId,
-        title: choice.title,
-        committeeId: choice.committeeId,
-        committee: choice.committee,
-      }))
-      .sort((a, b) => a.preferenceRank - b.preferenceRank),
+    choices: sortedChoices.map((choice) => ({
+      preferenceRank: choice.preferenceRank as 1 | 2,
+      positionId: choice.positionId,
+      title: choice.title,
+      committeeId: choice.committeeId,
+      committee: choice.committee,
+    })),
     documents,
     canEdit: eligibility.canEdit,
     editDeadline: eligibility.editDeadline,
     lockReason: eligibility.lockReason,
+    result: application.resultsReleasedAt
+      ? {
+          status: application.status,
+          releasedAt: application.resultsReleasedAt.toISOString(),
+          memberId: application.memberId,
+          finalPlacement: finalPlacement
+            ? {
+                positionId: finalPlacement.positionId,
+                title: finalPlacement.title,
+                committeeId: finalPlacement.committeeId,
+                committee: finalPlacement.committee,
+              }
+            : null,
+          choices: sortedChoices.map((choice) => ({
+            preferenceRank: choice.preferenceRank as 1 | 2,
+            decisionStatus: choice.decisionStatus,
+          })),
+        }
+      : null,
   };
 }
 
