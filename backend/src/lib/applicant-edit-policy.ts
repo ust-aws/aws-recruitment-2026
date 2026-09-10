@@ -1,5 +1,9 @@
 import { getRecruitmentWindow, type RecruitmentWindow } from "./recruitment-window";
 
+type RecruitmentWindowDatabase = NonNullable<
+  Parameters<typeof getRecruitmentWindow>[0]
+>;
+
 type ApplicationState = {
   status: "pending" | "approved" | "rejected";
   archivedAt: Date | null;
@@ -101,12 +105,15 @@ export function getApplicantEditEligibility(
 export async function resolveApplicantEditEligibility(
   application: ApplicationState,
   choices: ChoiceState[],
-  now = new Date(),
+  options: {
+    database?: RecruitmentWindowDatabase;
+    now?: Date;
+  } = {},
 ) {
   return getApplicantEditEligibility(
     application,
     choices,
-    await getRecruitmentWindow(),
-    now,
+    await getRecruitmentWindow(options.database),
+    options.now,
   );
 }

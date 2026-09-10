@@ -186,6 +186,7 @@ export async function updateApplicantApplication(
       const eligibility = await resolveApplicantEditEligibility(
         application,
         currentChoices,
+        { database: tx },
       );
       if (!eligibility.canEdit) {
         throw new ApplicantEditError(

@@ -384,8 +384,11 @@ export async function bookApplicantInterview(
         .select({ decisionStatus: applicationChoices.decisionStatus })
         .from(applicationChoices)
         .where(eq(applicationChoices.applicationId, applicationId));
-      const reason = (await resolveApplicantEditEligibility(application, decisions))
-        .lockReason;
+      const reason = (
+        await resolveApplicantEditEligibility(application, decisions, {
+          database: tx,
+        })
+      ).lockReason;
       if (reason) {
         throw new InterviewScheduleError("application_locked", reason);
       }

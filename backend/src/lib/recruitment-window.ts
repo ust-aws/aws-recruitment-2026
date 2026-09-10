@@ -12,6 +12,9 @@ export type RecruitmentWindowPayload = {
   endsAt: string | null;
 };
 
+type DbTransaction = Parameters<Parameters<typeof db.transaction>[0]>[0];
+type RecruitmentWindowDatabase = typeof db | DbTransaction;
+
 export class RecruitmentWindowError extends Error {
   constructor(
     public readonly code: "invalid_range" | "invalid_timestamp",
@@ -22,8 +25,10 @@ export class RecruitmentWindowError extends Error {
   }
 }
 
-export async function getRecruitmentWindow(): Promise<RecruitmentWindow | null> {
-  const [row] = await db
+export async function getRecruitmentWindow(
+  database: RecruitmentWindowDatabase = db,
+): Promise<RecruitmentWindow | null> {
+  const [row] = await database
     .select({
       startsAt: recruitmentWindows.startsAt,
       endsAt: recruitmentWindows.endsAt,
