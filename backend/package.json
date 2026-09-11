@@ -14,6 +14,7 @@
     "test:scheduling": "tsx --test --test-concurrency=1 src/interview-scheduling.test.ts",
     "test:results": "tsx --test --test-concurrency=1 src/results-preview.test.ts",
     "test:archive": "tsx --test --test-concurrency=1 src/application-archiving.test.ts",
+    "test:listing": "tsx --test --test-concurrency=1 src/application-listing.test.ts",
     "cdk": "cdk",
     "deploy": "cdk deploy",
     "synth": "cdk synth",

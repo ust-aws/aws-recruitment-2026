@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { useSearchParams } from "next/navigation"
 import { ActionFeedback } from "@/components/action-feedback"
 import { SectionHeader } from "@/components/section-header"
@@ -10,14 +10,14 @@ import {
 } from "@/components/hr/application-filters"
 import { ApplicationPagination } from "@/components/hr/application-pagination"
 import {
+  APPLICATION_PAGE_SIZE,
   pageCount,
-  pageSlice,
 } from "@/components/hr/application-pagination-utils"
 import { ApplicationRow } from "@/components/hr/application-row"
 import { ApplicationListSkeleton } from "@/components/hr/application-list-skeleton"
 import { ApplicationExportButton } from "@/components/hr/application-export-button"
 import { HrArchiveApplicantDialog } from "@/components/hr/hr-archive-applicant-dialog"
-import { fullName, hasCommittee, useApplications } from "@/lib/api"
+import { useApplications } from "@/lib/api"
 import { pageShellClasses } from "@/lib/surface"
 import type { HrApplication } from "@/lib/hr-application-types"
 
@@ -36,9 +36,17 @@ const emptyFilters: HrFilters = {
 
 export function HrApplicationList() {
   const searchParams = useSearchParams()
-  const { applications, loading, error, replaceApplication } = useApplications()
   const [filters, setFilters] = useState(emptyFilters)
   const [page, setPage] = useState(1)
+  const { applications, total, loading, error, refreshApplications } =
+    useApplications({
+      query: filters.query.trim(),
+      committeeName: filters.committee || undefined,
+      status: filters.status || undefined,
+      archive: filters.archive,
+      page,
+      pageSize: APPLICATION_PAGE_SIZE,
+    })
   const [archiveTarget, setArchiveTarget] = useState<HrApplication | null>(null)
   const [feedback, setFeedback] = useState<{
     type: "success" | "error"
@@ -57,23 +65,8 @@ export function HrApplicationList() {
         }
       : null)
 
-  const visible = useMemo(() => {
-    const query = filters.query.trim().toLowerCase()
-    const committee =
-      filters.committee === "all" ? "" : filters.committee
-    return applications.filter((app) => {
-      const archived = Boolean(app.archivedAt)
-      if (filters.archive === "archived" ? !archived : archived) return false
-      if (query && !fullName(app).toLowerCase().includes(query)) return false
-      if (committee && !hasCommittee(app, committee)) return false
-      if (filters.status && app.status !== filters.status) return false
-      return true
-    })
-  }, [applications, filters])
-
-  const totalPages = pageCount(visible.length)
+  const totalPages = pageCount(total)
   const safePage = Math.min(page, totalPages)
-  const pageItems = pageSlice(visible, safePage)
 
   function onFiltersChange(patch: Partial<HrFilters>) {
     setFilters((current) => ({ ...current, ...patch }))
@@ -98,20 +91,26 @@ export function HrApplicationList() {
           <ApplicationFilters value={filters} onChange={onFiltersChange} />
         </div>
         <ApplicationExportButton
-          applications={visible}
-          archive={filters.archive}
+          filters={{
+            query: filters.query.trim(),
+            committeeName: filters.committee || undefined,
+            status: filters.status || undefined,
+            archive: filters.archive,
+          }}
+          total={total}
+          onError={(message) => setFeedback({ type: "error", message })}
         />
       </div>
       {loading ? (
         <ApplicationListSkeleton />
       ) : error ? (
         <p className={emptyClasses}>{error}</p>
-      ) : visible.length === 0 ? (
+      ) : applications.length === 0 ? (
         <p className={emptyClasses}>No applications match those filters.</p>
       ) : (
         <>
           <ul className={listClasses}>
-            {pageItems.map((application, index) => (
+            {applications.map((application, index) => (
               <li key={application.id}>
                 <ApplicationRow
                   application={application}
@@ -122,7 +121,7 @@ export function HrApplicationList() {
             ))}
           </ul>
           <ApplicationPagination
-            total={visible.length}
+            total={total}
             page={safePage}
             onPageChange={setPage}
           />
@@ -134,7 +133,8 @@ export function HrApplicationList() {
           if (!open) setArchiveTarget(null)
         }}
         onChanged={(updated) => {
-          replaceApplication(updated)
+          setPage(1)
+          refreshApplications()
           setFeedback({
             type: "success",
             message: updated.archivedAt
