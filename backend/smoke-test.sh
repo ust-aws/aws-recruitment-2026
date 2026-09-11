@@ -49,6 +49,21 @@ json_field() {
   " "$field"
 }
 
+slot_id_by_start() {
+  local starts_at="$1"
+  printf '%s' "$LAST_BODY" | node -e "
+    const fs = require('fs');
+    const startsAt = process.argv[1];
+    const payload = JSON.parse(fs.readFileSync(0, 'utf8'));
+    const rows = Array.isArray(payload) ? payload : payload.slots;
+    const slot = Array.isArray(rows)
+      ? rows.find((row) => row.startsAt === startsAt)
+      : undefined;
+    if (!slot?.id) process.exit(1);
+    process.stdout.write(String(slot.id));
+  " "$starts_at"
+}
+
 contains_id() {
   local id="$1"
   printf '%s' "$LAST_BODY" | node -e "
@@ -276,7 +291,7 @@ if [[ -z "$POS1" || -z "$POS2" ]]; then
   fail=$((fail + 1))
 else
   SECTION="4SMK"
-  EMAIL="smoke.$(date +%s)@example.com"
+  EMAIL="smoke.$(date +%s)@ust.edu.ph"
   SLOT_ID=""
   if [[ -n "$token" && -n "$committee_id" ]]; then
     SLOT_START=$(node -e "
@@ -285,9 +300,26 @@ else
       d.setHours(9, 0, 0, 0);
       console.log(d.toISOString());
     ")
-    request POST "/interview-slots" "{\"committeeId\":\"$committee_id\",\"startsAt\":\"$SLOT_START\"}" "$token"
-    expect "POST /interview-slots for application smoke" 201
-    if [[ "$LAST_STATUS" == "201" ]]; then
+    WINDOW_START=$(node -e "
+      const d = new Date(process.argv[1]);
+      d.setDate(d.getDate() - 1);
+      console.log(d.toISOString());
+    " "$SLOT_START")
+    WINDOW_END=$(node -e "
+      const d = new Date(process.argv[1]);
+      d.setDate(d.getDate() + 1);
+      console.log(d.toISOString());
+    " "$SLOT_START")
+    request PATCH "/interview-window" "{\"startsAt\":\"$WINDOW_START\",\"endsAt\":\"$WINDOW_END\"}" "$token"
+    expect "PATCH /interview-window for application smoke" 200
+    request GET "/interview-slots?committeeId=$committee_id" "" "$token"
+    expect "GET /interview-slots for application smoke" 200
+    if [[ "$LAST_STATUS" == "200" ]]; then
+      SLOT_ID=$(slot_id_by_start "$SLOT_START" || true)
+    fi
+    if [[ -z "$SLOT_ID" ]]; then
+      request POST "/interview-slots" "{\"committeeId\":\"$committee_id\",\"startsAt\":\"$SLOT_START\"}" "$token"
+      expect "POST /interview-slots for application smoke" 201
       SLOT_ID=$(json_field id || true)
     fi
   fi
@@ -301,7 +333,7 @@ else
   fi
 
   CREATE_BODY=$(cat <<EOF
-{"firstName":"Smoke","lastName":"Test","email":"$EMAIL","age":21,"birthday":"2005-04-12","gender":"male","section":"$SECTION","studentNumber":"2026123456","contactNumber":"+639171234567","facebookUrl":"https://facebook.com/smoke.test","dataPrivacyAgreed":true,"motivation":"Smoke test why join.","slotId":"$SLOT_ID","choices":[{"positionId":"$POS1","preferenceRank":1},{"positionId":"$POS2","preferenceRank":2}],"documents":[{"documentType":"resume","fileName":"CV_Test.pdf","s3Key":"dev/cv.pdf"},{"documentType":"transcript","fileName":"TOR_Test.pdf","s3Key":"dev/tor.pdf"},{"documentType":"registration","fileName":"RegForm_Test.pdf","s3Key":"dev/reg.pdf"}]}
+{"firstName":"Smoke","lastName":"Test","email":"$EMAIL","age":21,"birthday":"2005-04-12","gender":"male","section":"$SECTION","studentNumber":"2026123456","contactNumber":"+639171234567","facebookUrl":"https://facebook.com/smoke.test","dataPrivacyAgreed":true,"motivation":"Smoke test why join.","portfolioUrl":"https://drive.google.com/file/d/smoke-test/view","slotId":"$SLOT_ID","choices":[{"positionId":"$POS1","preferenceRank":1},{"positionId":"$POS2","preferenceRank":2}],"documents":[{"documentType":"resume","fileName":"CV_Test.pdf","s3Key":"dev/uploads/$UNKNOWN_ID/CV_Test.pdf"},{"documentType":"transcript","fileName":"TOR_Test.pdf","s3Key":"dev/uploads/$UNKNOWN_ID/TOR_Test.pdf"},{"documentType":"registration","fileName":"RegForm_Test.pdf","s3Key":"dev/uploads/$UNKNOWN_ID/RegForm_Test.pdf"}]}
 EOF
 )
 
@@ -389,15 +421,17 @@ EOF
   expect "GET  /applications/:id/email-notifications unknown app" 404
 
   if [[ -n "$APP_ID" ]]; then
-    request PATCH "/applications/$APP_ID/status" '{"status":"approved"}' "$token"
-    expect "PATCH /applications/:id/status" 200
+    request PATCH "/applications/$APP_ID/decisions" "{\"positionId\":\"$POS1\",\"decisionStatus\":\"approved\"}" "$token"
+    expect "PATCH /applications/:id/decisions first choice" 200
+    request PATCH "/applications/$APP_ID/decisions" "{\"positionId\":\"$POS2\",\"decisionStatus\":\"rejected\",\"finalPositionId\":\"$POS1\"}" "$token"
+    expect "PATCH /applications/:id/decisions final decision" 200
   else
-    echo "FAIL  PATCH /applications/:id/status (no created id)"
-    fail=$((fail + 1))
+    echo "FAIL  PATCH /applications/:id/decisions (no created id)"
+    fail=$((fail + 2))
   fi
 
-  request PATCH "/applications/$UNKNOWN_ID/status" '{"status":"approved"}' "$token"
-  expect "PATCH /applications/:id/status unknown" 404
+  request PATCH "/applications/$UNKNOWN_ID/decisions" "{\"positionId\":\"$POS1\",\"decisionStatus\":\"approved\"}" "$token"
+  expect "PATCH /applications/:id/decisions unknown" 404
 
   if [[ -n "$APP_ID" ]]; then
     request DELETE "/applications/$APP_ID" "" "$token"

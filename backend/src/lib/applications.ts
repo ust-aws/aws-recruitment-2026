@@ -23,6 +23,7 @@ export type ApplicationChoiceJson = {
   positionId: string;
   committee: string;
   title: string;
+  decisionStatus: "pending" | "approved" | "rejected";
 };
 
 export type ApplicationDocumentJson = {
@@ -50,6 +51,11 @@ export type ApplicationJson = {
   portfolioUrl: string | null;
   githubUrl: string | null;
   choices: ApplicationChoiceJson[];
+  finalPlacement: {
+    positionId: string;
+    committee: string;
+    title: string;
+  } | null;
   documents: ApplicationDocumentJson[];
 };
 
@@ -138,6 +144,7 @@ type ApplicationRow = {
   motivation: string;
   portfolioUrl: string | null;
   githubUrl: string | null;
+  finalPositionId: string | null;
 };
 
 function iso(value: Date): string {
@@ -167,6 +174,7 @@ async function attachRelations(
       positionId: applicationChoices.positionId,
       committee: committees.name,
       title: positions.name,
+      decisionStatus: applicationChoices.decisionStatus,
     })
     .from(applicationChoices)
     .innerJoin(positions, eq(applicationChoices.positionId, positions.id))
@@ -191,6 +199,7 @@ async function attachRelations(
       positionId: choice.positionId,
       committee: choice.committee,
       title: choice.title,
+      decisionStatus: choice.decisionStatus,
     });
     choicesByApp.set(choice.applicationId, list);
   }
@@ -206,29 +215,42 @@ async function attachRelations(
     documentsByApp.set(doc.applicationId, list);
   }
 
-  return rows.map((row) => ({
-    id: row.id,
-    applicationCode: row.applicationCode,
-    status: row.status,
-    submittedAt: iso(row.submittedAt),
-    firstName: row.firstName,
-    lastName: row.lastName,
-    email: row.email,
-    age: row.age,
-    birthday: formatBirthday(row.birthday),
-    gender: row.gender,
-    section: row.section,
-    studentNumber: row.studentNumber,
-    contactNumber: row.contactNumber,
-    facebookUrl: row.facebookUrl,
-    motivation: row.motivation,
-    portfolioUrl: row.portfolioUrl,
-    githubUrl: row.githubUrl,
-    choices: (choicesByApp.get(row.id) ?? []).sort(
+  return rows.map((row) => {
+    const choices = (choicesByApp.get(row.id) ?? []).sort(
       (a, b) => a.preferenceRank - b.preferenceRank,
-    ),
-    documents: documentsByApp.get(row.id) ?? [],
-  }));
+    );
+    const finalPlacement = choices.find(
+      (choice) => choice.positionId === row.finalPositionId,
+    );
+    return {
+      id: row.id,
+      applicationCode: row.applicationCode,
+      status: row.status,
+      submittedAt: iso(row.submittedAt),
+      firstName: row.firstName,
+      lastName: row.lastName,
+      email: row.email,
+      age: row.age,
+      birthday: formatBirthday(row.birthday),
+      gender: row.gender,
+      section: row.section,
+      studentNumber: row.studentNumber,
+      contactNumber: row.contactNumber,
+      facebookUrl: row.facebookUrl,
+      motivation: row.motivation,
+      portfolioUrl: row.portfolioUrl,
+      githubUrl: row.githubUrl,
+      choices,
+      finalPlacement: finalPlacement
+        ? {
+            positionId: finalPlacement.positionId,
+            committee: finalPlacement.committee,
+            title: finalPlacement.title,
+          }
+        : null,
+      documents: documentsByApp.get(row.id) ?? [],
+    };
+  });
 }
 
 const applicationSelect = {
@@ -249,6 +271,7 @@ const applicationSelect = {
   motivation: applications.motivation,
   portfolioUrl: applications.portfolioUrl,
   githubUrl: applications.githubUrl,
+  finalPositionId: applications.finalPositionId,
 };
 
 export async function getApplicationById(
@@ -457,20 +480,6 @@ export async function createApplication(
     throw new Error("Created application could not be loaded");
   }
   return created;
-}
-
-export async function updateApplicationStatus(
-  id: string,
-  status: "approved" | "rejected",
-): Promise<ApplicationJson | null> {
-  const [updated] = await db
-    .update(applications)
-    .set({ status, reviewedAt: new Date() })
-    .where(eq(applications.id, id))
-    .returning({ id: applications.id });
-
-  if (!updated) return null;
-  return getApplicationById(updated.id);
 }
 
 export async function deleteApplication(id: string): Promise<boolean> {
