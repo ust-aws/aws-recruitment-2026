@@ -46,7 +46,7 @@ export function HrResultsSummary({
       <div className={actionPanelClasses}>
         <p className={actionCopyClasses}>
           {summary.incomplete > 0
-            ? `Resolve ${summary.incomplete} incomplete application${summary.incomplete === 1 ? "" : "s"} before releasing this batch.`
+            ? `Cannot release results. ${summary.incomplete === 1 ? "There is" : "There are"} still ${summary.incomplete} pending application${summary.incomplete === 1 ? "" : "s"}.`
             : summary.pendingRelease > 0
               ? "All pending records are ready. Releasing publishes every result, generates Member IDs for accepted applicants, and queues the result emails."
               : "There are no pending results to release."}
