@@ -21,7 +21,10 @@ resultsRoutes.get("/preview", async (c) => {
 
 resultsRoutes.post("/release", async (c) => {
   try {
-    const release = await releaseResults();
+    const payload = c.get("jwtPayload") as { sub?: unknown };
+    const release = await releaseResults(
+      typeof payload.sub === "string" ? payload.sub : undefined,
+    );
     const delivery = await deliverResultNotifications(
       release.notificationIds,
     );

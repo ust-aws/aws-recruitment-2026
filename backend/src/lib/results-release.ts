@@ -1,6 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db";
-import { applications, emailNotifications } from "../db/schema";
+import { applications, emailNotifications, users } from "../db/schema";
 import { getResultsPreviewForUpdate } from "./results-preview";
 
 export type ResultsReleaseSummary = {
@@ -44,7 +44,9 @@ function formatMemberId(recruitmentYear: number, sequence: number): string {
   return `AWS-${recruitmentYear}-${String(sequence).padStart(4, "0")}`;
 }
 
-export async function releaseResults(): Promise<ResultsRelease> {
+export async function releaseResults(
+  reviewerEmail?: string,
+): Promise<ResultsRelease> {
   return db.transaction(async (tx) => {
     const preview = await getResultsPreviewForUpdate(tx);
     if (preview.summary.pendingRelease === 0) {
@@ -78,6 +80,15 @@ export async function releaseResults(): Promise<ResultsRelease> {
     let memberIdsGenerated = 0;
     const releasedAt = new Date();
     const notificationIds: string[] = [];
+    let reviewerId: string | null = null;
+    if (reviewerEmail) {
+      const [reviewer] = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, reviewerEmail.trim().toLowerCase()))
+        .limit(1);
+      reviewerId = reviewer?.id ?? null;
+    }
 
     const applicationsToRelease = [...preview.applications].sort((a, b) =>
       a.submittedAt.localeCompare(b.submittedAt),
@@ -97,6 +108,7 @@ export async function releaseResults(): Promise<ResultsRelease> {
           status: accepted ? "approved" : "rejected",
           memberId: accepted ? memberId : null,
           resultsReleasedAt: releasedAt,
+          resultsReleasedBy: reviewerId,
         })
         .where(
           and(

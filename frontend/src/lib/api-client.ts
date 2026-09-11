@@ -278,6 +278,73 @@ export function patchInterviewWindow(startsAt: string, endsAt: string) {
   });
 }
 
+export type ResultClassification = "accepted" | "rejected" | "incomplete";
+
+export type ResultPreviewApplication = {
+  id: string;
+  applicationCode: string;
+  applicant: { fullName: string; email: string };
+  submittedAt: string;
+  classification: ResultClassification;
+  blockingReason: string | null;
+  finalPlacement: {
+    positionId: string;
+    title: string;
+    committeeId: string;
+    committee: string;
+  } | null;
+  choices: {
+    preferenceRank: 1 | 2;
+    positionId: string;
+    title: string;
+    committeeId: string;
+    committee: string;
+    decisionStatus: "pending" | "approved" | "rejected";
+  }[];
+  willGenerateMemberId: boolean;
+  willSendEmail: boolean;
+};
+
+export type ResultsPreview = {
+  recruitmentYear: number;
+  summary: {
+    pendingRelease: number;
+    accepted: number;
+    rejected: number;
+    incomplete: number;
+    alreadyReleased: number;
+    archived: number;
+    canRelease: boolean;
+  };
+  applications: ResultPreviewApplication[];
+};
+
+export type ReleaseResultsResponse = {
+  released: number;
+  accepted: number;
+  rejected: number;
+  memberIdsGenerated: number;
+  releasedAt: string | null;
+  emailDelivery: { queued: number; sent: number; failed: number };
+};
+
+export function getResultsPreview() {
+  return apiFetch<ResultsPreview>("/results/preview");
+}
+
+export function releaseResultsRequest() {
+  return apiFetch<ReleaseResultsResponse>("/results/release", {
+    method: "POST",
+  });
+}
+
+export function retryFailedResultEmailsRequest() {
+  return apiFetch<{ retried: number; sent: number; failed: number }>(
+    "/results/emails/retry-failed",
+    { method: "POST" },
+  );
+}
+
 type LoginResponse = {
   email: string;
   expiresAt: string;

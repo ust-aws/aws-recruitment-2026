@@ -10,8 +10,8 @@ export function applicationSubmittedSubject(applicationCode: string): string {
 
 /** Accepted result (Marc #10 Release Results). */
 export const resultAcceptedSubject =
-  "Welcome Aboard! Your AWS Builders - UST R1O1 Results";
+  "Welcome Aboard! Your AWS Builders - UST R101 Results";
 
 /** Rejected result (Marc #10 Release Results). */
 export const resultRejectedSubject =
-  "AWS Builders - UST R1O1 Recruitment Results";
+  "AWS Builders - UST R101 Recruitment Results";

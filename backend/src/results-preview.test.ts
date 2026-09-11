@@ -12,6 +12,7 @@ import {
   committees,
   emailNotifications,
   positions,
+  users,
 } from "./db/schema";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -29,6 +30,8 @@ process.env.RECRUITMENT_YEAR = "2095";
 process.env.EMAIL_ENABLED = "false";
 
 const runId = randomUUID();
+const hrUserId = randomUUID();
+const hrEmail = `results-hr-${runId}@aws-ust.org`;
 const committeeAId = randomUUID();
 const committeeBId = randomUUID();
 const positionAId = randomUUID();
@@ -45,6 +48,7 @@ let hrToken = "";
 after(async () => {
   try {
     await db.delete(applicants).where(inArray(applicants.id, applicantIds));
+    await db.delete(users).where(eq(users.id, hrUserId));
     await db
       .delete(committees)
       .where(inArray(committees.id, [committeeAId, committeeBId]));
@@ -88,6 +92,13 @@ function decisionValues(
 }
 
 test("results release preview", async (t) => {
+  await db.insert(users).values({
+    id: hrUserId,
+    email: hrEmail,
+    passwordHash: "test-only",
+    firstName: "Results",
+    lastName: "Reviewer",
+  });
   await db.insert(committees).values([
     { id: committeeAId, name: `Results A ${runId}` },
     { id: committeeBId, name: `Results B ${runId}` },
@@ -182,7 +193,7 @@ test("results release preview", async (t) => {
     ...decisionValues(applicationIds[6], "pending", "pending"),
   ]);
 
-  hrToken = (await signToken("results-hr@aws-ust.org")).token;
+  hrToken = (await signToken(hrEmail)).token;
 
   await t.test("requires HR authentication", async () => {
     assert.equal((await app.request("/results/preview")).status, 401);
@@ -476,6 +487,7 @@ test("results release preview", async (t) => {
         status: applications.status,
         memberId: applications.memberId,
         resultsReleasedAt: applications.resultsReleasedAt,
+        resultsReleasedBy: applications.resultsReleasedBy,
       })
       .from(applications)
       .where(inArray(applications.id, applicationIds.slice(0, 5)));
@@ -505,6 +517,7 @@ test("results release preview", async (t) => {
     assert.equal(releasedById.get(applicationIds[1])?.status, "rejected");
     assert.equal(releasedById.get(applicationIds[1])?.memberId, null);
     assert.ok(released.every((row) => row.resultsReleasedAt instanceof Date));
+    assert.ok(released.every((row) => row.resultsReleasedBy === hrUserId));
 
     const resultNotifications = await db
       .select({

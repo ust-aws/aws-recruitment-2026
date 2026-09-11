@@ -7,6 +7,7 @@ import {
   ClipboardList,
   LayoutDashboard,
   LogOut,
+  Send,
 } from "lucide-react"
 
 import { logoutHrSession } from "@/app/(site)/login/actions"
@@ -62,7 +63,7 @@ function isApplicationsActive(pathname: string) {
   if (pathname === "/admin/hr") return true
   const match = /^\/admin\/hr\/([^/]+)$/.exec(pathname)
   if (!match) return false
-  return match[1] !== "season"
+  return match[1] !== "season" && match[1] !== "results"
 }
 
 const navItems = [
@@ -71,6 +72,12 @@ const navItems = [
     href: "/admin/hr",
     icon: ClipboardList,
     isActive: isApplicationsActive,
+  },
+  {
+    label: "Results",
+    href: "/admin/hr/results",
+    icon: Send,
+    isActive: (pathname: string) => pathname.startsWith("/admin/hr/results"),
   },
   {
     label: "R101",

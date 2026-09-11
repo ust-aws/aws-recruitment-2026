@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ApplicantChoiceCards } from "@/components/apply/applicant-choice-cards"
 import { ApplicantInterviewScheduler } from "@/components/apply/applicant-interview-scheduler"
+import { ApplicantResultPanel } from "@/components/apply/applicant-result-panel"
 import { formatDateDisplay } from "@/lib/date-local"
 import { formatApplicantGender } from "@/lib/applicant-gender"
 import { ApplicantChoiceEditor } from "@/components/apply/applicant-choice-editor"
@@ -134,6 +135,13 @@ export function ApplicantDashboard() {
         {application.firstName} {application.lastName}
       </h1>
       <p className={codeClasses}>{application.applicationCode}</p>
+
+      {application.result ? (
+        <ApplicantResultPanel
+          result={application.result}
+          choices={application.choices}
+        />
+      ) : null}
 
       <div className="mt-6">
         <ApplicantEditBanner

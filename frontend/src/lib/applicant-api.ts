@@ -17,6 +17,22 @@ export type ApplicantDocument = {
   fileName: string
 }
 
+export type ApplicantResult = {
+  status: "approved" | "rejected"
+  releasedAt: string
+  memberId: string | null
+  finalPlacement: {
+    positionId: string
+    title: string
+    committeeId: string
+    committee: string
+  } | null
+  choices: {
+    preferenceRank: 1 | 2
+    decisionStatus: "approved" | "rejected"
+  }[]
+}
+
 export type ApplicantApplication = {
   applicationCode: string
   firstName: string
@@ -37,6 +53,7 @@ export type ApplicantApplication = {
   canEdit: boolean
   editDeadline: string | null
   lockReason: string | null
+  result: ApplicantResult | null
 }
 
 export type ApplicantInterviewSlot = {

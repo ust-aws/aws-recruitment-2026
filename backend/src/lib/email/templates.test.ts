@@ -45,9 +45,12 @@ test("applicant email templates use compact, plain formatting", async (t) => {
     const rejected = resultRejectedTemplate({ lastName: "Dela Cruz" });
 
     assert.match(accepted.text, /Mx\. Dela Cruz/);
+    assert.match(accepted.subject, /R101/);
+    assert.doesNotMatch(accepted.subject, /R1O1/);
     assert.match(accepted.text, /Development Committee Staff/);
     assert.match(accepted.html, /Development Committee Staff/);
     assert.match(rejected.text, /Mx\. Dela Cruz/);
+    assert.match(rejected.subject, /R101/);
     assert.match(rejected.text, /were not selected/);
   });
 });
