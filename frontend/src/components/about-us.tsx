@@ -3,11 +3,7 @@ import { SectionHeader } from "@/components/section-header"
 const INTRO =
   "AWS Builders – UST is a chapter of a global, student-led network of AWS User Groups — we don't stay inside campus walls. We're part of a thriving cloud and AI community spread across chapters in the Philippines and around the world."
 
-const STORY =
-  "Our story starts small — a handful of students who wanted UST to have a real seat at the cloud computing table, without gatekeeping who got to learn. What began as a few builders in a room grew into a full org with its own committees, its own mascot, and its own yearly recruitment cycle."
-
-const STORY_PLACEHOLDER =
-  "Placeholder — full origin story from Kuya Marc & Ate Syd goes here once finalized."
+const emphasisClasses = "italic text-blue-chalk"
 
 const CHAPTER_TAGS = [
   "Manila",
@@ -25,7 +21,6 @@ const tagClasses =
 const storyClasses =
   "flex max-w-[52rem] flex-col gap-4 border-l border-biloba-flower/25 pl-5"
 const storyBodyClasses = "font-sans text-base leading-relaxed text-prelude"
-const storyPlaceholderClasses = "font-sans text-sm leading-relaxed text-prelude/70"
 
 export function AboutUs() {
   return (
@@ -50,8 +45,25 @@ export function AboutUs() {
       </div>
 
       <blockquote className={storyClasses}>
-        <p className={storyBodyClasses}>{STORY}</p>
-        <p className={storyPlaceholderClasses}>{STORY_PLACEHOLDER}</p>
+        <p className={storyBodyClasses}>
+          It all began as a dream shared by eight students under the name{" "}
+          <span className={emphasisClasses}>AWS Learning Club - España</span>.
+          The spark was lit when the founder met the first Country Lead of AWS
+          Cloud Clubs Philippines, an encounter that transformed a simple
+          curiosity into a mission to establish a dedicated cloud community at
+          UST. Knowing 2025 was their only window to gain university
+          accreditation, the founder and seven co-founders pushed forward
+          together — establishing the group in 2024 and securing official AWS
+          and UST recognition as{" "}
+          <span className={emphasisClasses}>AWS Cloud Club - UST</span> in 2025.
+        </p>
+        <p className={storyBodyClasses}>
+          The core goal is clear: bridge the divide between what classes teach
+          and actual real-world tech demands. Created to serve the entire CICS
+          community, the club equips Thomasians with practical, hands-on
+          workshops and direct connections to industry leaders and peer builders
+          nationwide.
+        </p>
       </blockquote>
     </section>
   )

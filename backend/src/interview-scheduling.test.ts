@@ -18,6 +18,7 @@ import {
   interviewSlots,
   positions,
   recruitmentWindows,
+  interviewWindows,
 } from "./db/schema";
 
 const databaseUrl = process.env.DATABASE_URL;
@@ -136,6 +137,23 @@ test("interview scheduling backend", async (t) => {
       set: { startsAt: windowStart, endsAt: windowEnd },
     });
 
+  const interviewWindowStart = new Date(Date.now() - 24 * 60 * 60 * 1000);
+  const interviewWindowEnd = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000);
+  await db
+    .insert(interviewWindows)
+    .values({
+      singleton: 1,
+      startsAt: interviewWindowStart,
+      endsAt: interviewWindowEnd,
+    })
+    .onConflictDoUpdate({
+      target: interviewWindows.singleton,
+      set: {
+        startsAt: interviewWindowStart,
+        endsAt: interviewWindowEnd,
+      },
+    });
+
   await db.insert(committees).values([
     { id: committeeAId, name: `Scheduling A ${runId}` },
     { id: committeeBId, name: `Scheduling B ${runId}` },
@@ -159,6 +177,8 @@ test("interview scheduling backend", async (t) => {
       lastName: "Applicant",
       email: `schedule-${runId}-${index + 1}@ust.edu.ph`,
       age: 20,
+      birthday: "2005-06-15",
+      gender: "male" as const,
       section: "TEST-1",
     })),
   );
@@ -277,7 +297,7 @@ test("interview scheduling backend", async (t) => {
     );
   });
 
-  await t.test("books and atomically reschedules one application", async () => {
+  await t.test("books and reschedules one application", async () => {
     const wrongCommittee = await applicantRequest(
       0,
       "/applicant/interview-booking",
@@ -297,6 +317,15 @@ test("interview scheduling backend", async (t) => {
       booking: { rescheduled: boolean };
     };
     assert.equal(bookedPayload.booking.rescheduled, false);
+
+    const scheduleAfterBook = await applicantRequest(0, "/applicant/interview-slots");
+    const schedulePayload = (await scheduleAfterBook.json()) as {
+      canSchedule: boolean;
+      lockReason: string | null;
+    };
+    assert.equal(scheduleAfterBook.status, 200);
+    assert.equal(schedulePayload.canSchedule, true);
+    assert.equal(schedulePayload.lockReason, null);
 
     const occupied = await applicantRequest(
       1,
@@ -399,5 +428,24 @@ test("interview scheduling backend", async (t) => {
         slotId: slotB1Id,
       });
     });
+  });
+
+  await t.test("lets HR reset a committee interview schedule", async () => {
+    const response = await hrRequest(
+      `/interview-slots?committeeId=${committeeBId}`,
+      "DELETE",
+    );
+    assert.equal(response.status, 200);
+    const body = (await response.json()) as { deletedSlots: number };
+    assert.ok(body.deletedSlots >= 1);
+
+    const list = await hrRequest(
+      `/interview-slots?committeeId=${committeeBId}&from=${encodeURIComponent(
+        at(0).toISOString(),
+      )}&to=${encodeURIComponent(at(24).toISOString())}`,
+    );
+    assert.equal(list.status, 200);
+    const payload = (await list.json()) as { slots: unknown[] };
+    assert.deepEqual(payload.slots, []);
   });
 });

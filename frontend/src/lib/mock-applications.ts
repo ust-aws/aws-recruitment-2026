@@ -88,6 +88,8 @@ export const SEED_APPLICATIONS: Application[] = [
     lastName: "Escosia",
     email: "lykanicole.escosia.cics@ust.edu.ph",
     age: 21,
+    birthday: null,
+    gender: null,
     section: "3ISB",
     motivation: lorem,
     choices: [
@@ -118,6 +120,8 @@ export const SEED_APPLICATIONS: Application[] = [
     lastName: "Casihan",
     email: "carlraymond.casihan.cscs@ust.edu.ph",
     age: 20,
+    birthday: null,
+    gender: null,
     section: "3ISB",
     motivation: lorem,
     choices: [
@@ -148,6 +152,8 @@ export const SEED_APPLICATIONS: Application[] = [
     lastName: "Rosales",
     email: "benedict.rosales.cscs@ust.edu.ph",
     age: 21,
+    birthday: null,
+    gender: null,
     section: "3CSA",
     motivation: lorem,
     choices: [
@@ -178,6 +184,8 @@ export const SEED_APPLICATIONS: Application[] = [
     lastName: "Grimaldo",
     email: "halleclarice.grimaldo.cscs@ust.edu.ph",
     age: 19,
+    birthday: null,
+    gender: null,
     section: "2ISB",
     motivation: lorem,
     choices: [

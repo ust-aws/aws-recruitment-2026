@@ -3,6 +3,7 @@ import {
   getApplicantSession,
   requireApplicantAuth,
 } from "../applicant-auth";
+import { unavailableApiError } from "../lib/api-errors";
 import {
   bookApplicantInterview,
   getApplicantInterviewSchedule,
@@ -45,8 +46,16 @@ applicantInterviewRoutes.get("/interview-slots", async (c) => {
     );
     return c.json(schedule);
   } catch (error) {
-    const result = schedulingError(error);
-    return c.json(result.body, result.status);
+    if (error instanceof InterviewScheduleError) {
+      const result = schedulingError(error);
+      return c.json(result.body, result.status);
+    }
+    return unavailableApiError(
+      c,
+      error,
+      "applicant interview slots",
+      "Interview scheduling is temporarily unavailable. Try again in a moment.",
+    );
   }
 });
 
@@ -68,7 +77,15 @@ applicantInterviewRoutes.put("/interview-booking", async (c) => {
     );
     return c.json({ booking });
   } catch (error) {
-    const result = schedulingError(error);
-    return c.json(result.body, result.status);
+    if (error instanceof InterviewScheduleError) {
+      const result = schedulingError(error);
+      return c.json(result.body, result.status);
+    }
+    return unavailableApiError(
+      c,
+      error,
+      "applicant interview booking",
+      "Could not confirm your interview slot. Try again in a moment.",
+    );
   }
 });

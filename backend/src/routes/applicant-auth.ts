@@ -9,7 +9,13 @@ import {
   requireApplicantAuth,
   signApplicantToken,
 } from "../applicant-auth";
-import { issueApplicantOtp, verifyApplicantOtp } from "../lib/applicant-otp";
+import { unavailableApiError } from "../lib/api-errors";
+import {
+  OTP_RESEND_SECONDS,
+  OTP_REQUEST_WINDOW_SECONDS,
+  issueApplicantOtp,
+  verifyApplicantOtp,
+} from "../lib/applicant-otp";
 
 export const applicantAuthRoutes = new Hono();
 
@@ -53,11 +59,30 @@ applicantAuthRoutes.post("/request-code", async (c) => {
 
   try {
     assertApplicantAuthConfigured();
-    await issueApplicantOtp(identity.applicationCode, identity.email);
+    const result = await issueApplicantOtp(
+      identity.applicationCode,
+      identity.email,
+    );
+    if (result.status === "throttled") {
+      const retryAfter =
+        result.reason === "cooldown"
+          ? OTP_RESEND_SECONDS
+          : OTP_REQUEST_WINDOW_SECONDS;
+      const error =
+        result.reason === "cooldown"
+          ? "Wait before requesting another code."
+          : "Too many codes this hour. Try again later.";
+      c.header("Retry-After", String(retryAfter));
+      return c.json({ error }, 429);
+    }
     return c.json({ message: REQUEST_MESSAGE }, 202);
   } catch (err) {
-    console.error("applicant OTP request failed", err);
-    return c.json({ error: "Applicant verification is unavailable." }, 503);
+    return unavailableApiError(
+      c,
+      err,
+      "applicant OTP request",
+      "Applicant verification is unavailable. Try again in a moment.",
+    );
   }
 });
 
@@ -95,8 +120,12 @@ applicantAuthRoutes.post("/verify-code", async (c) => {
       expiresAt: signed.expiresAt,
     });
   } catch (err) {
-    console.error("applicant OTP verification failed", err);
-    return c.json({ error: "Applicant verification is unavailable." }, 503);
+    return unavailableApiError(
+      c,
+      err,
+      "applicant OTP verify",
+      "Applicant verification is unavailable. Try again in a moment.",
+    );
   }
 });
 
@@ -106,6 +135,9 @@ applicantAuthRoutes.get("/me", requireApplicantAuth, (c) => {
 });
 
 applicantAuthRoutes.post("/logout", (c) => {
-  deleteCookie(c, APPLICANT_AUTH_COOKIE_NAME, { path: "/" });
+  deleteCookie(c, APPLICANT_AUTH_COOKIE_NAME, {
+    ...applicantCookieOptions(0),
+    maxAge: 0,
+  });
   return c.body(null, 204);
 });

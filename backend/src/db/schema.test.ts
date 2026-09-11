@@ -77,6 +77,8 @@ test("application foundation database constraints", async (t) => {
       lastName: "Applicant",
       email: `${id}@example.com`,
       age: 20,
+      birthday: "2005-06-15",
+      gender: "male",
       section: "TEST-1",
     });
     return id;

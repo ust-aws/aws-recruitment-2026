@@ -13,8 +13,8 @@ import {
   pageSlice,
 } from "@/components/hr/application-pagination-utils"
 import { ApplicationRow } from "@/components/hr/application-row"
+import { ApplicationListSkeleton } from "@/components/hr/application-list-skeleton"
 import { HrDeleteApplicantDialog } from "@/components/hr/hr-delete-applicant-dialog"
-import { HrRecruitmentWindow } from "@/components/hr/hr-recruitment-window"
 import { fullName, hasCommittee, useApplications } from "@/lib/api"
 import { pageShellClasses } from "@/lib/surface"
 import type { Application } from "@/lib/application-types"
@@ -75,7 +75,6 @@ export function HrApplicationList() {
         title="Applications Results"
         subtitle="Every R101 application so far."
       />
-      <HrRecruitmentWindow />
       {feedback ? (
         <ActionFeedback type={feedback.type} message={feedback.message} />
       ) : null}
@@ -83,7 +82,7 @@ export function HrApplicationList() {
         <ApplicationFilters value={filters} onChange={onFiltersChange} />
       </div>
       {loading ? (
-        <p className={emptyClasses}>Loading applications…</p>
+        <ApplicationListSkeleton />
       ) : error ? (
         <p className={emptyClasses}>{error}</p>
       ) : visible.length === 0 ? (

@@ -1,92 +1,115 @@
 "use client"
 
-import { useId, useState } from "react"
-import { Field } from "@/components/field"
-import { cn } from "@/lib/utils"
+
+
+import { PdfFileDrop } from "@/components/apply/pdf-file-drop"
+
+import { documentFileNameFormatExample } from "@/lib/apply-field-validation"
+
+import type { DocumentType } from "@/lib/application-types"
+
+
 
 const stackClasses = "flex flex-col gap-5"
-const dropClasses =
-  "flex min-h-24 cursor-pointer items-center justify-center rounded-[20px] border border-dashed border-biloba-flower/50 bg-haiti/35 px-4 py-6 text-center font-sans text-sm text-prelude transition-colors"
-const dropActiveClasses = "border-aquamarine/70 bg-haiti/55 text-blue-chalk"
-const inputClasses = "sr-only"
 
-type FileDropProps = {
-  label: string
-  file: File | null
-  displayName?: string
-  onFile: (file: File | null) => void
-}
 
-function FileDrop({ label, file, displayName, onFile }: FileDropProps) {
-  const id = useId()
-  const [active, setActive] = useState(false)
-
-  function takeFile(list: FileList | null) {
-    const next = list?.[0]
-    if (!next) return
-    if (next.type !== "application/pdf") return
-    onFile(next)
-  }
-
-  return (
-    <Field label={label} htmlFor={id} required>
-      <label
-        htmlFor={id}
-        className={cn(dropClasses, (active || file) && dropActiveClasses)}
-        onDragOver={(event) => {
-          event.preventDefault()
-          setActive(true)
-        }}
-        onDragLeave={() => setActive(false)}
-        onDrop={(event) => {
-          event.preventDefault()
-          setActive(false)
-          takeFile(event.dataTransfer.files)
-        }}
-      >
-        {file?.name ?? displayName ?? "drag and drop or click to browse (.pdf)"}
-      </label>
-      <input
-        id={id}
-        type="file"
-        accept="application/pdf"
-        className={inputClasses}
-        onChange={(event) => takeFile(event.target.files)}
-      />
-    </Field>
-  )
-}
 
 export type UploadValues = {
+
   resume: File | null
+
   transcript: File | null
-  /** Shown after refresh when the File object cannot be restored. */
+
+  registration: File | null
+
   resumeDisplayName?: string
+
   transcriptDisplayName?: string
+
+  registrationDisplayName?: string
+
 }
+
+
 
 type UploadStepProps = {
+
   values: UploadValues
+
   onChange: (patch: Partial<UploadValues>) => void
+
 }
 
-export function UploadStep({ values, onChange }: UploadStepProps) {
-  return (
-    <div className={stackClasses}>
-      <FileDrop
-        label="Resume"
-        file={values.resume}
-        displayName={values.resumeDisplayName}
-        onFile={(resume) => onChange({ resume, resumeDisplayName: undefined })}
-      />
-      <FileDrop
-        label="Transcript of Records (TOR)"
-        file={values.transcript}
-        displayName={values.transcriptDisplayName}
-        onFile={(transcript) =>
-          onChange({ transcript, transcriptDisplayName: undefined })
-        }
-      />
-    </div>
-  )
+
+
+function fileHint(documentType: DocumentType) {
+
+  return `Save your PDF as ${documentFileNameFormatExample(documentType)}`
+
 }
+
+
+
+export function UploadStep({ values, onChange }: UploadStepProps) {
+
+  return (
+
+    <div className={stackClasses}>
+
+      <PdfFileDrop
+
+        label="Curriculum Vitae"
+
+        hint={fileHint("resume")}
+
+        file={values.resume}
+
+        displayName={values.resumeDisplayName}
+
+        onFile={(resume) => onChange({ resume, resumeDisplayName: undefined })}
+
+      />
+
+      <PdfFileDrop
+
+        label="Transcript of Records (TOR)"
+
+        hint={fileHint("transcript")}
+
+        file={values.transcript}
+
+        displayName={values.transcriptDisplayName}
+
+        onFile={(transcript) =>
+
+          onChange({ transcript, transcriptDisplayName: undefined })
+
+        }
+
+      />
+
+      <PdfFileDrop
+
+        label="Registration Form"
+
+        hint={fileHint("registration")}
+
+        file={values.registration}
+
+        displayName={values.registrationDisplayName}
+
+        onFile={(registration) =>
+
+          onChange({ registration, registrationDisplayName: undefined })
+
+        }
+
+      />
+
+    </div>
+
+  )
+
+}
+
+

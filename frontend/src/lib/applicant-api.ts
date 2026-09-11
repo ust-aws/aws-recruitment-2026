@@ -1,4 +1,8 @@
 import { ApiError } from "./api-client"
+import {
+  readApiErrorMessage,
+  userFacingApiError,
+} from "./api-error-message"
 
 export type ApplicantChoice = {
   preferenceRank: 1 | 2
@@ -9,7 +13,7 @@ export type ApplicantChoice = {
 }
 
 export type ApplicantDocument = {
-  documentType: "resume" | "transcript"
+  documentType: "resume" | "transcript" | "registration"
   fileName: string
 }
 
@@ -19,8 +23,15 @@ export type ApplicantApplication = {
   lastName: string
   email: string
   age: number | null
+  birthday: string | null
+  gender: string | null
   section: string | null
+  studentNumber: string | null
+  contactNumber: string | null
+  facebookUrl: string | null
   motivation: string
+  portfolioUrl: string | null
+  githubUrl: string | null
   choices: ApplicantChoice[]
   documents: ApplicantDocument[]
   canEdit: boolean
@@ -30,6 +41,11 @@ export type ApplicantApplication = {
 
 export type ApplicantInterviewSlot = {
   id: string
+  startsAt: string
+  endsAt: string
+}
+
+export type ApplicantInterviewSlotTime = {
   startsAt: string
   endsAt: string
 }
@@ -46,6 +62,7 @@ export type ApplicantInterviewSchedule = {
     bookedAt: string
   } | null
   slots: ApplicantInterviewSlot[]
+  booked: ApplicantInterviewSlotTime[]
 }
 
 async function applicantFetch<T>(
@@ -64,21 +81,15 @@ async function applicantFetch<T>(
   if (response.status === 204) return undefined as T
 
   if (!response.ok) {
-    let message = `Request failed (${response.status})`
-    try {
-      const body: unknown = await response.json()
-      if (
-        body &&
-        typeof body === "object" &&
-        "error" in body &&
-        typeof body.error === "string"
-      ) {
-        message = body.error
-      }
-    } catch {
-      // Keep the status fallback when the API does not return JSON.
-    }
-    throw new ApiError(response.status, message)
+    const serverMessage = await readApiErrorMessage(response)
+    throw new ApiError(
+      response.status,
+      userFacingApiError(
+        response.status,
+        serverMessage,
+        "Could not reach your application. Try signing in again."
+      )
+    )
   }
 
   return response.json() as Promise<T>
@@ -91,6 +102,21 @@ export function getApplicantApplication() {
 export function updateApplicantChoices(body: {
   choices: { positionId: string; preferenceRank: 1 | 2 }[]
   slotId?: string
+  portfolioUrl?: string
+  githubUrl?: string
+}) {
+  return applicantFetch<ApplicantApplication>("/applicant/application", {
+    method: "PATCH",
+    body: JSON.stringify(body),
+  })
+}
+
+export function updateApplicantDocuments(body: {
+  documents: {
+    documentType: ApplicantDocument["documentType"]
+    fileName: string
+    s3Key: string
+  }[]
 }) {
   return applicantFetch<ApplicantApplication>("/applicant/application", {
     method: "PATCH",
@@ -105,6 +131,24 @@ export function getApplicantInterviewSlots(positionId?: string) {
   return applicantFetch<ApplicantInterviewSchedule>(
     `/applicant/interview-slots${query}`
   )
+}
+
+export function putApplicantInterviewBooking(slotId: string) {
+  return applicantFetch<{
+    booking: {
+      id: string
+      slotId: string
+      committeeId: string
+      committeeName: string
+      startsAt: string
+      endsAt: string
+      bookedAt: string
+      rescheduled: boolean
+    }
+  }>("/applicant/interview-booking", {
+    method: "PUT",
+    body: JSON.stringify({ slotId }),
+  })
 }
 
 export async function logoutApplicant() {

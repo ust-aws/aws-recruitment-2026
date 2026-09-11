@@ -3,7 +3,11 @@
 import { useState } from "react"
 import { Field } from "@/components/field"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
 import {
   requestApplicantCode,
   verifyApplicantCode,
@@ -11,7 +15,6 @@ import {
 } from "@/lib/applicant-auth-api"
 import { APPLICANT_OTP_RESEND_SECONDS } from "@/lib/constants"
 import {
-  fieldControlClasses,
   glassPanelClasses,
   ghostPillButtonClasses,
 } from "@/lib/surface"
@@ -95,21 +98,23 @@ export function ApplicantCodeForm({
           <p className={`mt-2 ${messageClasses}`}>{message}</p>
         </div>
         <Field label="Six-digit verification code" htmlFor="otp" required>
-          <Input
+          <InputOTP
             id="otp"
-            type="text"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            pattern="[0-9]{6}"
             maxLength={6}
-            required
-            placeholder="000000"
+            autoComplete="one-time-code"
             value={code}
-            onChange={(event) =>
-              setCode(event.target.value.replace(/\D/g, "").slice(0, 6))
-            }
-            className={fieldControlClasses}
-          />
+            onChange={setCode}
+            containerClassName="justify-center"
+          >
+            <InputOTPGroup className="gap-2">
+              <InputOTPSlot index={0} />
+              <InputOTPSlot index={1} />
+              <InputOTPSlot index={2} />
+              <InputOTPSlot index={3} />
+              <InputOTPSlot index={4} />
+              <InputOTPSlot index={5} />
+            </InputOTPGroup>
+          </InputOTP>
         </Field>
         {error ? (
           <p className={errorClasses} role="alert">

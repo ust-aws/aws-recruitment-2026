@@ -98,14 +98,14 @@
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
   --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --sidebar: var(--haiti);
+  --sidebar-foreground: var(--blue-chalk);
+  --sidebar-primary: var(--aquamarine);
+  --sidebar-primary-foreground: var(--haiti);
+  --sidebar-accent: var(--meteorite);
+  --sidebar-accent-foreground: var(--blue-chalk);
+  --sidebar-border: color-mix(in oklch, var(--blue-chalk) 15%, transparent);
+  --sidebar-ring: color-mix(in oklch, var(--biloba-flower) 55%, transparent);
 }
 
 .dark {
@@ -187,6 +187,27 @@
 @media (prefers-reduced-motion: reduce) {
   .reveal {
     animation: none;
+  }
+}
+
+@utility hero-title-fade {
+  animation: hero-title-fade 750ms ease-out forwards;
+  opacity: 0;
+}
+
+@keyframes hero-title-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-title-fade {
+    animation: none;
+    opacity: 1;
   }
 }
 

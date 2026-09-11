@@ -12,7 +12,10 @@ export async function getServerSession(): Promise<{ email: string } | null> {
       headers: { Cookie: `hr_token=${token.value}` },
       cache: "no-store",
     })
-    if (!response.ok) return null
+    if (!response.ok) {
+      cookieStore.delete("hr_token")
+      return null
+    }
     return (await response.json()) as { email: string }
   } catch {
     return null

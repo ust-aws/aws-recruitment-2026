@@ -7,6 +7,7 @@ import {
   committees,
   positions,
   recruitmentWindows,
+  interviewWindows,
   users,
 } from "./schema";
 import { POSITION_SEEDS } from "./position-seeds";
@@ -52,6 +53,21 @@ async function main() {
     .onConflictDoUpdate({
       target: recruitmentWindows.singleton,
       set: { startsAt, endsAt },
+    });
+
+  const interviewStartsAt = new Date(startsAt);
+  interviewStartsAt.setMonth(interviewStartsAt.getMonth() + 1);
+  const interviewEndsAt = new Date(interviewStartsAt.getTime() + 45 * 24 * 60 * 60 * 1000);
+  await db
+    .insert(interviewWindows)
+    .values({
+      singleton: 1,
+      startsAt: interviewStartsAt,
+      endsAt: interviewEndsAt,
+    })
+    .onConflictDoUpdate({
+      target: interviewWindows.singleton,
+      set: { startsAt: interviewStartsAt, endsAt: interviewEndsAt },
     });
 
   const [seedReviewer] = await db
@@ -116,10 +132,54 @@ async function main() {
   const positionIdByName = new Map(positionRows.map((p) => [p.name, p.id]));
 
   const applicantSeeds = [
-    { firstName: "Ana", lastName: "Cruz", email: "ana.cruz@example.com", age: 20, section: "BSCS-3A" },
-    { firstName: "Ben", lastName: "Santos", email: "ben.santos@example.com", age: 21, section: "BSIT-3B" },
-    { firstName: "Carla", lastName: "Mendoza", email: "carla.mendoza@example.com", age: 19, section: "BSCS-2A" },
-    { firstName: "Dario", lastName: "Aquino", email: "dario.aquino@example.com", age: 22, section: "BSIT-4A" },
+    {
+      firstName: "Ana",
+      lastName: "Cruz",
+      email: "ana.cruz@example.com",
+      age: 20,
+      birthday: "2006-03-14",
+      gender: "female" as const,
+      section: "3CSC",
+      studentNumber: "2023001001",
+      contactNumber: "+639171000001",
+      facebookUrl: "https://facebook.com/ana.cruz",
+    },
+    {
+      firstName: "Ben",
+      lastName: "Santos",
+      email: "ben.santos@example.com",
+      age: 21,
+      birthday: "2005-07-22",
+      gender: "male" as const,
+      section: "3ITB",
+      studentNumber: "2023001002",
+      contactNumber: "+639171000002",
+      facebookUrl: "https://facebook.com/ben.santos",
+    },
+    {
+      firstName: "Carla",
+      lastName: "Mendoza",
+      email: "carla.mendoza@example.com",
+      age: 19,
+      birthday: "2007-01-08",
+      gender: "female" as const,
+      section: "2CSC",
+      studentNumber: "2024001003",
+      contactNumber: "+639171000003",
+      facebookUrl: "https://facebook.com/carla.mendoza",
+    },
+    {
+      firstName: "Dario",
+      lastName: "Aquino",
+      email: "dario.aquino@example.com",
+      age: 22,
+      birthday: "2004-11-30",
+      gender: "male" as const,
+      section: "4ITA",
+      studentNumber: "2022001004",
+      contactNumber: "+639171000004",
+      facebookUrl: "https://facebook.com/dario.aquino",
+    },
   ];
 
   const existingApplicants = await db.select().from(applicants);
@@ -127,6 +187,21 @@ async function main() {
   const newApplicantSeeds = applicantSeeds.filter((a) => !existingEmails.has(a.email));
   if (newApplicantSeeds.length > 0) {
     await db.insert(applicants).values(newApplicantSeeds);
+  }
+
+  for (const seed of applicantSeeds) {
+    await db
+      .update(applicants)
+      .set({
+        birthday: seed.birthday,
+        age: seed.age,
+        gender: seed.gender,
+        section: seed.section,
+        studentNumber: seed.studentNumber,
+        contactNumber: seed.contactNumber,
+        facebookUrl: seed.facebookUrl,
+      })
+      .where(eq(applicants.email, seed.email));
   }
 
   const applicantRows = await db.select().from(applicants);

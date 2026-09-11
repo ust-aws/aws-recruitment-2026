@@ -65,3 +65,19 @@ export async function loginAction(
 
   redirect("/admin/hr")
 }
+
+export async function logoutHrSession(): Promise<void> {
+  const cookieStore = await cookies()
+  cookieStore.delete("hr_token")
+
+  try {
+    await fetch(`${API_BASE}/auth/logout`, {
+      method: "POST",
+      cache: "no-store",
+    })
+  } catch {
+    // Cookie is already cleared for the Next app; ignore API errors.
+  }
+
+  redirect("/login")
+}

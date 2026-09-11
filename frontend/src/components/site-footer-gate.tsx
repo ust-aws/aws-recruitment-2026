@@ -4,10 +4,7 @@ import { usePathname } from "next/navigation"
 import { SiteFooter } from "@/components/site-footer"
 
 function shouldHideFooter(pathname: string) {
-  return (
-    pathname.startsWith("/apply/dashboard") ||
-    pathname.startsWith("/admin/hr")
-  )
+  return pathname.startsWith("/apply") || pathname.startsWith("/admin/hr")
 }
 
 export function SiteFooterGate() {

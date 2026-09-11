@@ -51,13 +51,18 @@ function generateOtp(): string {
   return randomInt(0, 1_000_000).toString().padStart(6, "0");
 }
 
+export type IssueApplicantOtpResult =
+  | { status: "issued" }
+  | { status: "unknown_identity" }
+  | { status: "throttled"; reason: "cooldown" | "hourly" };
+
 export async function issueApplicantOtp(
   applicationCode: string,
   email: string,
   now = new Date(),
-): Promise<boolean> {
+): Promise<IssueApplicantOtpResult> {
   const identity = await findApplicantIdentity(applicationCode, email);
-  if (!identity) return false;
+  if (!identity) return { status: "unknown_identity" };
 
   const windowStart = new Date(
     now.getTime() - OTP_REQUEST_WINDOW_SECONDS * 1000,
@@ -75,12 +80,22 @@ export async function issueApplicantOtp(
     .limit(OTP_MAX_REQUESTS_PER_WINDOW);
 
   const cooldownStart = new Date(now.getTime() - OTP_RESEND_SECONDS * 1000);
-  if (
-    recent.length >= OTP_MAX_REQUESTS_PER_WINDOW ||
-    (recent[0] && recent[0].createdAt > cooldownStart)
-  ) {
-    return false;
+  if (recent.length >= OTP_MAX_REQUESTS_PER_WINDOW) {
+    return { status: "throttled", reason: "hourly" };
   }
+  if (recent[0] && recent[0].createdAt > cooldownStart) {
+    return { status: "throttled", reason: "cooldown" };
+  }
+
+  await db
+    .update(applicantOtpChallenges)
+    .set({ consumedAt: now })
+    .where(
+      and(
+        eq(applicantOtpChallenges.applicationId, identity.applicationId),
+        isNull(applicantOtpChallenges.consumedAt),
+      ),
+    );
 
   const challengeId = randomUUID();
   const code = generateOtp();
@@ -104,7 +119,7 @@ export async function issueApplicantOtp(
   } catch (err) {
     console.error("applicant OTP email failed", err);
   }
-  return true;
+  return { status: "issued" };
 }
 
 export async function verifyApplicantOtp(
@@ -116,33 +131,35 @@ export async function verifyApplicantOtp(
   const identity = await findApplicantIdentity(applicationCode, email);
   if (!identity) return null;
 
-  const [challenge] = await db
+  const challenges = await db
     .select()
     .from(applicantOtpChallenges)
     .where(
       and(
         eq(applicantOtpChallenges.applicationId, identity.applicationId),
         isNull(applicantOtpChallenges.consumedAt),
+        gt(applicantOtpChallenges.expiresAt, now),
+        lt(applicantOtpChallenges.attempts, OTP_MAX_ATTEMPTS),
       ),
     )
-    .orderBy(desc(applicantOtpChallenges.createdAt))
-    .limit(1);
+    .orderBy(desc(applicantOtpChallenges.createdAt));
 
-  if (
-    !challenge ||
-    challenge.expiresAt <= now ||
-    challenge.attempts >= OTP_MAX_ATTEMPTS
-  ) {
+  if (challenges.length === 0) {
     return null;
   }
 
-  if (!applicantOtpMatches(challenge.id, code, challenge.codeHash)) {
+  const matched = challenges.find((challenge) =>
+    applicantOtpMatches(challenge.id, code, challenge.codeHash),
+  );
+
+  if (!matched) {
+    const [latest] = challenges;
     await db
       .update(applicantOtpChallenges)
       .set({ attempts: sql`${applicantOtpChallenges.attempts} + 1` })
       .where(
         and(
-          eq(applicantOtpChallenges.id, challenge.id),
+          eq(applicantOtpChallenges.id, latest.id),
           isNull(applicantOtpChallenges.consumedAt),
           lt(applicantOtpChallenges.attempts, OTP_MAX_ATTEMPTS),
         ),
@@ -155,7 +172,7 @@ export async function verifyApplicantOtp(
     .set({ consumedAt: now })
     .where(
       and(
-        eq(applicantOtpChallenges.id, challenge.id),
+        eq(applicantOtpChallenges.id, matched.id),
         isNull(applicantOtpChallenges.consumedAt),
         lt(applicantOtpChallenges.attempts, OTP_MAX_ATTEMPTS),
         gt(applicantOtpChallenges.expiresAt, now),

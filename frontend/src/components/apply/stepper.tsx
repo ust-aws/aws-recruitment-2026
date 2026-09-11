@@ -5,19 +5,22 @@ import { m, useReducedMotion } from "motion/react"
 import { cn } from "@/lib/utils"
 
 const STEPS = [
-  { n: 1, label: "General Info" },
-  { n: 2, label: "Committee" },
-  { n: 3, label: "Resume" },
+  { n: 1, label: "Privacy" },
+  { n: 2, label: "General Info" },
+  { n: 3, label: "Committee" },
+  { n: 4, label: "Documents" },
+  { n: 5, label: "Review" },
+  { n: 6, label: "Success" },
 ] as const
 
-const rowClasses = "mx-auto flex w-full max-w-md items-start justify-center"
-const connectorClasses = "mt-4 h-px min-w-8 flex-1 bg-biloba-flower/40"
+const rowClasses = "mx-auto flex w-full max-w-3xl items-start justify-center"
+const connectorClasses = "mt-4 h-px min-w-4 flex-1 bg-biloba-flower/40"
 const circleBase =
-  "flex size-9 items-center justify-center rounded-full font-sans text-sm font-semibold"
+  "flex size-8 items-center justify-center rounded-full font-sans text-xs font-semibold sm:size-9 sm:text-sm"
 const currentCircle = `${circleBase} bg-aquamarine text-haiti border border-transparent`
 const completeCircle = `${circleBase} bg-biloba-flower text-haiti border border-transparent`
 const upcomingCircle = `${circleBase} border border-prelude/50 bg-transparent text-prelude`
-const labelBase = "mt-2 text-center font-sans text-xs"
+const labelBase = "mt-2 text-center font-sans text-[10px] sm:text-xs"
 const currentLabel = `${labelBase} text-aquamarine`
 const completeLabel = `${labelBase} text-prelude`
 const upcomingLabel = `${labelBase} text-prelude/70`
@@ -26,7 +29,7 @@ const bubbleSpring = { type: "spring" as const, stiffness: 400, damping: 35 }
 const bubbleSnap = { duration: 0 }
 
 type StepperProps = {
-  current: 1 | 2 | 3
+  current: 1 | 2 | 3 | 4 | 5 | 6
 }
 
 export function ApplyStepper({ current }: StepperProps) {
@@ -56,7 +59,7 @@ export function ApplyStepper({ current }: StepperProps) {
                 transition={transition}
               />
             ) : null}
-            <div className="flex flex-col items-center px-2">
+            <div className="flex flex-col items-center px-1 sm:px-2">
               <m.span
                 className={cn(
                   state === "current" && currentCircle,
@@ -77,7 +80,7 @@ export function ApplyStepper({ current }: StepperProps) {
                     transition={transition}
                     className="inline-flex"
                   >
-                    <Check className="size-4" strokeWidth={3} />
+                    <Check className="size-3.5 sm:size-4" strokeWidth={3} />
                   </m.span>
                 ) : (
                   step.n

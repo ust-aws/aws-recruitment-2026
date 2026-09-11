@@ -4,6 +4,7 @@ import {
   createInterviewSlot,
   InterviewScheduleError,
   listInterviewSlotsForHr,
+  resetInterviewScheduleForCommittee,
   setInterviewSlotOpen,
 } from "../lib/interview-scheduling";
 
@@ -56,6 +57,21 @@ interviewSlotsRoutes.get("/", async (c) => {
 
   const slots = await listInterviewSlotsForHr({ committeeId, from, to });
   return c.json({ slots });
+});
+
+interviewSlotsRoutes.delete("/", async (c) => {
+  const committeeId = c.req.query("committeeId");
+  if (!committeeId || !isUuid(committeeId)) {
+    return c.json({ error: "committeeId must be a UUID." }, 400);
+  }
+
+  try {
+    const result = await resetInterviewScheduleForCommittee(committeeId);
+    return c.json(result);
+  } catch (error) {
+    const result = schedulingError(error);
+    return c.json(result.body, result.status);
+  }
 });
 
 interviewSlotsRoutes.post("/", async (c) => {

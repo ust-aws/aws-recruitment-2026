@@ -3,13 +3,12 @@
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { logout } from "@/lib/api"
 import { logoutApplicant } from "@/lib/applicant-api"
 import { chromeBarClasses } from "@/lib/surface"
 
 const headerClasses = `sticky top-0 z-50 ${chromeBarClasses}`
 const innerClasses =
-  "mx-auto flex max-w-[1180px] items-center gap-2 px-4 py-5 md:px-10"
+  "mx-auto flex max-w-[1180px] items-center gap-2 px-4 py-4 md:px-10 md:py-5"
 const topRowClasses =
   "flex w-full items-center gap-2 font-mono text-xs tracking-wide text-prelude"
 const brandClasses = "font-sans text-sm font-semibold text-blue-chalk"
@@ -18,7 +17,6 @@ const slashClasses = "text-prelude/40"
 const trailingActionClasses = "ml-auto"
 
 function crumbsFor(pathname: string) {
-  if (pathname.startsWith("/admin")) return ["admin", "hr"]
   if (pathname.startsWith("/apply")) return ["apply"]
   return pathname.split("/").filter(Boolean)
 }
@@ -27,14 +25,8 @@ export function ApplyAdminChrome() {
   const pathname = usePathname()
   const router = useRouter()
   const crumbs = crumbsFor(pathname)
-  const isAdmin = pathname.startsWith("/admin")
   const isApplyFlow = pathname.startsWith("/apply")
   const isApplicantDashboard = pathname.startsWith("/apply/dashboard")
-
-  async function onLogout() {
-    await logout()
-    router.replace("/login")
-  }
 
   async function onApplicantSignOut() {
     await logoutApplicant()
@@ -54,16 +46,6 @@ export function ApplyAdminChrome() {
               {crumb}
             </span>
           ))}
-          {isAdmin ? (
-            <Button
-              type="button"
-              color="purple"
-              className={trailingActionClasses}
-              onClick={() => void onLogout()}
-            >
-              Logout
-            </Button>
-          ) : null}
           {isApplicantDashboard ? (
             <Button
               type="button"

@@ -3,6 +3,10 @@ import { and, asc, eq } from "drizzle-orm";
 import { db } from "../db";
 import { committees, positions } from "../db/schema";
 import { requireAuth } from "../auth";
+import {
+  InterviewScheduleError,
+  listOpenInterviewSlotsForPosition,
+} from "../lib/interview-scheduling";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -204,6 +208,24 @@ positionsRoutes.get("/", async (c) => {
   const rows =
     scope === "all" ? await selectAllPositions() : await selectOpenPositions();
   return c.json(rows.map(toPositionResponse));
+});
+
+positionsRoutes.get("/:id/interview-slots", async (c) => {
+  const id = c.req.param("id");
+  if (!isUuid(id)) {
+    return c.json({ error: "Invalid position id." }, 400);
+  }
+
+  try {
+    const schedule = await listOpenInterviewSlotsForPosition(id);
+    return c.json(schedule);
+  } catch (error) {
+    if (error instanceof InterviewScheduleError) {
+      const status = error.code === "position_not_found" ? 404 : 409;
+      return c.json({ error: error.message }, status);
+    }
+    throw error;
+  }
 });
 
 positionsRoutes.post("/", requireAuth, async (c) => {

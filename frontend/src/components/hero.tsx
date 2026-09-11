@@ -176,7 +176,7 @@ export function Hero() {
           >
             <svg
               aria-hidden="true"
-              className="h-full w-full overflow-visible"
+              className="hero-title-fade h-full w-full overflow-visible"
               viewBox="0 0 1200 400"
               role="presentation"
             >

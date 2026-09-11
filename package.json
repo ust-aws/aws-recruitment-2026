@@ -8,6 +8,7 @@
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d postgres",
     "db:push": "pnpm --filter backend db:push",
+    "db:sync": "pnpm --filter backend db:sync",
     "db:seed": "pnpm --filter backend db:seed",
     "test": "pnpm --filter backend test",
     "deploy": "pnpm --filter backend deploy",

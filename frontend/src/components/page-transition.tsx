@@ -8,6 +8,7 @@ import { pageEnterOffset } from "@/lib/navigation-motion"
 
 const shellClasses = "overflow-x-clip"
 const pageClasses = "w-full transform-gpu"
+const hrPageClasses = "h-svh w-full overflow-hidden"
 
 type PageTransitionProps = {
   children: ReactNode
@@ -15,11 +16,16 @@ type PageTransitionProps = {
 
 export function PageTransition({ children }: PageTransitionProps) {
   const pathname = usePathname()
+  const isHrDashboard = pathname.startsWith("/admin/hr")
   const { direction, transition, animatePage, clearPageAnimation } =
     useNavigationMotion()
 
   if (!animatePage) {
-    return <div className={pageClasses}>{children}</div>
+    return (
+      <div className={isHrDashboard ? hrPageClasses : pageClasses}>
+        {children}
+      </div>
+    )
   }
 
   return (

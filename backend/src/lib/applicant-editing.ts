@@ -1,4 +1,4 @@
-import { eq, inArray } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { db } from "../db";
 import {
   applicants,
@@ -11,15 +11,30 @@ import {
   positions,
 } from "../db/schema";
 import { resolveApplicantEditEligibility } from "./applicant-edit-policy";
+import {
+  documentFileNameMatches,
+  isValidDevUploadS3Key,
+  validateChoiceUrls,
+} from "./apply-field-validation";
+import { formatBirthday, type DocumentType } from "./applications";
 
 export type ApplicantChoiceInput = {
   positionId: string;
   preferenceRank: 1 | 2;
 };
 
+export type ApplicantDocumentInput = {
+  documentType: DocumentType;
+  fileName: string;
+  s3Key: string;
+};
+
 export type UpdateApplicantApplicationInput = {
-  choices: ApplicantChoiceInput[];
+  choices?: ApplicantChoiceInput[];
   slotId?: string;
+  portfolioUrl?: string;
+  githubUrl?: string;
+  documents?: ApplicantDocumentInput[];
 };
 
 export type ApplicantEditErrorCode =
@@ -66,8 +81,15 @@ export async function getApplicantEditableApplication(applicationId: string) {
       lastName: applicants.lastName,
       email: applicants.email,
       age: applicants.age,
+      birthday: applicants.birthday,
+      gender: applicants.gender,
       section: applicants.section,
+      studentNumber: applicants.studentNumber,
+      contactNumber: applicants.contactNumber,
+      facebookUrl: applicants.facebookUrl,
       motivation: applications.motivation,
+      portfolioUrl: applications.portfolioUrl,
+      githubUrl: applications.githubUrl,
     })
     .from(applications)
     .innerJoin(applicants, eq(applications.applicantId, applicants.id))
@@ -112,8 +134,15 @@ export async function getApplicantEditableApplication(applicationId: string) {
     lastName: application.lastName,
     email: application.email,
     age: application.age,
+    birthday: formatBirthday(application.birthday),
+    gender: application.gender,
     section: application.section,
+    studentNumber: application.studentNumber,
+    contactNumber: application.contactNumber,
+    facebookUrl: application.facebookUrl,
     motivation: application.motivation,
+    portfolioUrl: application.portfolioUrl,
+    githubUrl: application.githubUrl,
     choices: sortedChoices.map((choice) => ({
       preferenceRank: choice.preferenceRank as 1 | 2,
       positionId: choice.positionId,
@@ -151,6 +180,44 @@ export async function updateApplicantApplication(
   applicationId: string,
   input: UpdateApplicantApplicationInput,
 ) {
+  const [applicationPreview] = await db
+    .select({
+      status: applications.status,
+      archivedAt: applications.archivedAt,
+      resultsReleasedAt: applications.resultsReleasedAt,
+    })
+    .from(applications)
+    .where(eq(applications.id, applicationId))
+    .limit(1);
+
+  if (!applicationPreview) {
+    throw new ApplicantEditError(
+      "application_not_found",
+      "Application not found.",
+    );
+  }
+
+  const choicesPreview = await db
+    .select({ decisionStatus: applicationChoices.decisionStatus })
+    .from(applicationChoices)
+    .where(eq(applicationChoices.applicationId, applicationId));
+
+  const eligibilityPreview = await resolveApplicantEditEligibility(
+    applicationPreview,
+    choicesPreview,
+  );
+  if (!eligibilityPreview.canEdit) {
+    throw new ApplicantEditError(
+      eligibilityPreview.blockCode === "deadline_unavailable"
+        ? "editing_unavailable"
+        : "application_locked",
+      eligibilityPreview.lockReason ?? "This application cannot be edited.",
+    );
+  }
+
+  const documentsOnly =
+    input.documents !== undefined && input.choices === undefined;
+
   try {
     await db.transaction(async (tx) => {
       const [application] = await tx
@@ -158,8 +225,12 @@ export async function updateApplicantApplication(
           status: applications.status,
           archivedAt: applications.archivedAt,
           resultsReleasedAt: applications.resultsReleasedAt,
+          portfolioUrl: applications.portfolioUrl,
+          githubUrl: applications.githubUrl,
+          lastName: applicants.lastName,
         })
         .from(applications)
+        .innerJoin(applicants, eq(applications.applicantId, applicants.id))
         .where(eq(applications.id, applicationId))
         .limit(1)
         .for("update");
@@ -168,6 +239,85 @@ export async function updateApplicantApplication(
         throw new ApplicantEditError(
           "application_not_found",
           "Application not found.",
+        );
+      }
+
+      if (input.documents?.length) {
+        const types = new Set<DocumentType>();
+        for (const doc of input.documents) {
+          if (types.has(doc.documentType)) {
+            throw new ApplicantEditError(
+              "application_locked",
+              "Each document type may only appear once.",
+            );
+          }
+          types.add(doc.documentType);
+          if (
+            !documentFileNameMatches(
+              doc.documentType,
+              doc.fileName,
+              application.lastName,
+            )
+          ) {
+            throw new ApplicantEditError(
+              "application_locked",
+              "Document file names must match CV_, TOR_, and RegForm_ followed by your last name and .pdf.",
+            );
+          }
+          if (
+            !isValidDevUploadS3Key(
+              doc.s3Key,
+              doc.documentType,
+              application.lastName,
+            )
+          ) {
+            throw new ApplicantEditError(
+              "application_locked",
+              "Document upload path is invalid.",
+            );
+          }
+        }
+
+        for (const doc of input.documents) {
+          const [existing] = await tx
+            .select({ id: applicationDocuments.id })
+            .from(applicationDocuments)
+            .where(
+              and(
+                eq(applicationDocuments.applicationId, applicationId),
+                eq(applicationDocuments.documentType, doc.documentType),
+              ),
+            )
+            .limit(1);
+
+          if (existing) {
+            await tx
+              .update(applicationDocuments)
+              .set({
+                fileName: doc.fileName,
+                s3Key: doc.s3Key,
+                uploadedAt: new Date(),
+              })
+              .where(eq(applicationDocuments.id, existing.id));
+          } else {
+            await tx.insert(applicationDocuments).values({
+              applicationId,
+              documentType: doc.documentType,
+              fileName: doc.fileName,
+              s3Key: doc.s3Key,
+            });
+          }
+        }
+      }
+
+      if (documentsOnly) {
+        return;
+      }
+
+      if (!input.choices) {
+        throw new ApplicantEditError(
+          "application_locked",
+          "choices must contain exactly two items.",
         );
       }
 
@@ -202,9 +352,11 @@ export async function updateApplicantApplication(
         .select({
           id: positions.id,
           committeeId: positions.committeeId,
+          committee: committees.name,
           isOpen: positions.isOpen,
         })
         .from(positions)
+        .innerJoin(committees, eq(positions.committeeId, committees.id))
         .where(inArray(positions.id, positionIds));
 
       if (
@@ -215,6 +367,24 @@ export async function updateApplicantApplication(
           "position_unavailable",
           "One or more selected positions are unavailable.",
         );
+      }
+
+      const committeeNames = selectedPositions.map((row) => row.committee);
+      const nextPortfolio =
+        input.portfolioUrl !== undefined
+          ? input.portfolioUrl.trim()
+          : (application.portfolioUrl?.trim() ?? "");
+      const nextGithub =
+        input.githubUrl !== undefined
+          ? input.githubUrl.trim()
+          : (application.githubUrl?.trim() ?? "");
+      const urlError = validateChoiceUrls(
+        committeeNames,
+        nextPortfolio,
+        nextGithub,
+      );
+      if (urlError) {
+        throw new ApplicantEditError("application_locked", urlError);
       }
 
       const currentFirst = currentChoices.find(
@@ -319,6 +489,14 @@ export async function updateApplicantApplication(
           preferenceRank: choice.preferenceRank,
         })),
       );
+
+      await tx
+        .update(applications)
+        .set({
+          portfolioUrl: nextPortfolio || null,
+          githubUrl: nextGithub || null,
+        })
+        .where(eq(applications.id, applicationId));
     });
   } catch (error) {
     if (error instanceof ApplicantEditError) throw error;

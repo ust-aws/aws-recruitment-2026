@@ -1,4 +1,8 @@
 import { ApiError } from "./api-client"
+import {
+  readApiErrorMessage,
+  userFacingApiError,
+} from "./api-error-message"
 
 const API_BASE = "/api/applicant-auth"
 
@@ -19,24 +23,40 @@ async function applicantAuthFetch<T>(
   })
 
   if (!response.ok) {
-    let message = `Request failed (${response.status})`
-    try {
-      const payload: unknown = await response.json()
-      if (
-        payload &&
-        typeof payload === "object" &&
-        "error" in payload &&
-        typeof payload.error === "string"
-      ) {
-        message = payload.error
-      }
-    } catch {
-      // Keep the status fallback when the API does not return JSON.
-    }
-    throw new ApiError(response.status, message)
+    const serverMessage = await readApiErrorMessage(response)
+    const fallback =
+      response.status === 401
+        ? "The verification code is invalid or expired."
+        : response.status === 429
+          ? "Too many code requests. Wait and try again."
+          : "Could not verify your code. Try again in a moment."
+    throw new ApiError(
+      response.status,
+      userFacingApiError(response.status, serverMessage, fallback)
+    )
   }
 
   return response.json() as Promise<T>
+}
+
+export async function getApplicantAuthMe() {
+  const response = await fetch(`${API_BASE}/me`, {
+    method: "GET",
+    credentials: "include",
+  })
+  if (response.status === 401) return null
+  if (!response.ok) {
+    const serverMessage = await readApiErrorMessage(response)
+    throw new ApiError(
+      response.status,
+      userFacingApiError(
+        response.status,
+        serverMessage,
+        "Could not verify your session."
+      )
+    )
+  }
+  return response.json() as Promise<{ applicationCode: string }>
 }
 
 export function requestApplicantCode(identity: ApplicantIdentity) {

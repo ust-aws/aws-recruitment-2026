@@ -16,6 +16,7 @@
     "deploy": "cdk deploy",
     "synth": "cdk synth",
     "db:push": "node --env-file=../.env ./node_modules/drizzle-kit/bin.cjs push",
+    "db:sync": "node --env-file=../.env scripts/sync-schema.mjs",
     "db:seed": "tsx --env-file=../.env src/db/seed.ts",
     "db:studio": "drizzle-kit studio"
   },

@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import {
   ApplicationAlreadySubmittedError,
+  committeeNamesForPositions,
   createApplication,
   deleteApplication,
   getApplicationById,
@@ -10,13 +11,52 @@ import {
   type CreateApplicationInput,
   type DocumentType,
 } from "../lib/applications";
+import {
+  canonicalizeHttpsUrl,
+  documentFileNameMatches,
+  hasValidLastNameFileToken,
+  isValidApplicantName,
+  isValidContactNumber,
+  isValidDevUploadS3Key,
+  isValidFacebookUrl,
+  isValidMotivation,
+  isValidSection,
+  isValidStudentNumber,
+  isValidUstApplicantEmail,
+  normalizeSection,
+  REQUIRED_DOCUMENT_TYPES,
+  validateChoiceUrls,
+} from "../lib/apply-field-validation";
 import { requireAuth } from "../auth";
 import {
   listEmailNotificationsByApplicationId,
   sendApplicationSubmitted,
 } from "../lib/email/service";
+import { parseApplicantGender } from "../lib/applicant-gender";
+import { InterviewScheduleError } from "../lib/interview-scheduling";
 
 export const applicationsRoutes = new Hono();
+
+const BIRTHDAY_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function parseBirthday(value: unknown): string | null {
+  if (!isNonEmptyString(value)) return null;
+  const trimmed = value.trim();
+  if (!BIRTHDAY_RE.test(trimmed)) return null;
+  const [year, month, day] = trimmed.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return null;
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (date > today) return null;
+  return trimmed;
+}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -37,21 +77,112 @@ function parseCreateBody(
   }
 
   const input = body as Record<string, unknown>;
+  if (input.dataPrivacyAgreed !== true) {
+    return {
+      ok: false,
+      error: "dataPrivacyAgreed must be true before submitting.",
+    };
+  }
+
   if (
     !isNonEmptyString(input.firstName) ||
     !isNonEmptyString(input.lastName) ||
     !isNonEmptyString(input.email) ||
     !isNonEmptyString(input.section) ||
-    !isNonEmptyString(input.motivation)
+    !isNonEmptyString(input.motivation) ||
+    !isNonEmptyString(input.studentNumber) ||
+    !isNonEmptyString(input.contactNumber) ||
+    !isNonEmptyString(input.facebookUrl)
   ) {
     return {
       ok: false,
-      error: "firstName, lastName, email, section, and motivation are required.",
+      error:
+        "firstName, lastName, email, section, studentNumber, contactNumber, facebookUrl, and motivation are required.",
     };
   }
 
+  const firstName = input.firstName.trim();
+  const lastName = input.lastName.trim();
+  const email = input.email.trim().toLowerCase();
+  const motivation = input.motivation.trim();
+
+  if (!isValidApplicantName(firstName) || !isValidApplicantName(lastName)) {
+    return {
+      ok: false,
+      error: "firstName and lastName must use letters only (max 100 characters).",
+    };
+  }
+  if (!hasValidLastNameFileToken(lastName)) {
+    return {
+      ok: false,
+      error: "lastName must include at least one letter for document file names.",
+    };
+  }
+  if (!isValidUstApplicantEmail(email)) {
+    return {
+      ok: false,
+      error: "email must be a valid @ust.edu.ph address.",
+    };
+  }
+  if (!isValidMotivation(motivation)) {
+    return {
+      ok: false,
+      error: "motivation is required and must be at most 4000 characters.",
+    };
+  }
+
+  const section = normalizeSection(input.section);
+  if (!isValidSection(section)) {
+    return {
+      ok: false,
+      error: "section must be four characters: year digit plus three letters (e.g. 4CSC).",
+    };
+  }
+
+  if (!isValidStudentNumber(input.studentNumber)) {
+    return { ok: false, error: "studentNumber must be exactly 10 digits." };
+  }
+
+  const contactNumber = input.contactNumber.trim();
+  if (!isValidContactNumber(contactNumber)) {
+    return {
+      ok: false,
+      error: "contactNumber must be +63 followed by 10 digits.",
+    };
+  }
+
+  const facebookCanonical = canonicalizeHttpsUrl(input.facebookUrl.trim());
+  if (!facebookCanonical || !isValidFacebookUrl(facebookCanonical)) {
+    return {
+      ok: false,
+      error: "facebookUrl must be a valid https Facebook profile link.",
+    };
+  }
+
+  const portfolioUrl =
+    typeof input.portfolioUrl === "string" ? input.portfolioUrl.trim() : "";
+  const githubUrl =
+    typeof input.githubUrl === "string" ? input.githubUrl.trim() : "";
+
   if (!Number.isInteger(input.age) || (input.age as number) <= 0) {
     return { ok: false, error: "age must be a positive integer." };
+  }
+
+  const birthday = parseBirthday(input.birthday);
+  if (!birthday) {
+    return {
+      ok: false,
+      error: "birthday must be a valid date (YYYY-MM-DD) that is not in the future.",
+    };
+  }
+
+  const gender = parseApplicantGender(input.gender);
+  if (!gender) {
+    return {
+      ok: false,
+      error:
+        "gender must be one of: male, female.",
+    };
   }
 
   if (!Array.isArray(input.choices) || input.choices.length !== 2) {
@@ -84,8 +215,11 @@ function parseCreateBody(
     return { ok: false, error: "choices must use two different positions." };
   }
 
-  if (!Array.isArray(input.documents) || input.documents.length !== 2) {
-    return { ok: false, error: "documents must contain resume and transcript." };
+  if (!Array.isArray(input.documents) || input.documents.length !== 3) {
+    return {
+      ok: false,
+      error: "documents must contain resume, transcript, and registration.",
+    };
   }
 
   const documents: CreateApplicationInput["documents"] = [];
@@ -95,10 +229,14 @@ function parseCreateBody(
       return { ok: false, error: "Each document must be an object." };
     }
     const row = doc as Record<string, unknown>;
-    if (row.documentType !== "resume" && row.documentType !== "transcript") {
+    if (
+      row.documentType !== "resume" &&
+      row.documentType !== "transcript" &&
+      row.documentType !== "registration"
+    ) {
       return {
         ok: false,
-        error: "documentType must be resume or transcript.",
+        error: "documentType must be resume, transcript, or registration.",
       };
     }
     if (!isNonEmptyString(row.fileName) || !isNonEmptyString(row.s3Key)) {
@@ -107,30 +245,70 @@ function parseCreateBody(
         error: "Each document needs a fileName and non-empty s3Key.",
       };
     }
-    types.add(row.documentType);
+    const documentType = row.documentType as DocumentType;
+    const fileName = row.fileName.trim();
+    const s3Key = row.s3Key.trim();
+    if (
+      !documentFileNameMatches(documentType, fileName, lastName)
+    ) {
+      return {
+        ok: false,
+        error: `Document file names must be CV_, TOR_, and RegForm_ followed by your last name and .pdf.`,
+      };
+    }
+    if (!isValidDevUploadS3Key(s3Key, documentType, lastName)) {
+      return {
+        ok: false,
+        error: "Each document s3Key must match the expected upload path and file name.",
+      };
+    }
+    types.add(documentType);
     documents.push({
-      documentType: row.documentType,
-      fileName: row.fileName.trim(),
-      s3Key: row.s3Key.trim(),
+      documentType,
+      fileName,
+      s3Key,
     });
   }
 
-  if (types.size !== 2) {
+  if (types.size !== 3) {
     return {
       ok: false,
-      error: "documents must include one resume and one transcript.",
+      error:
+        "documents must include one resume, one transcript, and one registration.",
     };
+  }
+  for (const required of REQUIRED_DOCUMENT_TYPES) {
+    if (!types.has(required)) {
+      return {
+        ok: false,
+        error:
+          "documents must include one resume, one transcript, and one registration.",
+      };
+    }
+  }
+
+  if (!isNonEmptyString(input.slotId) || !isUuid(input.slotId as string)) {
+    return { ok: false, error: "slotId must be a UUID." };
   }
 
   return {
     ok: true,
     value: {
-      firstName: input.firstName.trim(),
-      lastName: input.lastName.trim(),
-      email: input.email.trim(),
+      firstName,
+      lastName,
+      email,
       age: input.age as number,
-      section: input.section.trim(),
-      motivation: input.motivation.trim(),
+      birthday,
+      gender,
+      section,
+      studentNumber: input.studentNumber.trim(),
+      contactNumber,
+      facebookUrl: facebookCanonical,
+      motivation,
+      dataPrivacyAgreed: true,
+      ...(portfolioUrl ? { portfolioUrl } : {}),
+      ...(githubUrl ? { githubUrl } : {}),
+      slotId: (input.slotId as string).trim(),
       choices,
       documents,
     },
@@ -164,11 +342,20 @@ applicationsRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error }, 400);
   }
 
-  const known = await positionsExist(
-    parsed.value.choices.map((choice) => choice.positionId),
-  );
+  const positionIds = parsed.value.choices.map((choice) => choice.positionId);
+  const known = await positionsExist(positionIds);
   if (!known) {
     return c.json({ error: "One or more positions do not exist." }, 400);
+  }
+
+  const committeeNames = await committeeNamesForPositions(positionIds);
+  const urlError = validateChoiceUrls(
+    committeeNames,
+    parsed.value.portfolioUrl,
+    parsed.value.githubUrl,
+  );
+  if (urlError) {
+    return c.json({ error: urlError }, 400);
   }
 
   try {
@@ -180,6 +367,13 @@ applicationsRoutes.post("/", async (c) => {
   } catch (err) {
     if (err instanceof ApplicationAlreadySubmittedError) {
       return c.json({ error: err.message }, 409);
+    }
+    if (err instanceof InterviewScheduleError) {
+      const status =
+        err.code === "slot_not_found" || err.code === "position_not_found"
+          ? 404
+          : 409;
+      return c.json({ error: err.message }, status);
     }
     throw err;
   }

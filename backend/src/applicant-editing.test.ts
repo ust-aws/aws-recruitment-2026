@@ -230,6 +230,8 @@ test("applicant editing", async (t) => {
       lastName: "Applicant",
       email: `editing-${applicationId}@ust.edu.ph`,
       age: 20,
+      birthday: "2005-06-15",
+      gender: "male",
       section: "TEST-1",
     },
     {
@@ -238,6 +240,8 @@ test("applicant editing", async (t) => {
       lastName: "Owner",
       email: `editing-${blockerApplicationId}@ust.edu.ph`,
       age: 20,
+      birthday: "2005-06-15",
+      gender: "female",
       section: "TEST-2",
     },
   ]);

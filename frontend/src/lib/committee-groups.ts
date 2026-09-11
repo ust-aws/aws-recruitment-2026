@@ -72,3 +72,11 @@ export function groupedCommitteesForPicker(available: string[]) {
     }))
     .filter((group) => group.committees.length > 0)
 }
+
+export function officeForCommittee(committee: string) {
+  return (
+    COMMITTEE_OFFICE_GROUPS.find((group) =>
+      group.committees.includes(committee)
+    )?.office ?? ""
+  )
+}

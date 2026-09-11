@@ -4,12 +4,17 @@ import { usePathname } from "next/navigation"
 import { ApplyAdminChrome } from "@/components/apply-admin-chrome"
 import { Navbar } from "@/components/navbar"
 
-function isSlimPath(pathname: string) {
-  return pathname.startsWith("/apply") || pathname.startsWith("/admin")
+function isApplyPath(pathname: string) {
+  return pathname.startsWith("/apply")
+}
+
+function isAdminPath(pathname: string) {
+  return pathname.startsWith("/admin")
 }
 
 export function SiteChrome() {
   const pathname = usePathname()
 
-  return isSlimPath(pathname) ? <ApplyAdminChrome /> : <Navbar />
+  if (isAdminPath(pathname)) return null
+  return isApplyPath(pathname) ? <ApplyAdminChrome /> : <Navbar />
 }
