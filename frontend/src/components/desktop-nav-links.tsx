@@ -195,7 +195,8 @@ export function DesktopNavLinks({ items, pathname }: DesktopNavLinksProps) {
   )
 
   useLayoutEffect(() => {
-    measureActive()
+    const frame = window.requestAnimationFrame(measureActive)
+    return () => window.cancelAnimationFrame(frame)
   }, [measureActive])
 
   const remeasurePills = useEffectEvent(() => {

@@ -82,6 +82,7 @@ function Calendar({
 }) {
   const defaultClassNames = getDefaultClassNames()
   const dropdownCaption = isDropdownCaptionLayout(captionLayout)
+  void _buttonVariant
 
   return (
     <DayPicker
@@ -256,6 +257,7 @@ function CalendarDayButton({
   ...props
 }: React.ComponentProps<typeof DayButton> & { locale?: Partial<Locale> }) {
   const defaultClassNames = getDefaultClassNames()
+  void _dayColor
 
   const ref = React.useRef<HTMLButtonElement>(null)
   React.useEffect(() => {

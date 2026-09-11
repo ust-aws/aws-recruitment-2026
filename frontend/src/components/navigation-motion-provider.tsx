@@ -6,7 +6,7 @@ import {
   createContext,
   useCallback,
   useContext,
-  useRef,
+  useMemo,
   useState,
   type ReactNode,
 } from "react"
@@ -30,67 +30,82 @@ type NavigationMotionContextValue = {
 const NavigationMotionContext =
   createContext<NavigationMotionContextValue | null>(null)
 
+type NavigationState = {
+  pathname: string
+  historyStack: string[]
+  direction: NavigationDirection
+  animatePage: boolean
+}
+
+function navigationStateForPath(
+  current: NavigationState,
+  pathname: string,
+  reducedMotion: boolean
+): NavigationState {
+  const direction = resolveNavigationDirection(
+    current.pathname,
+    pathname,
+    current.historyStack
+  )
+  const existingIndex = current.historyStack.indexOf(pathname)
+  const historyStack =
+    existingIndex !== -1 && existingIndex < current.historyStack.length - 1
+      ? current.historyStack.slice(0, existingIndex + 1)
+      : current.historyStack[current.historyStack.length - 1] === pathname
+        ? current.historyStack
+        : [...current.historyStack, pathname]
+
+  return {
+    pathname,
+    historyStack,
+    direction,
+    animatePage:
+      !reducedMotion &&
+      !isApplyFlowTabSwitch(current.pathname, pathname) &&
+      !isHrDashboardSwitch(current.pathname, pathname),
+  }
+}
+
 export function NavigationMotionProvider({ children }: { children: ReactNode }) {
   const pathname = usePathname()
   const reducedMotion = useReducedMotion() ?? false
-  const historyStackRef = useRef<string[]>([pathname])
-  const previousPathRef = useRef(pathname)
-  const directionRef = useRef<NavigationDirection>(1)
-  const animatePageRef = useRef(false)
-  const [, setAnimationEpoch] = useState(0)
+  const [navigation, setNavigation] = useState<NavigationState>({
+    pathname,
+    historyStack: [pathname],
+    direction: 1,
+    animatePage: false,
+  })
 
-  if (previousPathRef.current !== pathname) {
-    directionRef.current = resolveNavigationDirection(
-      previousPathRef.current,
-      pathname,
-      historyStackRef.current
+  if (navigation.pathname !== pathname) {
+    setNavigation((current) =>
+      navigationStateForPath(current, pathname, reducedMotion)
     )
-
-    const existingIndex = historyStackRef.current.indexOf(pathname)
-    if (
-      existingIndex !== -1 &&
-      existingIndex < historyStackRef.current.length - 1
-    ) {
-      historyStackRef.current = historyStackRef.current.slice(
-        0,
-        existingIndex + 1
-      )
-    } else if (
-      historyStackRef.current[historyStackRef.current.length - 1] !== pathname
-    ) {
-      historyStackRef.current = [...historyStackRef.current, pathname]
-    }
-
-    animatePageRef.current =
-      !reducedMotion &&
-      !isApplyFlowTabSwitch(previousPathRef.current, pathname) &&
-      !isHrDashboardSwitch(previousPathRef.current, pathname)
-    previousPathRef.current = pathname
   }
 
   const clearPageAnimation = useCallback(() => {
-    if (!animatePageRef.current) return
-    animatePageRef.current = false
-    setAnimationEpoch((epoch) => epoch + 1)
+    setNavigation((current) =>
+      current.animatePage ? { ...current, animatePage: false } : current
+    )
   }, [])
 
   const transition = getNavigationTransition(reducedMotion)
+  const contextValue = useMemo<NavigationMotionContextValue>(
+    () => ({
+      direction: navigation.direction,
+      transition,
+      reducedMotion,
+      animatePage: navigation.animatePage,
+      clearPageAnimation,
+    }),
+    [clearPageAnimation, navigation, reducedMotion, transition]
+  )
 
   return (
-    <NavigationMotionContext.Provider
-      value={{
-        direction: directionRef.current,
-        transition,
-        reducedMotion,
-        animatePage: animatePageRef.current,
-        clearPageAnimation,
-      }}
-    >
+    <NavigationMotionContext.Provider value={contextValue}>
       {children}
     </NavigationMotionContext.Provider>
   )
 }
-
 export function useNavigationMotion() {
   const context = useContext(NavigationMotionContext)
   if (!context) {

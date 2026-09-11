@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { ActionFeedback } from "@/components/action-feedback"
 import { SlotGrid, type SlotGridCell } from "@/components/interview/slot-grid"
 import { Button } from "@/components/ui/button"
@@ -130,46 +130,63 @@ export function ApplicantInterviewScheduler({
 
   const selectedSlotId = controlledSlotId ?? internalSelectedId
   const setSelectedSlotId = onSelectedSlotIdChange ?? setInternalSelectedId
-  const onScheduleLoadedRef = useRef(onScheduleLoaded)
-  onScheduleLoadedRef.current = onScheduleLoaded
-  const setSelectedSlotIdRef = useRef(setSelectedSlotId)
-  setSelectedSlotIdRef.current = setSelectedSlotId
-  const seasonBoundsRef = useRef(seasonBounds)
-  seasonBoundsRef.current = seasonBounds
-  const previewModeRef = useRef(previewMode)
-  previewModeRef.current = previewMode
-
-  const days = useMemo(
-    () => weekDaysInSeason(weekStart, seasonBounds),
+  const displayedWeekStart = useMemo(
+    () => clampWeekStart(weekStart, seasonBounds),
     [weekStart, seasonBounds]
   )
-  const weekLabel = formatWeekRange(weekStart, days)
+  const days = useMemo(
+    () => weekDaysInSeason(displayedWeekStart, seasonBounds),
+    [displayedWeekStart, seasonBounds]
+  )
+  const weekLabel = formatWeekRange(displayedWeekStart, days)
+
+  const applySchedule = useCallback(
+    (payload: ApplicantInterviewSchedule) => {
+      setSchedule(payload)
+      onScheduleLoaded?.(payload)
+      if (!previewMode && payload.booking) {
+        setSelectedSlotId(payload.booking.slotId)
+        if (seasonBounds) {
+          setWeekStart(
+            clampWeekStart(
+              startOfWeek(new Date(payload.booking.startsAt)),
+              seasonBounds
+            )
+          )
+        }
+      }
+    },
+    [onScheduleLoaded, previewMode, seasonBounds, setSelectedSlotId]
+  )
 
   useEffect(() => {
-    if (!seasonBounds) return
-    setWeekStart((current) => clampWeekStart(current, seasonBounds))
-  }, [seasonBounds])
+    let cancelled = false
+    getApplicantInterviewSlots(positionId)
+      .then((payload) => {
+        if (!cancelled) applySchedule(payload)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        setSchedule(null)
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Interview scheduling is temporarily unavailable. Try again in a moment."
+        )
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [applySchedule, positionId])
 
-  const loadSchedule = useCallback(async () => {
+  async function refreshSchedule() {
     setLoading(true)
     setError("")
     try {
-      const payload = await getApplicantInterviewSlots(positionId)
-      setSchedule(payload)
-      onScheduleLoadedRef.current?.(payload)
-      if (!previewModeRef.current && payload.booking) {
-        setSelectedSlotIdRef.current(payload.booking.slotId)
-        const bounds = seasonBoundsRef.current
-        if (bounds) {
-          setWeekStart((current) => {
-            const next = clampWeekStart(
-              startOfWeek(new Date(payload.booking!.startsAt)),
-              bounds
-            )
-            return current.getTime() === next.getTime() ? current : next
-          })
-        }
-      }
+      applySchedule(await getApplicantInterviewSlots(positionId))
     } catch (err) {
       setSchedule(null)
       setError(
@@ -180,11 +197,7 @@ export function ApplicantInterviewScheduler({
     } finally {
       setLoading(false)
     }
-  }, [positionId])
-
-  useEffect(() => {
-    void loadSchedule()
-  }, [loadSchedule])
+  }
 
   const weekSlots = useMemo(() => {
     if (!schedule) return []
@@ -265,7 +278,7 @@ export function ApplicantInterviewScheduler({
           ? "Interview rescheduled."
           : "Interview booked."
       )
-      await loadSchedule()
+      await refreshSchedule()
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not confirm this interview slot."
@@ -324,10 +337,10 @@ export function ApplicantInterviewScheduler({
             type="button"
             color="purple"
             className={navButtonClasses}
-            disabled={weekNavDisabled || !canGoPrevWeek(weekStart, seasonBounds)}
+            disabled={weekNavDisabled || !canGoPrevWeek(displayedWeekStart, seasonBounds)}
             onClick={() =>
-              setWeekStart((current) =>
-                clampWeekStart(addDays(current, -7), seasonBounds)
+              setWeekStart(
+                clampWeekStart(addDays(displayedWeekStart, -7), seasonBounds)
               )
             }
           >
@@ -338,10 +351,10 @@ export function ApplicantInterviewScheduler({
             type="button"
             color="purple"
             className={navButtonClasses}
-            disabled={weekNavDisabled || !canGoNextWeek(weekStart, seasonBounds)}
+            disabled={weekNavDisabled || !canGoNextWeek(displayedWeekStart, seasonBounds)}
             onClick={() =>
-              setWeekStart((current) =>
-                clampWeekStart(addDays(current, 7), seasonBounds)
+              setWeekStart(
+                clampWeekStart(addDays(displayedWeekStart, 7), seasonBounds)
               )
             }
           >
@@ -398,10 +411,10 @@ export function ApplicantInterviewScheduler({
           type="button"
           color="purple"
           className={navButtonClasses}
-          disabled={weekNavDisabled || !canGoPrevWeek(weekStart, seasonBounds)}
+          disabled={weekNavDisabled || !canGoPrevWeek(displayedWeekStart, seasonBounds)}
           onClick={() =>
-            setWeekStart((current) =>
-              clampWeekStart(addDays(current, -7), seasonBounds)
+            setWeekStart(
+              clampWeekStart(addDays(displayedWeekStart, -7), seasonBounds)
             )
           }
         >
@@ -412,10 +425,10 @@ export function ApplicantInterviewScheduler({
           type="button"
           color="purple"
           className={navButtonClasses}
-          disabled={weekNavDisabled || !canGoNextWeek(weekStart, seasonBounds)}
+          disabled={weekNavDisabled || !canGoNextWeek(displayedWeekStart, seasonBounds)}
           onClick={() =>
-            setWeekStart((current) =>
-              clampWeekStart(addDays(current, 7), seasonBounds)
+            setWeekStart(
+              clampWeekStart(addDays(displayedWeekStart, 7), seasonBounds)
             )
           }
         >

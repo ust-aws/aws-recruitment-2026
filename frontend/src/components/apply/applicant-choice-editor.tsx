@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Field } from "@/components/field"
 import { Input } from "@/components/ui/input"
@@ -69,9 +69,6 @@ export function ApplicantChoiceEditor({
     Boolean(first?.committee) && firstCommittee !== first?.committee
   const needsSlot = committeeChanged && Boolean(firstPositionId)
 
-  useEffect(() => {
-    onPreviewPositionIdChange(needsSlot ? firstPositionId : undefined)
-  }, [firstPositionId, needsSlot, onPreviewPositionIdChange])
 
   const canSubmit = useMemo(() => {
     if (!firstPositionId || !secondPositionId) return false
@@ -104,6 +101,13 @@ export function ApplicantChoiceEditor({
     if (rank === 1) {
       setFirstCommittee(next.committee)
       setFirstPositionId(next.positionId)
+      const nextNeedsSlot =
+        Boolean(first?.committee) &&
+        next.committee !== first?.committee &&
+        Boolean(next.positionId)
+      onPreviewPositionIdChange(
+        nextNeedsSlot ? next.positionId : undefined
+      )
     } else {
       setSecondCommittee(next.committee)
       setSecondPositionId(next.positionId)

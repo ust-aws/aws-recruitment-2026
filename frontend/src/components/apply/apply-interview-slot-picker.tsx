@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useEffect, useEffectEvent, useMemo, useState } from "react"
 import { SlotGrid, type SlotGridCell } from "@/components/interview/slot-grid"
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -42,14 +42,6 @@ function slotInWeek(slotIso: string, days: Date[]): boolean {
   return time >= start.getTime() && time < end.getTime()
 }
 
-function formatSlotLabel(startsAt: string, endsAt: string) {
-  const start = new Date(startsAt)
-  const end = new Date(endsAt)
-  return `${start.toLocaleString(undefined, {
-    dateStyle: "medium",
-    timeStyle: "short",
-  })} – ${end.toLocaleTimeString(undefined, { timeStyle: "short" })}`
-}
 
 export function ApplyInterviewSlotPicker({
   positionId,
@@ -71,39 +63,44 @@ export function ApplyInterviewSlotPicker({
   const [weekStart, setWeekStart] = useState(() => startOfWeek(new Date()))
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState("")
-  const selectedSlotIdRef = useRef(selectedSlotId)
-  selectedSlotIdRef.current = selectedSlotId
-  const onSelectedSlotIdChangeRef = useRef(onSelectedSlotIdChange)
-  onSelectedSlotIdChangeRef.current = onSelectedSlotIdChange
-
-  const days = useMemo(
-    () => weekDaysInSeason(weekStart, seasonBounds),
+  const displayedWeekStart = useMemo(
+    () => clampWeekStart(weekStart, seasonBounds),
     [weekStart, seasonBounds]
   )
-  const weekLabel = formatWeekRange(weekStart, days)
+  const days = useMemo(
+    () => weekDaysInSeason(displayedWeekStart, seasonBounds),
+    [displayedWeekStart, seasonBounds]
+  )
+  const weekLabel = formatWeekRange(displayedWeekStart, days)
 
-  useEffect(() => {
-    if (!seasonBounds) return
-    setWeekStart((current) => clampWeekStart(current, seasonBounds))
-  }, [seasonBounds])
+  const applySlots = useEffectEvent(
+    (payload: Awaited<ReturnType<typeof listPositionInterviewSlots>>) => {
+      setCommitteeName(payload.committee.name)
+      setSlots(payload.slots)
+      setBooked(payload.booked ?? [])
+      if (
+        selectedSlotId &&
+        !payload.slots.some((slot) => slot.id === selectedSlotId)
+      ) {
+        onSelectedSlotIdChange("")
+        return
+      }
+      const selected = payload.slots.find(
+        (slot) => slot.id === selectedSlotId
+      )
+      if (selected && seasonBounds) {
+        setWeekStart(
+          clampWeekStart(startOfWeek(new Date(selected.startsAt)), seasonBounds)
+        )
+      }
+    }
+  )
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError("")
     listPositionInterviewSlots(positionId)
       .then((payload) => {
-        if (cancelled) return
-        setCommitteeName(payload.committee.name)
-        setSlots(payload.slots)
-        setBooked(payload.booked ?? [])
-        const savedSlotId = selectedSlotIdRef.current
-        if (
-          savedSlotId &&
-          !payload.slots.some((slot) => slot.id === savedSlotId)
-        ) {
-          onSelectedSlotIdChangeRef.current("")
-        }
+        if (!cancelled) applySlots(payload)
       })
       .catch((err: unknown) => {
         if (cancelled) return
@@ -123,19 +120,6 @@ export function ApplyInterviewSlotPicker({
       cancelled = true
     }
   }, [positionId])
-
-  useEffect(() => {
-    if (!selectedSlotId || slots.length === 0 || !seasonBounds) return
-    const selected = slots.find((slot) => slot.id === selectedSlotId)
-    if (!selected) return
-    const selectedWeek = clampWeekStart(
-      startOfWeek(new Date(selected.startsAt)),
-      seasonBounds
-    )
-    setWeekStart((current) =>
-      current.getTime() === selectedWeek.getTime() ? current : selectedWeek
-    )
-  }, [positionId, seasonBounds, selectedSlotId, slots])
 
   const weekSlots = useMemo(
     () => slots.filter((slot) => slotInWeek(slot.startsAt, days)),
@@ -204,10 +188,10 @@ export function ApplyInterviewSlotPicker({
           type="button"
           color="purple"
           className={navButtonClasses}
-          disabled={!seasonConfigured || !canGoPrevWeek(weekStart, seasonBounds)}
+          disabled={!seasonConfigured || !canGoPrevWeek(displayedWeekStart, seasonBounds)}
           onClick={() =>
-            setWeekStart((current) =>
-              clampWeekStart(addDays(current, -7), seasonBounds)
+            setWeekStart(
+              clampWeekStart(addDays(displayedWeekStart, -7), seasonBounds)
             )
           }
         >
@@ -218,10 +202,10 @@ export function ApplyInterviewSlotPicker({
           type="button"
           color="purple"
           className={navButtonClasses}
-          disabled={!seasonConfigured || !canGoNextWeek(weekStart, seasonBounds)}
+          disabled={!seasonConfigured || !canGoNextWeek(displayedWeekStart, seasonBounds)}
           onClick={() =>
-            setWeekStart((current) =>
-              clampWeekStart(addDays(current, 7), seasonBounds)
+            setWeekStart(
+              clampWeekStart(addDays(displayedWeekStart, 7), seasonBounds)
             )
           }
         >

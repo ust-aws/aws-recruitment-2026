@@ -2,7 +2,7 @@
 
 
 
-import { useEffect, useLayoutEffect, useState } from "react"
+import { useEffect, useState } from "react"
 
 import Link from "next/link"
 
@@ -220,42 +220,31 @@ export function ApplyForm({ initialPositionId }: ApplyFormProps) {
 
 
 
-  useLayoutEffect(() => {
-
-    const draft = loadApplyFormDraft()
-
-    if (draft) {
-
-      setPrivacy(draft.privacy)
-
-      setGeneral(draft.general)
-
-      setCommittee(draft.committee)
-
-      setStep(draft.step)
-
-      setUpload({
-
-        resume: null,
-
-        transcript: null,
-
-        registration: null,
-
-        resumeDisplayName: draft.resumeName,
-
-        transcriptDisplayName: draft.transcriptName,
-
-        registrationDisplayName: draft.registrationName,
-
-      })
-
+  useEffect(() => {
+    let cancelled = false
+    queueMicrotask(() => {
+      if (cancelled) return
+      const draft = loadApplyFormDraft()
+      if (draft) {
+        setPrivacy(draft.privacy)
+        setGeneral(draft.general)
+        setCommittee(draft.committee)
+        setStep(draft.step)
+        setUpload({
+          resume: null,
+          transcript: null,
+          registration: null,
+          resumeDisplayName: draft.resumeName,
+          transcriptDisplayName: draft.transcriptName,
+          registrationDisplayName: draft.registrationName,
+        })
+      }
+      setDraftReady(true)
+    })
+    return () => {
+      cancelled = true
     }
-
-    setDraftReady(true)
-
   }, [])
-
 
 
   useEffect(() => {

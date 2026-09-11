@@ -22,8 +22,6 @@ export function useInterviewWindow() {
 
   useEffect(() => {
     let cancelled = false
-    setLoading(true)
-    setError("")
     getInterviewWindow()
       .then((payload) => {
         if (cancelled) return

@@ -1,6 +1,6 @@
 "use client"
 
-import { type FormEvent, useEffect, useState } from "react"
+import { type FormEvent, useState } from "react"
 import { ActionFeedback } from "@/components/action-feedback"
 import { Button } from "@/components/ui/button"
 import { DatetimePicker } from "@/components/ui/datetime-picker"
@@ -47,18 +47,17 @@ export function HrInterviewWindow({
   loadError,
   onSaved,
 }: HrInterviewWindowProps) {
-  const [startsAt, setStartsAt] = useState("")
-  const [endsAt, setEndsAt] = useState("")
+  const initialBounds = boundsToIso(seasonBounds)
+  const [startsAt, setStartsAt] = useState(() =>
+    toDatetimeLocal(initialBounds.startsAt)
+  )
+  const [endsAt, setEndsAt] = useState(() =>
+    toDatetimeLocal(initialBounds.endsAt)
+  )
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [pending, setPending] = useState(false)
 
-  useEffect(() => {
-    if (seasonLoading) return
-    const { startsAt: startIso, endsAt: endIso } = boundsToIso(seasonBounds)
-    setStartsAt(toDatetimeLocal(startIso))
-    setEndsAt(toDatetimeLocal(endIso))
-  }, [seasonBounds, seasonLoading])
 
   async function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()

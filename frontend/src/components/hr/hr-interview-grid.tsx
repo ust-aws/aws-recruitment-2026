@@ -145,47 +145,49 @@ export function HrInterviewGrid({
   const [resetOpen, setResetOpen] = useState(false)
 
   const committeeId = committeeName ? committeeIds.get(committeeName) : undefined
-  const days = useMemo(
-    () => weekDaysInSeason(weekStart, seasonBounds),
+  const displayedWeekStart = useMemo(
+    () => clampWeekStart(weekStart, seasonBounds),
     [weekStart, seasonBounds]
   )
-  const weekLabel = formatWeekRange(weekStart, days)
+  const days = useMemo(
+    () => weekDaysInSeason(displayedWeekStart, seasonBounds),
+    [displayedWeekStart, seasonBounds]
+  )
+  const weekLabel = formatWeekRange(displayedWeekStart, days)
   const cells = useMemo(() => buildHrCells(days, slots), [days, slots])
 
-  useEffect(() => {
-    if (!seasonBounds) return
-    setWeekStart((current) => clampWeekStart(current, seasonBounds))
-  }, [seasonBounds])
-
-  const loadSlots = useCallback(async () => {
+  const fetchSlots = useCallback(() => {
     if (!committeeId || !seasonConfigured) {
-      setSlots([])
-      return
+      return Promise.resolve<HrInterviewSlot[]>([])
     }
-    if (slots.length === 0) setLoading(true)
-    setError("")
-    try {
-      const range = weekQueryRange(weekStart, days)
-      setSlots(
-        await listInterviewSlots({
-          committeeId,
-          from: range.from,
-          to: range.to,
-        })
-      )
-    } catch (err) {
-      setSlots([])
-      setError(
-        err instanceof Error ? err.message : "Could not load interview slots."
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [committeeId, days, seasonConfigured, weekStart])
+    const range = weekQueryRange(displayedWeekStart, days)
+    return listInterviewSlots({
+      committeeId,
+      from: range.from,
+      to: range.to,
+    })
+  }, [committeeId, days, displayedWeekStart, seasonConfigured])
 
   useEffect(() => {
-    void loadSlots()
-  }, [loadSlots])
+    let cancelled = false
+    fetchSlots()
+      .then((rows) => {
+        if (!cancelled) setSlots(rows)
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return
+        setSlots([])
+        setError(
+          err instanceof Error ? err.message : "Could not load interview slots."
+        )
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [fetchSlots])
 
   async function openSlot(startsAt: Date, existing?: HrInterviewSlot) {
     if (!committeeId) return
@@ -220,7 +222,7 @@ export function HrInterviewGrid({
       }
       setSuccess(parts.join(" "))
       setResetOpen(false)
-      await loadSlots()
+      setSlots(await fetchSlots())
     } catch (err) {
       setError(
         err instanceof Error ? err.message : "Could not reset the schedule."
@@ -304,6 +306,8 @@ export function HrInterviewGrid({
             onValueChange={(value: string | null) => {
               setCommitteeName(value ?? "")
               setSlots([])
+              setError("")
+              setLoading(Boolean(value && seasonConfigured))
             }}
           >
             <SelectTrigger id="hr-interview-committee" className={fieldControlClasses}>
@@ -329,12 +333,14 @@ export function HrInterviewGrid({
             type="button"
             color="purple"
             className={navButtonClasses}
-            disabled={!seasonConfigured || !canGoPrevWeek(weekStart, seasonBounds)}
-            onClick={() =>
-              setWeekStart((current) =>
-                clampWeekStart(addDays(current, -7), seasonBounds)
+            disabled={!seasonConfigured || !canGoPrevWeek(displayedWeekStart, seasonBounds)}
+            onClick={() => {
+              setLoading(true)
+              setError("")
+              setWeekStart(
+                clampWeekStart(addDays(displayedWeekStart, -7), seasonBounds)
               )
-            }
+            }}
           >
             ← Prev
           </Button>
@@ -343,12 +349,14 @@ export function HrInterviewGrid({
             type="button"
             color="purple"
             className={navButtonClasses}
-            disabled={!seasonConfigured || !canGoNextWeek(weekStart, seasonBounds)}
-            onClick={() =>
-              setWeekStart((current) =>
-                clampWeekStart(addDays(current, 7), seasonBounds)
+            disabled={!seasonConfigured || !canGoNextWeek(displayedWeekStart, seasonBounds)}
+            onClick={() => {
+              setLoading(true)
+              setError("")
+              setWeekStart(
+                clampWeekStart(addDays(displayedWeekStart, 7), seasonBounds)
               )
-            }
+            }}
           >
             Next →
           </Button>

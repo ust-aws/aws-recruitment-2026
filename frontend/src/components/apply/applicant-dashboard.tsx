@@ -98,11 +98,8 @@ export function ApplicantDashboard() {
 
   const handlePreviewPositionIdChange = useCallback(
     (positionId: string | undefined) => {
-      setPreviewPositionId((current) => {
-        if (current === positionId) return current
-        setPreviewSlotId("")
-        return positionId
-      })
+      setPreviewPositionId(positionId)
+      setPreviewSlotId("")
     },
     [],
   )
@@ -233,6 +230,7 @@ export function ApplicantDashboard() {
       </div>
 
       <ApplicantInterviewScheduler
+        key={previewPositionId ?? "current-booking"}
         positionId={previewPositionId}
         previewMode={Boolean(previewPositionId)}
         selectedSlotId={previewPositionId ? previewSlotId : undefined}
