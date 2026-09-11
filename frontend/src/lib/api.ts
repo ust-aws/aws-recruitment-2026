@@ -1,11 +1,14 @@
 import { useEffect, useState } from "react"
 import type {
   Application,
-  ApplicationStatus,
   CreateApplicationInput,
   DocumentType,
   Position,
 } from "./application-types"
+import type {
+  HrApplication,
+  UpdateApplicationDecisionInput,
+} from "./hr-application-types"
 import {
   ApiError,
   deleteApplicationRequest,
@@ -13,7 +16,7 @@ import {
   listApplications,
   listOpenPositions,
   peekOpenPositions,
-  patchApplicationStatusRequest,
+  patchApplicationDecisionRequest,
   postApplication,
 } from "./api-client"
 
@@ -44,7 +47,7 @@ export type {
 } from "./api-client"
 
 export function useApplications() {
-  const [applications, setApplications] = useState<Application[]>([])
+  const [applications, setApplications] = useState<HrApplication[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -77,7 +80,7 @@ export function useApplications() {
 }
 
 export function useApplication(id: string | undefined) {
-  const [application, setApplication] = useState<Application | null>(null)
+  const [application, setApplication] = useState<HrApplication | null>(null)
   const [loading, setLoading] = useState(Boolean(id))
   const [error, setError] = useState<string | null>(null)
   const [notFound, setNotFound] = useState(false)
@@ -189,8 +192,11 @@ export async function createApplication(
   return postApplication(payload)
 }
 
-export function patchApplicationStatus(id: string, status: ApplicationStatus) {
-  return patchApplicationStatusRequest(id, status)
+export function patchApplicationDecision(
+  id: string,
+  input: UpdateApplicationDecisionInput
+) {
+  return patchApplicationDecisionRequest(id, input)
 }
 
 export function deleteApplication(id: string) {

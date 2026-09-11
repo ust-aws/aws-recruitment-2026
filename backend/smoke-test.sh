@@ -433,15 +433,17 @@ EOF
   expect "GET  /applications/:id/email-notifications unknown app" 404
 
   if [[ -n "$APP_ID" ]]; then
-    request PATCH "/applications/$APP_ID/status" '{"status":"approved"}' "$token"
-    expect "PATCH /applications/:id/status" 200
+    request PATCH "/applications/$APP_ID/decisions" "{\"positionId\":\"$POS1\",\"decisionStatus\":\"approved\"}" "$token"
+    expect "PATCH /applications/:id/decisions first choice" 200
+    request PATCH "/applications/$APP_ID/decisions" "{\"positionId\":\"$POS2\",\"decisionStatus\":\"rejected\",\"finalPositionId\":\"$POS1\"}" "$token"
+    expect "PATCH /applications/:id/decisions final decision" 200
   else
-    echo "FAIL  PATCH /applications/:id/status (no created id)"
-    fail=$((fail + 1))
+    echo "FAIL  PATCH /applications/:id/decisions (no created id)"
+    fail=$((fail + 2))
   fi
 
-  request PATCH "/applications/$UNKNOWN_ID/status" '{"status":"approved"}' "$token"
-  expect "PATCH /applications/:id/status unknown" 404
+  request PATCH "/applications/$UNKNOWN_ID/decisions" "{\"positionId\":\"$POS1\",\"decisionStatus\":\"approved\"}" "$token"
+  expect "PATCH /applications/:id/decisions unknown" 404
 
   if [[ -n "$APP_ID" ]]; then
     request DELETE "/applications/$APP_ID" "" "$token"

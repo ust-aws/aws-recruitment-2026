@@ -7,10 +7,14 @@ import {
   getApplicationById,
   listApplications,
   positionsExist,
-  updateApplicationStatus,
   type CreateApplicationInput,
   type DocumentType,
 } from "../lib/applications";
+import {
+  ApplicationDecisionError,
+  updateApplicationDecision,
+  type ChoiceDecisionStatus,
+} from "../lib/application-decisions";
 import {
   canonicalizeHttpsUrl,
   documentFileNameMatches,
@@ -379,26 +383,96 @@ applicationsRoutes.post("/", async (c) => {
   }
 });
 
-applicationsRoutes.patch("/:id/status", requireAuth, async (c) => {
+applicationsRoutes.patch("/:id/decisions", requireAuth, async (c) => {
   const id = c.req.param("id");
   if (!isUuid(id)) {
     return c.json({ error: "Invalid application id." }, 400);
   }
 
-  const body = await c.req.json().catch(() => null);
-  const status =
-    body && typeof body === "object"
-      ? (body as Record<string, unknown>).status
-      : undefined;
-  if (status !== "approved" && status !== "rejected") {
-    return c.json({ error: "status must be approved or rejected." }, 400);
+  const body = (await c.req.json().catch(() => null)) as
+    | Record<string, unknown>
+    | null;
+  if (!body) {
+    return c.json({ error: "Request body must be a JSON object." }, 400);
   }
 
-  const updated = await updateApplicationStatus(id, status);
-  if (!updated) {
-    return c.json({ error: "Application not found." }, 404);
+  const hasPositionId = Object.hasOwn(body, "positionId");
+  const hasDecisionStatus = Object.hasOwn(body, "decisionStatus");
+  const changesChoice = hasPositionId && hasDecisionStatus;
+  const changesFinalPlacement = Object.hasOwn(body, "finalPositionId");
+  if (hasPositionId !== hasDecisionStatus) {
+    return c.json(
+      { error: "positionId and decisionStatus must be provided together." },
+      400,
+    );
   }
-  return c.json(updated);
+  if (!changesChoice && !changesFinalPlacement) {
+    return c.json(
+      { error: "Provide a committee decision or finalPositionId." },
+      400,
+    );
+  }
+  if (
+    changesChoice &&
+    (!isNonEmptyString(body.positionId) ||
+      !isUuid(body.positionId) ||
+      (body.decisionStatus !== "approved" &&
+        body.decisionStatus !== "rejected"))
+  ) {
+    return c.json(
+      {
+        error:
+          "positionId must be a UUID and decisionStatus must be approved or rejected.",
+      },
+      400,
+    );
+  }
+  if (
+    changesFinalPlacement &&
+    body.finalPositionId !== null &&
+    (!isNonEmptyString(body.finalPositionId) ||
+      !isUuid(body.finalPositionId))
+  ) {
+    return c.json(
+      { error: "finalPositionId must be a UUID or null." },
+      400,
+    );
+  }
+
+  const payload = c.get("jwtPayload") as { sub?: unknown };
+  const reviewerEmail =
+    typeof payload.sub === "string" ? payload.sub : undefined;
+  try {
+    const updated = await updateApplicationDecision(
+      id,
+      {
+        ...(changesChoice
+          ? {
+              positionId: body.positionId as string,
+              decisionStatus: body.decisionStatus as ChoiceDecisionStatus,
+            }
+          : {}),
+        ...(changesFinalPlacement
+          ? { finalPositionId: body.finalPositionId as string | null }
+          : {}),
+      },
+      reviewerEmail,
+    );
+    if (!updated) {
+      return c.json({ error: "Application not found." }, 404);
+    }
+    return c.json(updated);
+  } catch (error) {
+    if (error instanceof ApplicationDecisionError) {
+      const status =
+        error.code === "application_not_found" ||
+        error.code === "choice_not_found"
+          ? 404
+          : 409;
+      return c.json({ error: error.message }, status);
+    }
+    throw error;
+  }
 });
 
 applicationsRoutes.get("/:id/email-notifications", requireAuth, async (c) => {

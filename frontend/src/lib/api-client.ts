@@ -1,9 +1,12 @@
 import type {
   Application,
-  ApplicationStatus,
   CreateApplicationInput,
   Position,
 } from "./application-types"
+import type {
+  HrApplication,
+  UpdateApplicationDecisionInput,
+} from "./hr-application-types"
 import {
   readApiErrorMessage,
   userFacingApiError,
@@ -57,13 +60,13 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 }
 
 export function listApplications() {
-  return apiFetch<{ applications: Application[]; total: number }>(
+  return apiFetch<{ applications: HrApplication[]; total: number }>(
     "/applications",
   ).then((body) => body.applications);
 }
 
 export function getApplicationById(id: string) {
-  return apiFetch<Application>(`/applications/${id}`);
+  return apiFetch<HrApplication>(`/applications/${id}`);
 }
 
 export function postApplication(body: CreateApplicationInput) {
@@ -73,13 +76,13 @@ export function postApplication(body: CreateApplicationInput) {
   });
 }
 
-export function patchApplicationStatusRequest(
+export function patchApplicationDecisionRequest(
   id: string,
-  status: ApplicationStatus,
+  body: UpdateApplicationDecisionInput,
 ) {
-  return apiFetch<Application>(`/applications/${id}/status`, {
+  return apiFetch<HrApplication>(`/applications/${id}/decisions`, {
     method: "PATCH",
-    body: JSON.stringify({ status }),
+    body: JSON.stringify(body),
   });
 }
 
