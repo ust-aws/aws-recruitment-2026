@@ -11,6 +11,7 @@ export type HrApplicationChoice = ApplicationChoice & {
 }
 
 export type HrApplication = Omit<Application, "choices"> & {
+  archivedAt: string | null
   choices: HrApplicationChoice[]
   finalPlacement: {
     positionId: string

@@ -446,17 +446,39 @@ EOF
   expect "PATCH /applications/:id/decisions unknown" 404
 
   if [[ -n "$APP_ID" ]]; then
-    request DELETE "/applications/$APP_ID" "" "$token"
-    expect "DELETE /applications/:id" 204
+    request PATCH "/applications/$APP_ID/archive" '{"archived":true}'
+    expect "PATCH /applications/:id/archive (no token)" 401
+    request PATCH "/applications/$APP_ID/archive" '{"archived":true}' "$token"
+    expect "PATCH /applications/:id/archive" 200
     request GET "/applications/$APP_ID" "" "$token"
-    expect "GET  /applications/:id after delete" 404
+    expect "GET  /applications/:id after archive" 200
+    request GET "/applications" "" "$token"
+    expect "GET  /applications after archive" 200
+    if contains_id "$APP_ID"; then
+      echo "FAIL  GET  /applications excludes archived row"
+      echo "      body: $LAST_BODY"
+      fail=$((fail + 1))
+    else
+      echo "PASS  GET  /applications excludes archived row"
+      pass=$((pass + 1))
+    fi
+    request GET "/applications?archive=archived" "" "$token"
+    expect "GET  /applications?archive=archived" 200
+    if contains_id "$APP_ID"; then
+      echo "PASS  GET  /applications?archive=archived contains row"
+      pass=$((pass + 1))
+    else
+      echo "FAIL  GET  /applications?archive=archived contains row"
+      echo "      body: $LAST_BODY"
+      fail=$((fail + 1))
+    fi
   else
-    echo "FAIL  DELETE /applications/:id (no created id)"
+    echo "FAIL  PATCH /applications/:id/archive (no created id)"
     fail=$((fail + 1))
   fi
 
-  request DELETE "/applications/$UNKNOWN_ID" "" "$token"
-  expect "DELETE /applications/:id unknown" 404
+  request PATCH "/applications/$UNKNOWN_ID/archive" '{"archived":true}' "$token"
+  expect "PATCH /applications/:id/archive unknown" 404
   fi
 fi
 

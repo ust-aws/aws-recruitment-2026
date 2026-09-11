@@ -3,10 +3,10 @@ import {
   ApplicationAlreadySubmittedError,
   committeeNamesForPositions,
   createApplication,
-  deleteApplication,
   getApplicationById,
   listApplications,
   positionsExist,
+  setApplicationArchived,
   type CreateApplicationInput,
   type DocumentType,
 } from "../lib/applications";
@@ -323,6 +323,7 @@ applicationsRoutes.get("/", requireAuth, async (c) => {
   const committee = c.req.query("committee") ?? "";
   const position = c.req.query("position") ?? "";
   const section = c.req.query("section") ?? "";
+  const archive = c.req.query("archive") ?? "active";
 
   if (committee && !isUuid(committee)) {
     return c.json({ error: "committee must be a UUID." }, 400);
@@ -330,11 +331,18 @@ applicationsRoutes.get("/", requireAuth, async (c) => {
   if (position && !isUuid(position)) {
     return c.json({ error: "position must be a UUID." }, 400);
   }
+  if (!["active", "archived", "all"].includes(archive)) {
+    return c.json(
+      { error: "archive must be active, archived, or all." },
+      400,
+    );
+  }
 
   const result = await listApplications({
     committee: committee || undefined,
     position: position || undefined,
     section: section || undefined,
+    archive: archive as "active" | "archived" | "all",
   });
   return c.json(result);
 });
@@ -490,6 +498,33 @@ applicationsRoutes.get("/:id/email-notifications", requireAuth, async (c) => {
   return c.json({ notifications });
 });
 
+applicationsRoutes.patch("/:id/archive", requireAuth, async (c) => {
+  const id = c.req.param("id");
+  if (!isUuid(id)) {
+    return c.json({ error: "Invalid application id." }, 400);
+  }
+
+  const body = (await c.req.json().catch(() => null)) as
+    | Record<string, unknown>
+    | null;
+  if (!body || typeof body.archived !== "boolean") {
+    return c.json({ error: "archived must be a boolean." }, 400);
+  }
+
+  const payload = c.get("jwtPayload") as { sub?: unknown };
+  const reviewerEmail =
+    typeof payload.sub === "string" ? payload.sub : undefined;
+  const updated = await setApplicationArchived(
+    id,
+    body.archived,
+    reviewerEmail,
+  );
+  if (!updated) {
+    return c.json({ error: "Application not found." }, 404);
+  }
+  return c.json(updated);
+});
+
 applicationsRoutes.get("/:id", requireAuth, async (c) => {
   const id = c.req.param("id");
   if (!isUuid(id)) {
@@ -501,17 +536,4 @@ applicationsRoutes.get("/:id", requireAuth, async (c) => {
     return c.json({ error: "Application not found." }, 404);
   }
   return c.json(application);
-});
-
-applicationsRoutes.delete("/:id", requireAuth, async (c) => {
-  const id = c.req.param("id");
-  if (!isUuid(id)) {
-    return c.json({ error: "Invalid application id." }, 400);
-  }
-
-  const deleted = await deleteApplication(id);
-  if (!deleted) {
-    return c.json({ error: "Application not found." }, 404);
-  }
-  return c.body(null, 204);
 });

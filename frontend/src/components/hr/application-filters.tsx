@@ -15,10 +15,12 @@ import { fieldControlClasses } from "@/lib/surface"
 import { useOpenPositions } from "@/lib/api"
 import type { ApplicationStatus } from "@/lib/application-types"
 
-const rowClasses = "flex flex-col gap-3 md:flex-row md:items-center"
+const rowClasses =
+  "flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center xl:flex-nowrap"
 const searchClasses = `${fieldControlClasses} md:flex-1`
 const statusSelectClasses = `${fieldControlClasses} md:w-52`
 const committeeSelectClasses = `${fieldControlClasses} md:min-w-[17rem] md:max-w-[20rem] *:data-[slot=select-value]:line-clamp-2 *:data-[slot=select-value]:whitespace-normal *:data-[slot=select-value]:text-left`
+const archiveSelectClasses = `${fieldControlClasses} md:w-44`
 const committeeMenuClasses =
   "min-w-[22rem] w-max max-w-[min(100vw-2rem,28rem)]"
 const committeeItemClasses =
@@ -36,6 +38,7 @@ export type HrFilters = {
   query: string
   committee: string
   status: "" | ApplicationStatus
+  archive: "active" | "archived"
 }
 
 type ApplicationFiltersProps = {
@@ -108,6 +111,24 @@ export function ApplicationFilters({ value, onChange }: ApplicationFiltersProps)
           <SelectItem value="pending">Pending</SelectItem>
           <SelectItem value="approved">Approved</SelectItem>
           <SelectItem value="rejected">Rejected</SelectItem>
+        </SelectContent>
+      </Select>
+      <Select
+        value={value.archive}
+        onValueChange={(next) =>
+          onChange({
+            archive: next === "archived" ? "archived" : "active",
+          })
+        }
+      >
+        <SelectTrigger className={archiveSelectClasses}>
+          <SelectValue>
+            {value.archive === "archived" ? "View: Archived" : "View: Active"}
+          </SelectValue>
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="active">View: Active</SelectItem>
+          <SelectItem value="archived">View: Archived</SelectItem>
         </SelectContent>
       </Select>
     </div>

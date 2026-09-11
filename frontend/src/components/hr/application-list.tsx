@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import { useSearchParams } from "next/navigation"
 import { ActionFeedback } from "@/components/action-feedback"
 import { SectionHeader } from "@/components/section-header"
 import {
@@ -14,44 +15,55 @@ import {
 } from "@/components/hr/application-pagination-utils"
 import { ApplicationRow } from "@/components/hr/application-row"
 import { ApplicationListSkeleton } from "@/components/hr/application-list-skeleton"
-import { HrDeleteApplicantDialog } from "@/components/hr/hr-delete-applicant-dialog"
+import { ApplicationExportButton } from "@/components/hr/application-export-button"
+import { HrArchiveApplicantDialog } from "@/components/hr/hr-archive-applicant-dialog"
 import { fullName, hasCommittee, useApplications } from "@/lib/api"
 import { pageShellClasses } from "@/lib/surface"
-import type { Application } from "@/lib/application-types"
+import type { HrApplication } from "@/lib/hr-application-types"
 
 const listClasses = "mt-8 flex flex-col gap-3"
 const emptyClasses = "mt-8 font-sans text-sm text-prelude"
+const toolbarClasses =
+  "mt-8 flex flex-col gap-3 xl:flex-row xl:items-center"
+const filtersClasses = "min-w-0 flex-1"
 
 const emptyFilters: HrFilters = {
   query: "",
   committee: "",
   status: "",
-}
-
-export const HR_DELETE_NOTICE_KEY = "hr-notice-applicant-deleted"
-
-function readDeleteNotice() {
-  if (typeof window === "undefined") return null
-  if (sessionStorage.getItem(HR_DELETE_NOTICE_KEY) !== "1") return null
-  sessionStorage.removeItem(HR_DELETE_NOTICE_KEY)
-  return { type: "success" as const, message: "Applicant deleted." }
+  archive: "active",
 }
 
 export function HrApplicationList() {
-  const { applications, loading, error, removeApplication } = useApplications()
+  const searchParams = useSearchParams()
+  const { applications, loading, error, replaceApplication } = useApplications()
   const [filters, setFilters] = useState(emptyFilters)
   const [page, setPage] = useState(1)
-  const [deleteTarget, setDeleteTarget] = useState<Application | null>(null)
+  const [archiveTarget, setArchiveTarget] = useState<HrApplication | null>(null)
   const [feedback, setFeedback] = useState<{
     type: "success" | "error"
     message: string
-  } | null>(readDeleteNotice)
+  } | null>(null)
+  const notice = searchParams.get("notice")
+  const visibleFeedback =
+    feedback ??
+    (notice === "archived" || notice === "restored"
+      ? {
+          type: "success" as const,
+          message:
+            notice === "archived"
+              ? "Applicant archived."
+              : "Applicant restored.",
+        }
+      : null)
 
   const visible = useMemo(() => {
     const query = filters.query.trim().toLowerCase()
     const committee =
       filters.committee === "all" ? "" : filters.committee
     return applications.filter((app) => {
+      const archived = Boolean(app.archivedAt)
+      if (filters.archive === "archived" ? !archived : archived) return false
       if (query && !fullName(app).toLowerCase().includes(query)) return false
       if (committee && !hasCommittee(app, committee)) return false
       if (filters.status && app.status !== filters.status) return false
@@ -75,11 +87,20 @@ export function HrApplicationList() {
         title="Applications Results"
         subtitle="Every R101 application so far."
       />
-      {feedback ? (
-        <ActionFeedback type={feedback.type} message={feedback.message} />
+      {visibleFeedback ? (
+        <ActionFeedback
+          type={visibleFeedback.type}
+          message={visibleFeedback.message}
+        />
       ) : null}
-      <div className="mt-8">
-        <ApplicationFilters value={filters} onChange={onFiltersChange} />
+      <div className={toolbarClasses}>
+        <div className={filtersClasses}>
+          <ApplicationFilters value={filters} onChange={onFiltersChange} />
+        </div>
+        <ApplicationExportButton
+          applications={visible}
+          archive={filters.archive}
+        />
       </div>
       {loading ? (
         <ApplicationListSkeleton />
@@ -95,7 +116,7 @@ export function HrApplicationList() {
                 <ApplicationRow
                   application={application}
                   emphasized={safePage === 1 && index === 0}
-                  onDelete={setDeleteTarget}
+                  onArchive={setArchiveTarget}
                 />
               </li>
             ))}
@@ -107,14 +128,19 @@ export function HrApplicationList() {
           />
         </>
       )}
-      <HrDeleteApplicantDialog
-        application={deleteTarget}
+      <HrArchiveApplicantDialog
+        application={archiveTarget}
         onOpenChange={(open) => {
-          if (!open) setDeleteTarget(null)
+          if (!open) setArchiveTarget(null)
         }}
-        onDeleted={(id) => {
-          removeApplication(id)
-          setFeedback({ type: "success", message: "Applicant deleted." })
+        onChanged={(updated) => {
+          replaceApplication(updated)
+          setFeedback({
+            type: "success",
+            message: updated.archivedAt
+              ? "Applicant archived."
+              : "Applicant restored.",
+          })
         }}
       />
     </main>

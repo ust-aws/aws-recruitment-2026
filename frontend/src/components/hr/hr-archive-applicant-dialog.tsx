@@ -10,39 +10,46 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { deleteApplication, fullName } from "@/lib/api"
-import type { Application } from "@/lib/application-types"
+import { fullName, setApplicationArchived } from "@/lib/api"
+import type { HrApplication } from "@/lib/hr-application-types"
 
 const errorClasses = "text-sm text-rose-glow"
 
-type HrDeleteApplicantDialogProps = {
-  application: Application | null
+type HrArchiveApplicantDialogProps = {
+  application: HrApplication | null
   onOpenChange: (open: boolean) => void
-  onDeleted: (id: string) => void
+  onChanged: (application: HrApplication) => void
 }
 
-export function HrDeleteApplicantDialog({
+export function HrArchiveApplicantDialog({
   application,
   onOpenChange,
-  onDeleted,
-}: HrDeleteApplicantDialogProps) {
+  onChanged,
+}: HrArchiveApplicantDialogProps) {
   const [pending, setPending] = useState(false)
   const [error, setError] = useState("")
+  const restoring = Boolean(application?.archivedAt)
 
   async function confirm() {
     if (!application) return
     setPending(true)
     setError("")
     try {
-      await deleteApplication(application.id)
-      onDeleted(application.id)
+      const updated = await setApplicationArchived(application.id, !restoring)
+      onChanged(updated)
       onOpenChange(false)
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not delete applicant.")
+      setError(
+        err instanceof Error
+          ? err.message
+          : `Could not ${restoring ? "restore" : "archive"} applicant.`
+      )
     } finally {
       setPending(false)
     }
   }
+
+  const action = restoring ? "Restore" : "Archive"
 
   return (
     <Dialog
@@ -55,10 +62,12 @@ export function HrDeleteApplicantDialog({
     >
       <DialogContent showCloseButton={false}>
         <DialogHeader>
-          <DialogTitle>Delete applicant?</DialogTitle>
+          <DialogTitle>{action} applicant?</DialogTitle>
           <DialogDescription>
             {application
-              ? `This removes ${fullName(application)} (${application.applicationCode}) from this cycle. They will no longer appear in HR or be able to open their dashboard. This cannot be undone.`
+              ? restoring
+                ? `${fullName(application)} (${application.applicationCode}) will return to active applications.`
+                : `${fullName(application)} (${application.applicationCode}) will be hidden from active applications and excluded from results release. You can restore this record later.`
               : null}
           </DialogDescription>
         </DialogHeader>
@@ -72,11 +81,11 @@ export function HrDeleteApplicantDialog({
             Cancel
           </Button>
           <Button
-            color="danger"
+            color={restoring ? "cyan" : "purple"}
             disabled={pending}
             onClick={confirm}
           >
-            {pending ? "Deleting…" : "Delete"}
+            {pending ? (restoring ? "Restoring…" : "Archiving…") : action}
           </Button>
         </DialogFooter>
       </DialogContent>

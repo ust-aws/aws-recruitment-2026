@@ -11,11 +11,11 @@ import type {
 } from "./hr-application-types"
 import {
   ApiError,
-  deleteApplicationRequest,
   getApplicationById,
   listApplications,
   listOpenPositions,
   peekOpenPositions,
+  patchApplicationArchivedRequest,
   patchApplicationDecisionRequest,
   postApplication,
 } from "./api-client"
@@ -53,7 +53,7 @@ export function useApplications() {
 
   useEffect(() => {
     let cancelled = false
-    listApplications()
+    listApplications("all")
       .then((rows) => {
         if (cancelled) return
         setApplications(rows)
@@ -72,11 +72,15 @@ export function useApplications() {
     }
   }, [])
 
-  function removeApplication(id: string) {
-    setApplications((current) => current.filter((app) => app.id !== id))
+  function replaceApplication(updated: HrApplication) {
+    setApplications((current) =>
+      current.map((application) =>
+        application.id === updated.id ? updated : application
+      )
+    )
   }
 
-  return { applications, loading, error, removeApplication }
+  return { applications, loading, error, replaceApplication }
 }
 
 export function useApplication(id: string | undefined) {
@@ -199,8 +203,8 @@ export function patchApplicationDecision(
   return patchApplicationDecisionRequest(id, input)
 }
 
-export function deleteApplication(id: string) {
-  return deleteApplicationRequest(id)
+export function setApplicationArchived(id: string, archived: boolean) {
+  return patchApplicationArchivedRequest(id, archived)
 }
 
 export function fullName(app: Application) {

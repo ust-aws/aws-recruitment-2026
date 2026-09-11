@@ -1,4 +1,12 @@
-import { and, desc, eq, exists, inArray } from "drizzle-orm";
+import {
+  and,
+  desc,
+  eq,
+  exists,
+  inArray,
+  isNotNull,
+  isNull,
+} from "drizzle-orm";
 import { db } from "../db";
 import {
   applicants,
@@ -7,6 +15,7 @@ import {
   applications,
   committees,
   positions,
+  users,
 } from "../db/schema";
 import {
   generateApplicationCode,
@@ -37,6 +46,7 @@ export type ApplicationJson = {
   applicationCode: string;
   status: ApplicationStatus;
   submittedAt: string;
+  archivedAt: string | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -83,6 +93,7 @@ export type ListFilters = {
   committee?: string;
   position?: string;
   section?: string;
+  archive?: "active" | "archived" | "all";
 };
 
 export class ApplicationAlreadySubmittedError extends Error {
@@ -131,6 +142,7 @@ type ApplicationRow = {
   applicationCode: string;
   status: ApplicationStatus;
   submittedAt: Date;
+  archivedAt: Date | null;
   firstName: string;
   lastName: string;
   email: string;
@@ -227,6 +239,7 @@ async function attachRelations(
       applicationCode: row.applicationCode,
       status: row.status,
       submittedAt: iso(row.submittedAt),
+      archivedAt: row.archivedAt ? iso(row.archivedAt) : null,
       firstName: row.firstName,
       lastName: row.lastName,
       email: row.email,
@@ -258,6 +271,7 @@ const applicationSelect = {
   applicationCode: applications.applicationCode,
   status: applications.status,
   submittedAt: applications.submittedAt,
+  archivedAt: applications.archivedAt,
   firstName: applicants.firstName,
   lastName: applicants.lastName,
   email: applicants.email,
@@ -294,6 +308,12 @@ export async function listApplications(filters: ListFilters): Promise<{
   total: number;
 }> {
   const conditions = [];
+
+  if (filters.archive === "archived") {
+    conditions.push(isNotNull(applications.archivedAt));
+  } else if (filters.archive !== "all") {
+    conditions.push(isNull(applications.archivedAt));
+  }
 
   if (filters.section) {
     conditions.push(eq(applicants.section, filters.section));
@@ -482,28 +502,53 @@ export async function createApplication(
   return created;
 }
 
-export async function deleteApplication(id: string): Promise<boolean> {
-  return db.transaction(async (tx) => {
-    const [row] = await tx
-      .select({
-        id: applications.id,
-        applicantId: applications.applicantId,
-      })
+export async function setApplicationArchived(
+  id: string,
+  archived: boolean,
+  reviewerEmail?: string,
+): Promise<ApplicationJson | null> {
+  const found = await db.transaction(async (tx) => {
+    const [application] = await tx
+      .select({ archivedAt: applications.archivedAt })
       .from(applications)
       .where(eq(applications.id, id))
-      .limit(1);
-    if (!row) return false;
+      .limit(1)
+      .for("update");
+    if (!application) return false;
 
-    await tx.delete(applications).where(eq(applications.id, id));
+    const alreadyInRequestedState = archived
+      ? application.archivedAt !== null
+      : application.archivedAt === null;
+    if (alreadyInRequestedState) return true;
 
-    const remaining = await tx
-      .select({ id: applications.id })
-      .from(applications)
-      .where(eq(applications.applicantId, row.applicantId))
-      .limit(1);
-    if (remaining.length === 0) {
-      await tx.delete(applicants).where(eq(applicants.id, row.applicantId));
+    let reviewerId: string | null = null;
+    if (archived && reviewerEmail) {
+      const [reviewer] = await tx
+        .select({ id: users.id })
+        .from(users)
+        .where(eq(users.email, reviewerEmail.trim().toLowerCase()))
+        .limit(1);
+      reviewerId = reviewer?.id ?? null;
     }
+
+    await tx
+      .update(applications)
+      .set(
+        archived
+          ? {
+              archivedAt: new Date(),
+              archivedBy: reviewerId,
+              archiveReason: null,
+            }
+          : {
+              archivedAt: null,
+              archivedBy: null,
+              archiveReason: null,
+            },
+      )
+      .where(eq(applications.id, id));
     return true;
   });
+
+  return found ? getApplicationById(id) : null;
 }

@@ -12,7 +12,8 @@
     "db:seed": "pnpm --filter backend db:seed",
     "test": "pnpm --filter backend test",
     "deploy": "pnpm --filter backend deploy",
-    "doctor": "npx react-doctor@latest"
+    "doctor": "npx react-doctor@latest",
+    "test:csv": "pnpm --filter backend exec tsx --test ../frontend/src/lib/hr-applications-csv.test.ts"
   },
   "dependencies": {
     "@neon/config": "^1.2.0",

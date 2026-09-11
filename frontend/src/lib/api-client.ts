@@ -59,9 +59,11 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function listApplications() {
+export function listApplications(
+  archive: "active" | "archived" | "all" = "active",
+) {
   return apiFetch<{ applications: HrApplication[]; total: number }>(
-    "/applications",
+    `/applications?archive=${archive}`,
   ).then((body) => body.applications);
 }
 
@@ -86,8 +88,11 @@ export function patchApplicationDecisionRequest(
   });
 }
 
-export function deleteApplicationRequest(id: string) {
-  return apiFetch<void>(`/applications/${id}`, { method: "DELETE" });
+export function patchApplicationArchivedRequest(id: string, archived: boolean) {
+  return apiFetch<HrApplication>(`/applications/${id}/archive`, {
+    method: "PATCH",
+    body: JSON.stringify({ archived }),
+  });
 }
 
 type PositionApiRow = {
