@@ -4,17 +4,15 @@ import { db } from "../db";
 import { applicationDocuments, uploadSessions } from "../db/schema";
 import {
   createDocumentUpload,
-  DOCUMENT_TYPES,
-  MAX_DOCUMENT_SIZE_BYTES,
   type DocumentType,
 } from "../lib/documents";
+import { uploadPresignSchema } from "../lib/apply-schemas";
 import { uploadsAreClosed } from "../lib/free-plan";
 
 const UPLOAD_EXPIRY_SECONDS = 10 * 60;
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;
 const STORAGE_CAP_BYTES = 4_000_000_000;
 const SESSION_CAP = 200;
-const SHA256_BASE64_RE = /^[A-Za-z0-9+/]{43}=$/;
 
 type UploadDocument = {
   documentType: DocumentType;
@@ -30,30 +28,9 @@ class UploadError extends Error {
 }
 
 function parseBody(body: unknown): UploadDocument[] {
-  if (!body || typeof body !== "object") throw new UploadError(400, "Request body must be a JSON object.");
-  const documents = (body as { documents?: unknown }).documents;
-  if (!Array.isArray(documents) || documents.length !== 2) {
-    throw new UploadError(400, "documents must contain one resume and one transcript.");
-  }
-  const parsed: UploadDocument[] = documents.map((document) => {
-    if (!document || typeof document !== "object") throw new UploadError(400, "Each document must be an object.");
-    const item = document as Record<string, unknown>;
-    if (!DOCUMENT_TYPES.includes(item.documentType as DocumentType)) throw new UploadError(400, "documentType must be resume or transcript.");
-    if (typeof item.fileName !== "string" || !item.fileName.trim() || item.fileName.length > 255 || !item.fileName.toLowerCase().endsWith(".pdf")) {
-      throw new UploadError(400, "fileName must be a PDF name with 255 characters or fewer.");
-    }
-    if (!Number.isInteger(item.sizeBytes) || (item.sizeBytes as number) < 1 || (item.sizeBytes as number) > MAX_DOCUMENT_SIZE_BYTES) {
-      throw new UploadError(400, "sizeBytes must be from 1 through 10000000.");
-    }
-    if (typeof item.checksumSha256 !== "string" || !SHA256_BASE64_RE.test(item.checksumSha256)) {
-      throw new UploadError(400, "checksumSha256 must be a base64 SHA-256 checksum.");
-    }
-    return { documentType: item.documentType as DocumentType, fileName: item.fileName.trim(), sizeBytes: item.sizeBytes as number, checksumSha256: item.checksumSha256 };
-  });
-  if (new Set(parsed.map((document) => document.documentType)).size !== 2) {
-    throw new UploadError(400, "documents must contain one resume and one transcript.");
-  }
-  return parsed;
+  const result = uploadPresignSchema.safeParse(body);
+  if (!result.success) throw new UploadError(400, result.error.issues[0].message);
+  return result.data.documents;
 }
 
 function numeric(value: unknown): number {
@@ -64,6 +41,7 @@ function numeric(value: unknown): number {
 async function createUploadSession(documents: UploadDocument[]) {
   const resume = documents.find((document) => document.documentType === "resume")!;
   const transcript = documents.find((document) => document.documentType === "transcript")!;
+  const registration = documents.find((document) => document.documentType === "registration")!;
   const now = new Date();
   const uploadExpiresAt = new Date(now.getTime() + UPLOAD_EXPIRY_SECONDS * 1000);
   const expiresAt = new Date(now.getTime() + SESSION_EXPIRY_MS);
@@ -73,8 +51,8 @@ async function createUploadSession(documents: UploadDocument[]) {
     const [{ count }] = await tx.select({ count: sql<number>`count(*)::int` }).from(uploadSessions).where(inArray(uploadSessions.status, ["active", "consumed"]));
     if (numeric(count) >= SESSION_CAP) throw new UploadError(409, "The application upload-session cap has been reached.");
     const [{ committedBytes }] = await tx.select({ committedBytes: sql<number>`coalesce(sum(${applicationDocuments.fileSizeBytes}), 0)::bigint` }).from(applicationDocuments);
-    const [{ reservedBytes }] = await tx.select({ reservedBytes: sql<number>`coalesce(sum(${uploadSessions.resumeSizeBytes} + ${uploadSessions.transcriptSizeBytes}), 0)::bigint` }).from(uploadSessions).where(and(eq(uploadSessions.status, "active"), gt(uploadSessions.expiresAt, now)));
-    if (numeric(committedBytes) + numeric(reservedBytes) + resume.sizeBytes + transcript.sizeBytes > STORAGE_CAP_BYTES) {
+    const [{ reservedBytes }] = await tx.select({ reservedBytes: sql<number>`coalesce(sum(${uploadSessions.resumeSizeBytes} + ${uploadSessions.transcriptSizeBytes} + ${uploadSessions.registrationSizeBytes}), 0)::bigint` }).from(uploadSessions).where(and(eq(uploadSessions.status, "active"), gt(uploadSessions.expiresAt, now)));
+    if (numeric(committedBytes) + numeric(reservedBytes) + resume.sizeBytes + transcript.sizeBytes + registration.sizeBytes > STORAGE_CAP_BYTES) {
       throw new UploadError(409, "The document storage cap has been reached.");
     }
     return tx.insert(uploadSessions).values({
@@ -84,6 +62,9 @@ async function createUploadSession(documents: UploadDocument[]) {
       transcriptFileName: transcript.fileName,
       transcriptSizeBytes: transcript.sizeBytes,
       transcriptChecksumSha256: transcript.checksumSha256,
+      registrationFileName: registration.fileName,
+      registrationSizeBytes: registration.sizeBytes,
+      registrationChecksumSha256: registration.checksumSha256,
       uploadExpiresAt,
       expiresAt,
     }).returning({ id: uploadSessions.id });

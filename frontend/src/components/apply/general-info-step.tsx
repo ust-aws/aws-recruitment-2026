@@ -17,6 +17,7 @@ import {
 import { sanitizeSectionInput } from "@/lib/apply-field-validation"
 import { fieldControlClasses } from "@/lib/surface"
 import { UST_EMAIL_DOMAIN } from "@/lib/constants"
+import type { GeneralInfoValues } from "@/components/apply/apply-schema"
 
 const gridClasses = "grid gap-5 sm:grid-cols-2"
 const personalRowClasses = "grid gap-5 sm:col-span-2 sm:grid-cols-3"
@@ -31,22 +32,10 @@ const composedAffixClasses =
 const composedPrefixClasses = `${composedAffixClasses} border-r border-blue-chalk/20 pl-4 pr-3`
 const composedSuffixClasses = `${composedAffixClasses} border-l border-blue-chalk/20 pl-3 pr-4`
 
-export type GeneralInfoValues = {
-  firstName: string
-  lastName: string
-  age: string
-  birthday: string
-  gender: string
-  section: string
-  emailLocal: string
-  studentNumber: string
-  contactDigits: string
-  facebookUrl: string
-}
-
 type GeneralInfoStepProps = {
   values: GeneralInfoValues
   onChange: (patch: Partial<GeneralInfoValues>) => void
+  errors?: Partial<Record<keyof GeneralInfoValues, string>>
 }
 
 function lettersOnly(value: string) {
@@ -67,10 +56,10 @@ function contactDigitsOnly(value: string) {
   return value.replace(/\D/g, "").slice(0, 10)
 }
 
-export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
+export function GeneralInfoStep({ values, onChange, errors }: GeneralInfoStepProps) {
   return (
     <div className={gridClasses}>
-      <Field label="First Name" htmlFor="firstName" required>
+      <Field label="First Name" htmlFor="firstName" required error={errors?.firstName}>
         <Input
           id="firstName"
           name="firstName"
@@ -83,7 +72,7 @@ export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
           className={fieldControlClasses}
         />
       </Field>
-      <Field label="Last Name" htmlFor="lastName" required>
+      <Field label="Last Name" htmlFor="lastName" required error={errors?.lastName}>
         <Input
           id="lastName"
           name="lastName"
@@ -97,7 +86,7 @@ export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
         />
       </Field>
       <div className={personalRowClasses}>
-        <Field label="Age" htmlFor="age" required>
+        <Field label="Age" htmlFor="age" required error={errors?.age}>
           <Input
             id="age"
             name="age"
@@ -112,7 +101,7 @@ export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
             className={fieldControlClasses}
           />
         </Field>
-        <Field label="Birthday" htmlFor="birthday" required>
+        <Field label="Birthday" htmlFor="birthday" required error={errors?.birthday}>
           <DatePicker
             id="birthday"
             required
@@ -121,7 +110,7 @@ export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
             placeholder="Select birthday"
           />
         </Field>
-        <Field label="Gender" htmlFor="gender" required>
+        <Field label="Gender" htmlFor="gender" required error={errors?.gender}>
           <Select
             value={values.gender || null}
             onValueChange={(gender: string | null) =>
@@ -149,7 +138,7 @@ export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
           </Select>
         </Field>
       </div>
-      <Field label="Student Number" htmlFor="studentNumber" required>
+      <Field label="Student Number" htmlFor="studentNumber" required error={errors?.studentNumber}>
         <Input
           id="studentNumber"
           name="studentNumber"
@@ -165,7 +154,7 @@ export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
           className={fieldControlClasses}
         />
       </Field>
-      <Field label="Contact Number" htmlFor="contactDigits" required>
+      <Field label="Contact Number" htmlFor="contactDigits" required error={errors?.contactDigits}>
         <div className={composedWrapClasses}>
           <span className={composedPrefixClasses} aria-hidden="true">
             +63
@@ -188,7 +177,7 @@ export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
         </div>
       </Field>
       <div className={sectionEmailRowClasses}>
-        <Field label="Year & Section" htmlFor="section" required>
+        <Field label="Year & Section" htmlFor="section" required error={errors?.section}>
           <Input
             id="section"
             name="section"
@@ -203,7 +192,7 @@ export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
             className={fieldControlClasses}
           />
         </Field>
-        <Field label="UST Email" htmlFor="emailLocal" required>
+        <Field label="UST Email" htmlFor="emailLocal" required error={errors?.emailLocal}>
           <div className={composedWrapClasses}>
             <Input
               id="emailLocal"
@@ -228,6 +217,7 @@ export function GeneralInfoStep({ values, onChange }: GeneralInfoStepProps) {
         htmlFor="facebookUrl"
         required
         className="sm:col-span-2"
+        error={errors?.facebookUrl}
       >
         <Input
           id="facebookUrl"

@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "tsx watch --env-file=../.env src/server.ts",
     "test": "./smoke-test.sh",
+    "test:validation": "tsx --test src/lib/apply-field-validation.test.ts",
+    "test:schemas": "tsx --test src/lib/apply-schemas.test.ts",
     "test:db": "tsx --test --test-concurrency=1 src/db/schema.test.ts",
     "test:email": "tsx --test src/lib/email/templates.test.ts",
     "test:editing": "tsx --test --test-concurrency=1 src/applicant-editing.test.ts",
@@ -30,7 +32,8 @@
     "drizzle-orm": "^0.45.2",
     "google-auth-library": "^11.0.2",
     "hono": "^4.13.3",
-    "postgres": "^3.4.5"
+    "postgres": "^3.4.5",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",

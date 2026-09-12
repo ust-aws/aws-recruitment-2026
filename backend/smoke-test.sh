@@ -80,10 +80,10 @@ expect "GET /health" 200
 request POST /uploads/presign '{}'
 expect "missing documents" 400
 
-request POST /uploads/presign '{"documents":[{"documentType":"resume","fileName":"resume.pdf","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},{"documentType":"resume","fileName":"copy.pdf","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}]}'
+request POST /uploads/presign '{"documents":[{"documentType":"resume","fileName":"resume.pdf","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},{"documentType":"resume","fileName":"copy.pdf","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},{"documentType":"registration","fileName":"registration.pdf","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}]}'
 expect "duplicate document type" 400
 
-request POST /uploads/presign '{"documents":[{"documentType":"resume","fileName":"resume.txt","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},{"documentType":"transcript","fileName":"transcript.pdf","sizeBytes":10000001,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}]}'
+request POST /uploads/presign '{"documents":[{"documentType":"resume","fileName":"resume.txt","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},{"documentType":"transcript","fileName":"transcript.pdf","sizeBytes":10000001,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},{"documentType":"registration","fileName":"registration.pdf","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}]}'
 expect "invalid PDF name and size" 400
 
 request GET "/applications/$UNKNOWN_ID/documents/resume"
