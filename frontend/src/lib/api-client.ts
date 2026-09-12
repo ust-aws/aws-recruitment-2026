@@ -60,12 +60,45 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-export function listApplications(
-  archive: "active" | "archived" | "all" = "active",
-) {
-  return apiFetch<{ applications: HrApplication[]; total: number }>(
-    `/applications?archive=${archive}`,
-  ).then((body) => body.applications);
+export type ApplicationListParams = {
+  query?: string;
+  committeeName?: string;
+  status?: "pending" | "approved" | "rejected";
+  archive?: "active" | "archived" | "all";
+  page?: number;
+  pageSize?: number;
+};
+
+export type ApplicationListResponse = {
+  applications: HrApplication[];
+  total: number;
+};
+
+export function listApplications(params: ApplicationListParams = {}) {
+  const query = new URLSearchParams();
+  if (params.query) query.set("query", params.query);
+  if (params.committeeName) query.set("committeeName", params.committeeName);
+  if (params.status) query.set("status", params.status);
+  query.set("archive", params.archive ?? "active");
+  query.set("page", String(params.page ?? 1));
+  query.set("pageSize", String(params.pageSize ?? 10));
+
+  return apiFetch<ApplicationListResponse>(`/applications?${query}`);
+}
+
+export async function listAllApplications(params: ApplicationListParams = {}) {
+  const pageSize = 100;
+  const first = await listApplications({ ...params, page: 1, pageSize });
+  const totalPages = Math.ceil(first.total / pageSize);
+  const remainingPages = await Promise.all(
+    Array.from({ length: totalPages - 1 }, (_, index) =>
+      listApplications({ ...params, page: index + 2, pageSize }),
+    ),
+  );
+
+  return [first, ...remainingPages].flatMap(
+    (response) => response.applications,
+  );
 }
 
 export function getApplicationById(id: string) {

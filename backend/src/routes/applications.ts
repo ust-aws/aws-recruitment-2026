@@ -39,6 +39,20 @@ function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
 }
 
+function parsePositiveInteger(
+  value: string | undefined,
+  fallback: number,
+  max?: number,
+): number | null {
+  if (value === undefined) return fallback;
+  if (!/^\d+$/.test(value)) return null;
+  const parsed = Number(value);
+  if (!Number.isSafeInteger(parsed) || parsed < 1 || (max && parsed > max)) {
+    return null;
+  }
+  return parsed;
+}
+
 function parseCreateBody(
   body: unknown,
 ): { ok: true; value: CreateApplicationInput } | { ok: false; error: string } {
@@ -50,15 +64,32 @@ function parseCreateBody(
 
 applicationsRoutes.get("/", requireAuth, async (c) => {
   const committee = c.req.query("committee") ?? "";
+  const committeeName = (c.req.query("committeeName") ?? "").trim();
   const position = c.req.query("position") ?? "";
   const section = c.req.query("section") ?? "";
+  const query = (c.req.query("query") ?? "").trim();
+  const status = c.req.query("status") ?? "";
   const archive = c.req.query("archive") ?? "active";
+  const page = parsePositiveInteger(c.req.query("page"), 1);
+  const pageSize = parsePositiveInteger(c.req.query("pageSize"), 10, 100);
 
   if (committee && !isUuid(committee)) {
     return c.json({ error: "committee must be a UUID." }, 400);
   }
+  if (committeeName.length > 100) {
+    return c.json({ error: "committeeName must be at most 100 characters." }, 400);
+  }
   if (position && !isUuid(position)) {
     return c.json({ error: "position must be a UUID." }, 400);
+  }
+  if (query.length > 200) {
+    return c.json({ error: "query must be at most 200 characters." }, 400);
+  }
+  if (status && !["pending", "approved", "rejected"].includes(status)) {
+    return c.json(
+      { error: "status must be pending, approved, or rejected." },
+      400,
+    );
   }
   if (!["active", "archived", "all"].includes(archive)) {
     return c.json(
@@ -66,12 +97,26 @@ applicationsRoutes.get("/", requireAuth, async (c) => {
       400,
     );
   }
+  if (page === null) {
+    return c.json({ error: "page must be a positive integer." }, 400);
+  }
+  if (pageSize === null) {
+    return c.json(
+      { error: "pageSize must be an integer between 1 and 100." },
+      400,
+    );
+  }
 
   const result = await listApplications({
     committee: committee || undefined,
+    committeeName: committeeName || undefined,
     position: position || undefined,
     section: section || undefined,
+    query: query || undefined,
+    status: status ? (status as "pending" | "approved" | "rejected") : undefined,
     archive: archive as "active" | "archived" | "all",
+    page,
+    pageSize,
   });
   return c.json(result);
 });

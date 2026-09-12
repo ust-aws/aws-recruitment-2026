@@ -16,6 +16,7 @@
     "test:scheduling": "tsx --test --test-concurrency=1 src/interview-scheduling.test.ts",
     "test:results": "tsx --test --test-concurrency=1 src/results-preview.test.ts",
     "test:archive": "tsx --test --test-concurrency=1 src/application-archiving.test.ts",
+    "test:listing": "tsx --test --test-concurrency=1 src/application-listing.test.ts",
     "cdk": "cdk",
     "deploy": "cdk deploy",
     "synth": "cdk synth",
@@ -31,7 +32,7 @@
     "@hono/node-server": "^1.14.0",
     "drizzle-orm": "^0.45.2",
     "google-auth-library": "^11.0.2",
-    "hono": "^4.13.3",
+    "hono": "^4.13.5",
     "postgres": "^3.4.5",
     "zod": "^4.4.3"
   },

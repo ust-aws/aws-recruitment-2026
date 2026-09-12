@@ -1,11 +1,14 @@
 import {
   and,
+  count,
   desc,
   eq,
   exists,
+  ilike,
   inArray,
   isNotNull,
   isNull,
+  sql,
 } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db } from "../db";
@@ -105,9 +108,14 @@ export type CreateApplicationInput = {
 
 export type ListFilters = {
   committee?: string;
+  committeeName?: string;
   position?: string;
   section?: string;
+  query?: string;
+  status?: ApplicationStatus;
   archive?: "active" | "archived" | "all";
+  page?: number;
+  pageSize?: number;
 };
 
 export class ApplicationAlreadySubmittedError extends Error {
@@ -351,6 +359,8 @@ export async function listApplications(filters: ListFilters): Promise<{
   total: number;
 }> {
   const conditions = [];
+  const page = filters.page ?? 1;
+  const pageSize = filters.pageSize ?? 10;
 
   if (filters.archive === "archived") {
     conditions.push(isNotNull(applications.archivedAt));
@@ -360,6 +370,19 @@ export async function listApplications(filters: ListFilters): Promise<{
 
   if (filters.section) {
     conditions.push(eq(applicants.section, filters.section));
+  }
+
+  if (filters.query) {
+    conditions.push(
+      ilike(
+        sql`${applicants.firstName} || ' ' || ${applicants.lastName}`,
+        `%${filters.query}%`,
+      ),
+    );
+  }
+
+  if (filters.status) {
+    conditions.push(eq(applications.status, filters.status));
   }
 
   if (filters.committee) {
@@ -373,6 +396,24 @@ export async function listApplications(filters: ListFilters): Promise<{
             and(
               eq(applicationChoices.applicationId, applications.id),
               eq(positions.committeeId, filters.committee),
+            ),
+          ),
+      ),
+    );
+  }
+
+  if (filters.committeeName) {
+    conditions.push(
+      exists(
+        db
+          .select({ id: applicationChoices.id })
+          .from(applicationChoices)
+          .innerJoin(positions, eq(applicationChoices.positionId, positions.id))
+          .innerJoin(committees, eq(positions.committeeId, committees.id))
+          .where(
+            and(
+              eq(applicationChoices.applicationId, applications.id),
+              eq(committees.name, filters.committeeName),
             ),
           ),
       ),
@@ -395,15 +436,25 @@ export async function listApplications(filters: ListFilters): Promise<{
     );
   }
 
-  const rows = await db
-    .select(applicationSelect)
-    .from(applications)
-    .innerJoin(applicants, eq(applications.applicantId, applicants.id))
-    .where(conditions.length > 0 ? and(...conditions) : undefined)
-    .orderBy(desc(applications.submittedAt));
+  const where = conditions.length > 0 ? and(...conditions) : undefined;
+  const [rows, totalRows] = await Promise.all([
+    db
+      .select(applicationSelect)
+      .from(applications)
+      .innerJoin(applicants, eq(applications.applicantId, applicants.id))
+      .where(where)
+      .orderBy(desc(applications.submittedAt), desc(applications.id))
+      .limit(pageSize)
+      .offset((page - 1) * pageSize),
+    db
+      .select({ total: count() })
+      .from(applications)
+      .innerJoin(applicants, eq(applications.applicantId, applicants.id))
+      .where(where),
+  ]);
 
   const mapped = await attachRelations(rows);
-  return { applications: mapped, total: mapped.length };
+  return { applications: mapped, total: totalRows[0]?.total ?? 0 };
 }
 
 export async function positionsExist(positionIds: string[]): Promise<boolean> {

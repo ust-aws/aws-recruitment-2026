@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import type {
   Application,
   CreateApplicationInput,
@@ -18,6 +18,7 @@ import {
   patchApplicationDecisionRequest,
   postApplication,
   postUploadPresign,
+  type ApplicationListParams,
   type UploadPresignRequest,
 } from "./api-client"
 
@@ -47,41 +48,66 @@ export type {
   HrInterviewSlotBooking,
 } from "./api-client"
 
-export function useApplications() {
+export function useApplications(params: ApplicationListParams) {
+  const {
+    query = "",
+    committeeName = "",
+    status,
+    archive = "active",
+    page = 1,
+    pageSize = 10,
+  } = params
   const [applications, setApplications] = useState<HrApplication[]>([])
+  const [total, setTotal] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [reloadVersion, setReloadVersion] = useState(0)
 
   useEffect(() => {
     let cancelled = false
-    listApplications("all")
-      .then((rows) => {
-        if (cancelled) return
-        setApplications(rows)
-        setError(null)
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return
-        setApplications([])
-        setError(err instanceof Error ? err.message : "Failed to load applications.")
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false)
-      })
+    const timeout = window.setTimeout(
+      () => {
+        setLoading(true)
+        listApplications({
+          query,
+          committeeName,
+          status,
+          archive,
+          page,
+          pageSize,
+        })
+          .then((response) => {
+            if (cancelled) return
+            setApplications(response.applications)
+            setTotal(response.total)
+            setError(null)
+          })
+          .catch((err: unknown) => {
+            if (cancelled) return
+            setApplications([])
+            setTotal(0)
+            setError(
+              err instanceof Error ? err.message : "Failed to load applications."
+            )
+          })
+          .finally(() => {
+            if (!cancelled) setLoading(false)
+          })
+      },
+      query ? 250 : 0
+    )
+
     return () => {
       cancelled = true
+      window.clearTimeout(timeout)
     }
+  }, [archive, committeeName, page, pageSize, query, reloadVersion, status])
+
+  const refreshApplications = useCallback(() => {
+    setReloadVersion((current) => current + 1)
   }, [])
 
-  function replaceApplication(updated: HrApplication) {
-    setApplications((current) =>
-      current.map((application) =>
-        application.id === updated.id ? updated : application
-      )
-    )
-  }
-
-  return { applications, loading, error, replaceApplication }
+  return { applications, total, loading, error, refreshApplications }
 }
 
 export function useApplication(id: string | undefined) {
