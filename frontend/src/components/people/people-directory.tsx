@@ -49,7 +49,7 @@ export function PeopleDirectory() {
         className={gridClasses}
         role="tabpanel"
         aria-label={
-          view === "executive-board" ? "Executive Board" : "Committee Directors"
+          view === "executive-board" ? "Executive Boards" : "Committee Directors"
         }
       >
         {view === "executive-board"

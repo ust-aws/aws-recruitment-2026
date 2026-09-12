@@ -132,6 +132,22 @@ const DOCUMENT_FILE_PREFIX: Record<DocumentType, string> = {
 
 export const documentLastNamePlaceholder = "Lastname"
 
+export const APPLICATION_DOCUMENT_PDF_MAX_BYTES = 10 * 1024 * 1024
+
+export const APPLICATION_DOCUMENT_PDF_MAX_SIZE_LABEL = "10 MB"
+
+export function isApplicationDocumentPdfWithinSizeLimit(file: File): boolean {
+  return file.size <= APPLICATION_DOCUMENT_PDF_MAX_BYTES
+}
+
+export function applicationDocumentPdfSizeLimitMessage(): string {
+  return `Each PDF must be ${APPLICATION_DOCUMENT_PDF_MAX_SIZE_LABEL} or smaller.`
+}
+
+export function documentUploadFileHint(documentType: DocumentType): string {
+  return `Save your PDF as ${documentFileNameFormatExample(documentType)}. Maximum file size: ${APPLICATION_DOCUMENT_PDF_MAX_SIZE_LABEL}.`
+}
+
 export function documentFileNameFormatExample(documentType: DocumentType): string {
   return `${DOCUMENT_FILE_PREFIX[documentType]}_${documentLastNamePlaceholder}.pdf`
 }

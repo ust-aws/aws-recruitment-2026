@@ -3,12 +3,12 @@ import {
   ApplicationAlreadySubmittedError,
   committeeNamesForPositions,
   createApplication,
+  getApplicationDocument,
   getApplicationById,
   listApplications,
   positionsExist,
   setApplicationArchived,
   type CreateApplicationInput,
-  type DocumentType,
 } from "../lib/applications";
 import {
   ApplicationDecisionError,
@@ -17,21 +17,20 @@ import {
 } from "../lib/application-decisions";
 import {
   canonicalizeHttpsUrl,
-  documentFileNameMatches,
   hasValidLastNameFileToken,
   isValidApplicantName,
   isValidContactNumber,
-  isValidDevUploadS3Key,
   isValidFacebookUrl,
   isValidMotivation,
   isValidSection,
   isValidStudentNumber,
   isValidUstApplicantEmail,
   normalizeSection,
-  REQUIRED_DOCUMENT_TYPES,
   validateChoiceUrls,
 } from "../lib/apply-field-validation";
 import { requireAuth } from "../auth";
+import { createDocumentDownload } from "../lib/documents";
+import { freePlanEndDate } from "../lib/free-plan";
 import {
   listEmailNotificationsByApplicationId,
   sendApplicationSubmitted,
@@ -219,76 +218,8 @@ function parseCreateBody(
     return { ok: false, error: "choices must use two different positions." };
   }
 
-  if (!Array.isArray(input.documents) || input.documents.length !== 3) {
-    return {
-      ok: false,
-      error: "documents must contain resume, transcript, and registration.",
-    };
-  }
-
-  const documents: CreateApplicationInput["documents"] = [];
-  const types = new Set<DocumentType>();
-  for (const doc of input.documents) {
-    if (!doc || typeof doc !== "object") {
-      return { ok: false, error: "Each document must be an object." };
-    }
-    const row = doc as Record<string, unknown>;
-    if (
-      row.documentType !== "resume" &&
-      row.documentType !== "transcript" &&
-      row.documentType !== "registration"
-    ) {
-      return {
-        ok: false,
-        error: "documentType must be resume, transcript, or registration.",
-      };
-    }
-    if (!isNonEmptyString(row.fileName) || !isNonEmptyString(row.s3Key)) {
-      return {
-        ok: false,
-        error: "Each document needs a fileName and non-empty s3Key.",
-      };
-    }
-    const documentType = row.documentType as DocumentType;
-    const fileName = row.fileName.trim();
-    const s3Key = row.s3Key.trim();
-    if (
-      !documentFileNameMatches(documentType, fileName, lastName)
-    ) {
-      return {
-        ok: false,
-        error: `Document file names must be CV_, TOR_, and RegForm_ followed by your last name and .pdf.`,
-      };
-    }
-    if (!isValidDevUploadS3Key(s3Key, documentType, lastName)) {
-      return {
-        ok: false,
-        error: "Each document s3Key must match the expected upload path and file name.",
-      };
-    }
-    types.add(documentType);
-    documents.push({
-      documentType,
-      fileName,
-      s3Key,
-    });
-  }
-
-  if (types.size !== 3) {
-    return {
-      ok: false,
-      error:
-        "documents must include one resume, one transcript, and one registration.",
-    };
-  }
-  for (const required of REQUIRED_DOCUMENT_TYPES) {
-    if (!types.has(required)) {
-      return {
-        ok: false,
-        error:
-          "documents must include one resume, one transcript, and one registration.",
-      };
-    }
+  if (!isNonEmptyString(input.uploadSessionId) || !isUuid(input.uploadSessionId)) {
+    return { ok: false, error: "uploadSessionId must be a valid UUID." };
   }
 
   if (!isNonEmptyString(input.slotId) || !isUuid(input.slotId as string)) {
@@ -314,7 +245,7 @@ function parseCreateBody(
       ...(githubUrl ? { githubUrl } : {}),
       slotId: (input.slotId as string).trim(),
       choices,
-      documents,
+      uploadSessionId: input.uploadSessionId,
     },
   };
 }
@@ -371,23 +302,32 @@ applicationsRoutes.post("/", async (c) => {
   }
 
   try {
-    const created = await createApplication(parsed.value);
-    void sendApplicationSubmitted(created).catch((err) => {
-      console.error("submission email failed", err);
-    });
-    return c.json(created, 201);
-  } catch (err) {
-    if (err instanceof ApplicationAlreadySubmittedError) {
-      return c.json({ error: err.message }, 409);
+    const result = await createApplication(parsed.value);
+    if (result.created) {
+      void sendApplicationSubmitted(result.application).catch((err) => {
+        console.error("submission email failed", err);
+      });
     }
-    if (err instanceof InterviewScheduleError) {
+    return c.json(result.application, result.created ? 201 : 200);
+  } catch (error) {
+    if (error instanceof ApplicationAlreadySubmittedError) {
+      return c.json({ error: error.message }, 409);
+    }
+    if (error instanceof InterviewScheduleError) {
       const status =
-        err.code === "slot_not_found" || err.code === "position_not_found"
+        error.code === "slot_not_found" || error.code === "position_not_found"
           ? 404
           : 409;
-      return c.json({ error: err.message }, status);
+      return c.json({ error: error.message }, status);
     }
-    throw err;
+    const message = error instanceof Error ? error.message : "Could not create application.";
+    if (message.includes("was not found")) return c.json({ error: message }, 404);
+    if (message.includes("has expired")) return c.json({ error: message }, 410);
+    if (message.includes("metadata") || message.includes("not a PDF")) {
+      return c.json({ error: message }, 400);
+    }
+    console.error("Could not create application", error);
+    return c.json({ error: "Could not create application." }, 503);
   }
 });
 
@@ -536,4 +476,38 @@ applicationsRoutes.get("/:id", requireAuth, async (c) => {
     return c.json({ error: "Application not found." }, 404);
   }
   return c.json(application);
+});
+
+applicationsRoutes.get("/:id/documents/:type", requireAuth, async (c) => {
+  const id = c.req.param("id");
+  const type = c.req.param("type");
+  if (!isUuid(id)) return c.json({ error: "Invalid application id." }, 400);
+  if (type !== "resume" && type !== "transcript" && type !== "registration") {
+    return c.json(
+      { error: "Document type must be resume, transcript, or registration." },
+      400,
+    );
+  }
+  const document = await getApplicationDocument(id, type);
+  if (!document) return c.json({ error: "Document not found." }, 404);
+  const availableUntil = document.availableUntil ?? freePlanEndDate();
+  if (availableUntil && availableUntil <= new Date()) {
+    return c.json({ error: "Document files have expired." }, 410);
+  }
+  const disposition = c.req.query("disposition") ?? "inline";
+  if (disposition !== "inline" && disposition !== "attachment") {
+    return c.json({ error: "disposition must be inline or attachment." }, 400);
+  }
+  try {
+    const url = await createDocumentDownload(
+      document.s3Key,
+      document.fileName,
+      disposition,
+    );
+    c.header("Cache-Control", "no-store");
+    return c.redirect(url, 302);
+  } catch (error) {
+    console.error("Could not load application document", error);
+    return c.json({ error: "Document storage is unavailable." }, 503);
+  }
 });

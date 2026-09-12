@@ -26,7 +26,7 @@ export function ApplicantEditBanner({
   if (canEdit) {
     return (
       <p className={`${bannerClasses} ${openClasses}`}>
-        You can change your committee choices until{" "}
+        You can edit your application on this dashboard until{" "}
         {editDeadline ? formatDeadline(editDeadline) : "the end of recruitment week"}.
       </p>
     )
