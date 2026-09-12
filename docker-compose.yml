@@ -16,5 +16,23 @@ services:
       timeout: 5s
       retries: 5
 
+  localstack:
+    image: localstack/localstack:4.12@sha256:0df3a97da57de03a588c05d9b8f390f15c7033fc7c4512f94619d344bc3cd317
+    environment:
+      SERVICES: s3
+      S3_SKIP_SIGNATURE_VALIDATION: "0"
+      S3_VALIDATE_SIGNATURES: "1"
+      S3_BUCKET: ${S3_BUCKET:-aws-ust-recruitment-documents}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "${LOCALSTACK_PORT:-4566}:4566"
+    volumes:
+      - ./localstack-init:/etc/localstack/init/ready.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "awslocal s3api list-buckets >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+
 volumes:
   postgres-data:

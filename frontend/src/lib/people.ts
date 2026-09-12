@@ -1,3 +1,5 @@
+export const PERSON_AVATAR_PLACEHOLDER = "/people/person-placeholder.png"
+
 export type PersonTerm = {
   name: string
   title: string
@@ -21,34 +23,6 @@ export type DirectorSeat = {
 const CURRENT_AY = "AY 2026-2027"
 const PREVIOUS_AY = "AY 2025-2026"
 
-/** Famous meme placeholders until real headshots are available. */
-const MEME = {
-  bernie: "/people/memes/bernie.jpg",
-  changeMyMind: "/people/memes/change-my-mind.jpg",
-  confusedNick: "/people/memes/confused-nick.jpg",
-  cryingJordan: "/people/memes/crying-jordan.jpg",
-  disasterGirl: "/people/memes/disaster-girl.jpg",
-  distractedBoyfriend: "/people/memes/distracted-boyfriend.jpg",
-  doge: "/people/memes/doge.jpg",
-  drake: "/people/memes/drake.jpg",
-  expandingBrain: "/people/memes/expanding-brain.jpg",
-  grumpyCat: "/people/memes/grumpy-cat.jpg",
-  harold: "/people/memes/harold.jpg",
-  keanu: "/people/memes/keanu.jpg",
-  kermitTea: "/people/memes/kermit-tea.jpg",
-  mockingSpongebob: "/people/memes/mocking-spongebob.jpg",
-  philosoraptor: "/people/memes/philosoraptor.jpg",
-  pikachu: "/people/memes/pikachu.jpg",
-  rollSafe: "/people/memes/roll-safe.jpg",
-  scumbagSteve: "/people/memes/scumbag-steve.jpg",
-  stonks: "/people/memes/stonks.jpg",
-  successKid: "/people/memes/success-kid.jpg",
-  surprisedPikachu: "/people/memes/surprised-pikachu.jpg",
-  thisIsFine: "/people/memes/this-is-fine.jpg",
-  womanYellingCat: "/people/memes/woman-yelling-cat.jpg",
-  yUNo: "/people/memes/y-u-no.jpg",
-} as const
-
 /** Matches office order in `committee-groups.ts` (CEO → COO → CRO → …). */
 function officer(
   rank: number,
@@ -56,49 +30,28 @@ function officer(
   name: string,
   title: string,
   previousName: string,
-  currentPhoto: string,
-  previousPhoto: string,
 ): OfficerSeat {
   return {
     id,
     rank,
-    current: { name, title, academicYear: CURRENT_AY, photo: currentPhoto },
+    current: { name, title, academicYear: CURRENT_AY },
     previous: {
       name: previousName,
       title,
       academicYear: PREVIOUS_AY,
-      photo: previousPhoto,
     },
   }
 }
 
 export const EXECUTIVE_BOARD: OfficerSeat[] = [
-  officer(
-    1,
-    "ceo",
-    "Sydney Padua",
-    "Chief Executive Officer",
-    "Josh Kenn Viray",
-    MEME.drake,
-    MEME.keanu,
-  ),
-  officer(
-    2,
-    "coo",
-    "Marc Axalan",
-    "Chief Operating Officer",
-    "Marc Axalan",
-    MEME.stonks,
-    MEME.rollSafe,
-  ),
+  officer(1, "ceo", "Sydney Padua", "Chief Executive Officer", "Josh Kenn Viray"),
+  officer(2, "coo", "Marc Axalan", "Chief Operating Officer", "Marc Axalan"),
   officer(
     3,
     "cro",
     "Alden Olmedo",
     "Chief Relations Officer",
     "Leigh Andrei Sigua",
-    MEME.successKid,
-    MEME.distractedBoyfriend,
   ),
   officer(
     4,
@@ -106,44 +59,16 @@ export const EXECUTIVE_BOARD: OfficerSeat[] = [
     "Hannah Muñoz",
     "Corporate Secretary",
     "Jan Vincent Elleazar",
-    MEME.kermitTea,
-    MEME.disasterGirl,
   ),
-  officer(
-    5,
-    "cto",
-    "Neil Casas",
-    "Chief Technology Officer",
-    "Lance Owen Gulinao",
-    MEME.expandingBrain,
-    MEME.philosoraptor,
-  ),
-  officer(
-    6,
-    "cfo",
-    "Kyan So",
-    "Chief Finance Officer",
-    "Alexa Palanog",
-    MEME.bernie,
-    MEME.confusedNick,
-  ),
-  officer(
-    7,
-    "chro",
-    "Claire Abas",
-    "Chief Human Resource Officer",
-    "Denzel To",
-    MEME.womanYellingCat,
-    MEME.thisIsFine,
-  ),
+  officer(5, "cto", "Neil Casas", "Chief Technology Officer", "Lance Owen Gulinao"),
+  officer(6, "cfo", "Kyan So", "Chief Finance Officer", "Alexa Palanog"),
+  officer(7, "chro", "Claire Abas", "Chief Human Resource Officer", "Denzel To"),
   officer(
     8,
     "cco",
     "Lyka Escosia",
     "Chief Creative Officer",
     "Sydney Padua",
-    MEME.mockingSpongebob,
-    MEME.harold,
   ),
 ].sort((a, b) => a.rank - b.rank)
 
@@ -163,22 +88,6 @@ const COMMITTEE_DIRECTOR_SEATS: Array<{ rank: number; title: string; name: strin
   { rank: 13, title: "Publication Committee Director", name: "Elleinrich Jarina" },
 ]
 
-const DIRECTOR_MEMES = [
-  MEME.doge,
-  MEME.grumpyCat,
-  MEME.cryingJordan,
-  MEME.scumbagSteve,
-  MEME.changeMyMind,
-  MEME.yUNo,
-  MEME.pikachu,
-  MEME.surprisedPikachu,
-  MEME.harold,
-  MEME.distractedBoyfriend,
-  MEME.thisIsFine,
-  MEME.rollSafe,
-  MEME.expandingBrain,
-] as const
-
 export const COMMITTEE_DIRECTORS: DirectorSeat[] = COMMITTEE_DIRECTOR_SEATS
   .sort((a, b) => a.rank - b.rank)
   .map((seat, index) => ({
@@ -188,6 +97,5 @@ export const COMMITTEE_DIRECTORS: DirectorSeat[] = COMMITTEE_DIRECTOR_SEATS
       name: seat.name,
       title: seat.title,
       academicYear: CURRENT_AY,
-      photo: DIRECTOR_MEMES[index],
     },
   }))

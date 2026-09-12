@@ -1,7 +1,11 @@
+import { parseDateYmd, partsToDateYmd } from "@/lib/date-local"
+
 /** Local hours; grid shows 30-minute slots from 7:00 AM through 9:30 PM. */
 export const INTERVIEW_GRID_START_HOUR = 7
 export const INTERVIEW_GRID_END_HOUR = 22
 export const INTERVIEW_SLOT_MINUTES = 30
+export const INTERVIEW_SEASON_END_HOUR = 21
+export const INTERVIEW_SEASON_END_MINUTE = 30
 
 export type InterviewSeasonBounds = {
   startsAt: Date
@@ -19,6 +23,31 @@ export function interviewSeasonBoundsFromPayload(payload: {
     return null
   }
   return { startsAt, endsAt }
+}
+
+export function interviewSeasonYmdFromIso(iso: string | null): string {
+  if (!iso) return ""
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ""
+  return partsToDateYmd({
+    year: date.getFullYear(),
+    month: date.getMonth(),
+    day: date.getDate(),
+  })
+}
+
+export function interviewSeasonStartIsoFromYmd(ymd: string): string | null {
+  const date = parseDateYmd(ymd)
+  if (!date) return null
+  date.setHours(INTERVIEW_GRID_START_HOUR, 0, 0, 0)
+  return date.toISOString()
+}
+
+export function interviewSeasonEndIsoFromYmd(ymd: string): string | null {
+  const date = parseDateYmd(ymd)
+  if (!date) return null
+  date.setHours(INTERVIEW_SEASON_END_HOUR, INTERVIEW_SEASON_END_MINUTE, 0, 0)
+  return date.toISOString()
 }
 
 export function interviewTimeLabels(): string[] {

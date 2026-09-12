@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "docker compose up postgres & pnpm -r --parallel dev",
-    "db:up": "docker compose up -d postgres",
+    "dev": "docker compose up postgres localstack & pnpm -r --parallel dev",
+    "db:up": "docker compose up -d postgres localstack",
     "db:down": "docker compose down",
     "db:reset": "docker compose down -v && docker compose up -d postgres",
     "db:push": "pnpm --filter backend db:push",

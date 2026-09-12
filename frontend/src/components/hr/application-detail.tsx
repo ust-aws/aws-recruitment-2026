@@ -37,7 +37,6 @@ const whyLabelClasses =
   "mt-8 font-sans text-sm font-semibold text-biloba-flower"
 const whyBodyClasses = "mt-2 font-sans text-sm leading-relaxed text-blue-chalk"
 const downloadsClasses = "mt-8 flex flex-wrap justify-center gap-4"
-const downloadButtonClasses = "h-10 px-5 text-xs"
 const archiveRowClasses = "mt-8 flex justify-center"
 const archiveActionClasses = "h-9 rounded-pill px-5 font-mono text-xs"
 const archivedPillClasses =
@@ -47,12 +46,67 @@ const archivedNoticeClasses =
 const missingClasses = "font-sans text-sm text-prelude"
 const linkClasses =
   "text-aquamarine underline-offset-2 hover:text-blue-chalk hover:underline"
+const documentCardClasses =
+  "flex min-w-64 flex-1 flex-col gap-3 rounded-[14px] border border-blue-chalk/20 bg-haiti/35 p-4 text-left"
+const documentNameClasses = "font-sans text-sm font-semibold text-blue-chalk"
+const documentMetaClasses = "font-sans text-xs text-prelude"
+const documentActionsClasses = "flex flex-wrap gap-2"
+const documentButtonClasses = "h-9 px-4 text-xs"
 
 function documentFor(
   application: Application,
   type: ApplicationDocument["documentType"]
 ) {
   return application.documents.find((doc) => doc.documentType === type)
+}
+
+function formatFileSize(bytes: number) {
+  return `${(bytes / 1_000_000).toFixed(bytes < 1_000_000 ? 2 : 1)} MB`
+}
+
+function DocumentActions({ applicationId, document }: { applicationId: string; document: ApplicationDocument | undefined }) {
+  if (!document) {
+    return <p className={missingClasses}>Document metadata is not available.</p>
+  }
+  const expired = new Date(document.availableUntil) <= new Date()
+  const baseUrl = `/api/applications/${applicationId}/documents/${document.documentType}`
+  return (
+    <div className={documentCardClasses}>
+      <p className={documentNameClasses}>{document.fileName}</p>
+      <p className={documentMetaClasses}>{formatFileSize(document.fileSizeBytes)}</p>
+      <p className={documentMetaClasses}>
+        Available until {formatAppliedDate(document.availableUntil)}
+      </p>
+      <div className={documentActionsClasses}>
+        {expired ? (
+          <>
+            <Button color="cyan" className={documentButtonClasses} disabled>View</Button>
+            <Button color="purple" className={documentButtonClasses} disabled>Download</Button>
+          </>
+        ) : (
+          <>
+          <Button
+            color="cyan"
+            className={documentButtonClasses}
+            nativeButton={false}
+            render={<a href={baseUrl} target="_blank" rel="noopener noreferrer" />}
+          >
+            View
+          </Button>
+          <Button
+            color="purple"
+            className={documentButtonClasses}
+            nativeButton={false}
+            render={<a href={`${baseUrl}?disposition=attachment`} />}
+          >
+            Download
+          </Button>
+          </>
+        )}
+      </div>
+      {expired ? <p className={documentMetaClasses}>This file has expired. The application metadata remains available.</p> : null}
+    </div>
+  )
 }
 
 export function HrApplicationDetail() {
@@ -211,23 +265,9 @@ export function HrApplicationDetail() {
         </p>
         <p className={whyBodyClasses}>{application.motivation || "—"}</p>
         <div className={downloadsClasses}>
-          <Button color="cyan" className={downloadButtonClasses} disabled={!resume?.s3Key}>
-            Download CV ({resume?.fileName ?? "—"})
-          </Button>
-          <Button
-            color="purple"
-            className={downloadButtonClasses}
-            disabled={!transcript?.s3Key}
-          >
-            Download TOR ({transcript?.fileName ?? "—"})
-          </Button>
-          <Button
-            color="purple"
-            className={downloadButtonClasses}
-            disabled={!registration?.s3Key}
-          >
-            Download RegForm ({registration?.fileName ?? "—"})
-          </Button>
+          <DocumentActions applicationId={application.id} document={resume} />
+          <DocumentActions applicationId={application.id} document={transcript} />
+          <DocumentActions applicationId={application.id} document={registration} />
         </div>
         <div className={archiveRowClasses}>
           <Button

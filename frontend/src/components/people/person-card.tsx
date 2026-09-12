@@ -4,7 +4,7 @@ import { useRef, useState } from "react"
 import Image from "next/image"
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react"
 import { AnimatePresence, LazyMotion, domAnimation, m, useReducedMotion } from "motion/react"
-import type { PersonTerm } from "@/lib/people"
+import { PERSON_AVATAR_PLACEHOLDER, type PersonTerm } from "@/lib/people"
 import { cn } from "@/lib/utils"
 
 const cardClasses =
@@ -14,7 +14,6 @@ const stageClasses =
 const contentClasses = "flex w-full flex-col items-center"
 const avatarClasses =
   "flex size-24 shrink-0 items-center justify-center overflow-hidden rounded-full border border-biloba-flower/35 bg-daisy-bush/30"
-const avatarPlaceholderClasses = "size-full bg-gradient-to-b from-biloba-flower/25 to-haiti/80"
 const nameClasses = "mt-5 font-sans text-lg font-bold leading-tight text-blue-chalk"
 const titleClasses =
   "mt-1 flex min-h-12 max-w-[11rem] items-center justify-center font-sans text-sm font-semibold leading-snug text-aquamarine"
@@ -129,18 +128,14 @@ export function PersonCard({ terms, showPager = false }: PersonCardProps) {
               className={contentClasses}
             >
               <div className={avatarClasses}>
-                {person.photo ? (
-                  <Image
-                    src={person.photo}
-                    alt=""
-                    width={96}
-                    height={96}
-                    className="size-full object-cover"
-                    unoptimized
-                  />
-                ) : (
-                  <div className={avatarPlaceholderClasses} aria-hidden />
-                )}
+                <Image
+                  src={person.photo ?? PERSON_AVATAR_PLACEHOLDER}
+                  alt=""
+                  width={96}
+                  height={96}
+                  className="size-full object-cover"
+                  unoptimized={!person.photo}
+                />
               </div>
               <h3 className={nameClasses}>{person.name}</h3>
               <p className={titleClasses}>{person.title}</p>

@@ -8,6 +8,7 @@ import { applicantApplicationRoutes } from "./routes/applicant-application";
 import { applicantInterviewRoutes } from "./routes/applicant-interview";
 import { interviewSlotsRoutes } from "./routes/interview-slots";
 import { positionsRoutes } from "./routes/positions";
+import { uploadsRoutes } from "./routes/uploads";
 import { recruitmentWindowRoutes } from "./routes/recruitment-window";
 import { resultsRoutes } from "./routes/results";
 import { interviewWindowRoutes } from "./routes/interview-window";
@@ -100,13 +101,10 @@ app.route("/applicant", applicantApplicationRoutes);
 app.route("/applicant", applicantInterviewRoutes);
 
 app.route("/applications", applicationsRoutes);
+app.route("/uploads", uploadsRoutes);
 app.route("/interview-slots", interviewSlotsRoutes);
 app.route("/recruitment-window", recruitmentWindowRoutes);
 app.route("/results", resultsRoutes);
 app.route("/interview-window", interviewWindowRoutes);
-
-app.post("/uploads/presign", (c) =>
-  c.json({ error: "not implemented" }, 501)
-);
 
 export type AppType = typeof app;

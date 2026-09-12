@@ -30,6 +30,11 @@ export const documentType = pgEnum("document_type", [
   "transcript",
   "registration",
 ]);
+export const uploadSessionStatus = pgEnum("upload_session_status", [
+  "active",
+  "consumed",
+  "expired",
+]);
 export const emailMessageType = pgEnum("email_message_type", [
   "application_submitted",
   "applicant_otp",
@@ -447,13 +452,51 @@ export const applicationDocuments = pgTable(
       .references(() => applications.id, { onDelete: "cascade" }),
     documentType: documentType("document_type").notNull(),
     fileName: varchar("file_name", { length: 255 }).notNull(),
+    fileSizeBytes: integer("file_size_bytes").notNull().default(0),
     s3Key: text("s3_key").notNull(),
     uploadedAt: timestamp("uploaded_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
+    availableUntil: timestamp("available_until", { withTimezone: true }),
   },
   (t) => [
     unique().on(t.applicationId, t.documentType),
     index("idx_documents_application").on(t.applicationId),
+  ],
+);
+
+export const uploadSessions = pgTable(
+  "upload_sessions",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    status: uploadSessionStatus().notNull().default("active"),
+    applicationId: uuid("application_id").references(() => applications.id, {
+      onDelete: "set null",
+    }),
+    resumeFileName: varchar("resume_file_name", { length: 255 }).notNull(),
+    resumeSizeBytes: integer("resume_size_bytes").notNull(),
+    resumeChecksumSha256: varchar("resume_checksum_sha256", {
+      length: 44,
+    }).notNull(),
+    transcriptFileName: varchar("transcript_file_name", {
+      length: 255,
+    }).notNull(),
+    transcriptSizeBytes: integer("transcript_size_bytes").notNull(),
+    transcriptChecksumSha256: varchar("transcript_checksum_sha256", {
+      length: 44,
+    }).notNull(),
+    uploadExpiresAt: timestamp("upload_expires_at", {
+      withTimezone: true,
+    }).notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+    consumedAt: timestamp("consumed_at", { withTimezone: true }),
+  },
+  (t) => [
+    index("idx_upload_sessions_status").on(t.status),
+    index("idx_upload_sessions_expires_at").on(t.expiresAt),
+    unique().on(t.applicationId),
   ],
 );

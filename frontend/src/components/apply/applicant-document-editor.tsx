@@ -4,8 +4,11 @@ import { useState } from "react"
 import { PdfFileDrop } from "@/components/apply/pdf-file-drop"
 import { Button } from "@/components/ui/button"
 import {
+  applicationDocumentPdfSizeLimitMessage,
   documentFileNameFormatExample,
   documentFileNameMatches,
+  documentUploadFileHint,
+  isApplicationDocumentPdfWithinSizeLimit,
 } from "@/lib/apply-field-validation"
 import { updateApplicantDocuments } from "@/lib/applicant-api"
 import type { ApplicantApplication, ApplicantDocument } from "@/lib/applicant-api"
@@ -51,11 +54,17 @@ export function ApplicantDocumentEditor({
 
   const lastName = application.lastName
 
-  function validateFile(type: DocumentType, file: File): boolean {
-    return (
-      file.type === "application/pdf" &&
-      documentFileNameMatches(type, file.name, lastName)
-    )
+  function validateFile(type: DocumentType, file: File): string | null {
+    if (file.type !== "application/pdf") {
+      return "Only PDF files (.pdf) are accepted."
+    }
+    if (!isApplicationDocumentPdfWithinSizeLimit(file)) {
+      return applicationDocumentPdfSizeLimitMessage()
+    }
+    if (!documentFileNameMatches(type, file.name, lastName)) {
+      return `Name each replacement PDF exactly: ${documentFileNameFormatExample("resume")}, ${documentFileNameFormatExample("transcript")}, and ${documentFileNameFormatExample("registration")}.`
+    }
+    return null
   }
 
   async function save() {
@@ -74,10 +83,9 @@ export function ApplicantDocumentEditor({
     }
 
     for (const doc of pendingDocs) {
-      if (!validateFile(doc.documentType, doc.file)) {
-        setError(
-          `Name each replacement PDF exactly: ${documentFileNameFormatExample("resume")}, ${documentFileNameFormatExample("transcript")}, and ${documentFileNameFormatExample("registration")}.`
-        )
+      const fileError = validateFile(doc.documentType, doc.file)
+      if (fileError) {
+        setError(fileError)
         return
       }
     }
@@ -109,6 +117,7 @@ export function ApplicantDocumentEditor({
       <p className={hintClasses}>
         Upload only the files you want to change. Names must match{" "}
         {documentFileNameFormatExample("resume")}, etc., using your last name.
+        Maximum file size per PDF: 10 MB.
       </p>
       <PdfFileDrop
         label={DOC_LABELS.resume}
@@ -164,5 +173,5 @@ export function ApplicantDocumentEditor({
 }
 
 function fileHint(documentType: DocumentType) {
-  return `Save your PDF as ${documentFileNameFormatExample(documentType)}`
+  return documentUploadFileHint(documentType)
 }

@@ -8,7 +8,7 @@ export default function ApplicantDashboardPage() {
       <SectionHeader
         eyebrow="// APPLICANT DASHBOARD"
         title="Your application"
-        subtitle="Review what you submitted. Committee choices can be changed only during recruitment week."
+        subtitle="Review what you submitted and update committee choices, documents, or your interview while recruitment week is open."
       />
       <ApplicantDashboard />
     </main>

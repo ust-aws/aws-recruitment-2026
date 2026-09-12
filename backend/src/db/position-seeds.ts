@@ -19,7 +19,7 @@ export const POSITION_SEEDS: PositionSeed[] = [
       "The Executive Assistant supports the CEO in matters related to the organization, coordinates with committees under the CEO, and acts as the CEO's associate.",
     responsibilities: [
       "Assist the CEO with organization-wide matters and initiatives",
-      "Coordinate with executive officers and committee directors on behalf of the CEO",
+      "Coordinate with executive officers and Committee Directors on behalf of the CEO",
       "Assist in organizing executive meetings and activities",
       "Monitor and coordinate tasks delegated by the CEO",
       "Help facilitate communication between the CEO and different committees",

@@ -4,7 +4,7 @@
 
 import { PdfFileDrop } from "@/components/apply/pdf-file-drop"
 
-import { documentFileNameFormatExample } from "@/lib/apply-field-validation"
+import { documentUploadFileHint } from "@/lib/apply-field-validation"
 
 import type { DocumentType } from "@/lib/application-types"
 
@@ -43,9 +43,7 @@ type UploadStepProps = {
 
 
 function fileHint(documentType: DocumentType) {
-
-  return `Save your PDF as ${documentFileNameFormatExample(documentType)}`
-
+  return documentUploadFileHint(documentType)
 }
 
 

@@ -47,7 +47,9 @@ const application: HrApplication = {
     {
       documentType: "resume",
       fileName: "resume.pdf",
-      s3Key: "private/applications/resume.pdf",
+      fileSizeBytes: 12345,
+      uploadedAt: "2026-09-11T08:00:00.000Z",
+      availableUntil: "2027-01-01T00:00:00.000Z",
     },
   ],
 }
@@ -59,7 +61,6 @@ test("exports only allowed fields and escapes spreadsheet input", () => {
   assert.match(csv, /"'=Formula Tester"/)
   assert.match(csv, /"Operations, and Finance"/)
   assert.match(csv, /"Lead ""Builder"""/)
-  assert.ok(!csv.includes("private/applications"))
   assert.ok(!csv.includes("resume.pdf"))
   assert.ok(!csv.includes("facebook.com"))
   assert.ok(!csv.includes("drive.google.com"))
