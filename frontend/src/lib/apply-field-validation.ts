@@ -132,7 +132,7 @@ const DOCUMENT_FILE_PREFIX: Record<DocumentType, string> = {
 
 export const documentLastNamePlaceholder = "Lastname"
 
-export const APPLICATION_DOCUMENT_PDF_MAX_BYTES = 10 * 1024 * 1024
+export const APPLICATION_DOCUMENT_PDF_MAX_BYTES = 10_000_000
 
 export const APPLICATION_DOCUMENT_PDF_MAX_SIZE_LABEL = "10 MB"
 

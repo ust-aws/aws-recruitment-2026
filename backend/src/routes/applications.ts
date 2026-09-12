@@ -15,19 +15,8 @@ import {
   updateApplicationDecision,
   type ChoiceDecisionStatus,
 } from "../lib/application-decisions";
-import {
-  canonicalizeHttpsUrl,
-  hasValidLastNameFileToken,
-  isValidApplicantName,
-  isValidContactNumber,
-  isValidFacebookUrl,
-  isValidMotivation,
-  isValidSection,
-  isValidStudentNumber,
-  isValidUstApplicantEmail,
-  normalizeSection,
-  validateChoiceUrls,
-} from "../lib/apply-field-validation";
+import { validateChoiceUrls } from "../lib/apply-field-validation";
+import { createApplicationSchema } from "../lib/apply-schemas";
 import { requireAuth } from "../auth";
 import { createDocumentDownload } from "../lib/documents";
 import { freePlanEndDate } from "../lib/free-plan";
@@ -35,31 +24,9 @@ import {
   listEmailNotificationsByApplicationId,
   sendApplicationSubmitted,
 } from "../lib/email/service";
-import { parseApplicantGender } from "../lib/applicant-gender";
 import { InterviewScheduleError } from "../lib/interview-scheduling";
 
 export const applicationsRoutes = new Hono();
-
-const BIRTHDAY_RE = /^\d{4}-\d{2}-\d{2}$/;
-
-function parseBirthday(value: unknown): string | null {
-  if (!isNonEmptyString(value)) return null;
-  const trimmed = value.trim();
-  if (!BIRTHDAY_RE.test(trimmed)) return null;
-  const [year, month, day] = trimmed.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  if (
-    date.getFullYear() !== year ||
-    date.getMonth() !== month - 1 ||
-    date.getDate() !== day
-  ) {
-    return null;
-  }
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (date > today) return null;
-  return trimmed;
-}
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -75,179 +42,10 @@ function isNonEmptyString(value: unknown): value is string {
 function parseCreateBody(
   body: unknown,
 ): { ok: true; value: CreateApplicationInput } | { ok: false; error: string } {
-  if (!body || typeof body !== "object") {
-    return { ok: false, error: "Request body must be a JSON object." };
-  }
-
-  const input = body as Record<string, unknown>;
-  if (input.dataPrivacyAgreed !== true) {
-    return {
-      ok: false,
-      error: "dataPrivacyAgreed must be true before submitting.",
-    };
-  }
-
-  if (
-    !isNonEmptyString(input.firstName) ||
-    !isNonEmptyString(input.lastName) ||
-    !isNonEmptyString(input.email) ||
-    !isNonEmptyString(input.section) ||
-    !isNonEmptyString(input.motivation) ||
-    !isNonEmptyString(input.studentNumber) ||
-    !isNonEmptyString(input.contactNumber) ||
-    !isNonEmptyString(input.facebookUrl)
-  ) {
-    return {
-      ok: false,
-      error:
-        "firstName, lastName, email, section, studentNumber, contactNumber, facebookUrl, and motivation are required.",
-    };
-  }
-
-  const firstName = input.firstName.trim();
-  const lastName = input.lastName.trim();
-  const email = input.email.trim().toLowerCase();
-  const motivation = input.motivation.trim();
-
-  if (!isValidApplicantName(firstName) || !isValidApplicantName(lastName)) {
-    return {
-      ok: false,
-      error: "firstName and lastName must use letters only (max 100 characters).",
-    };
-  }
-  if (!hasValidLastNameFileToken(lastName)) {
-    return {
-      ok: false,
-      error: "lastName must include at least one letter for document file names.",
-    };
-  }
-  if (!isValidUstApplicantEmail(email)) {
-    return {
-      ok: false,
-      error: "email must be a valid @ust.edu.ph address.",
-    };
-  }
-  if (!isValidMotivation(motivation)) {
-    return {
-      ok: false,
-      error: "motivation is required and must be at most 4000 characters.",
-    };
-  }
-
-  const section = normalizeSection(input.section);
-  if (!isValidSection(section)) {
-    return {
-      ok: false,
-      error: "section must be four characters: year digit plus three letters (e.g. 4CSC).",
-    };
-  }
-
-  if (!isValidStudentNumber(input.studentNumber)) {
-    return { ok: false, error: "studentNumber must be exactly 10 digits." };
-  }
-
-  const contactNumber = input.contactNumber.trim();
-  if (!isValidContactNumber(contactNumber)) {
-    return {
-      ok: false,
-      error: "contactNumber must be +63 followed by 10 digits.",
-    };
-  }
-
-  const facebookCanonical = canonicalizeHttpsUrl(input.facebookUrl.trim());
-  if (!facebookCanonical || !isValidFacebookUrl(facebookCanonical)) {
-    return {
-      ok: false,
-      error: "facebookUrl must be a valid https Facebook profile link.",
-    };
-  }
-
-  const portfolioUrl =
-    typeof input.portfolioUrl === "string" ? input.portfolioUrl.trim() : "";
-  const githubUrl =
-    typeof input.githubUrl === "string" ? input.githubUrl.trim() : "";
-
-  if (!Number.isInteger(input.age) || (input.age as number) <= 0) {
-    return { ok: false, error: "age must be a positive integer." };
-  }
-
-  const birthday = parseBirthday(input.birthday);
-  if (!birthday) {
-    return {
-      ok: false,
-      error: "birthday must be a valid date (YYYY-MM-DD) that is not in the future.",
-    };
-  }
-
-  const gender = parseApplicantGender(input.gender);
-  if (!gender) {
-    return {
-      ok: false,
-      error:
-        "gender must be one of: male, female.",
-    };
-  }
-
-  if (!Array.isArray(input.choices) || input.choices.length !== 2) {
-    return { ok: false, error: "choices must contain exactly two items." };
-  }
-
-  const choices: CreateApplicationInput["choices"] = [];
-  for (const choice of input.choices) {
-    if (!choice || typeof choice !== "object") {
-      return { ok: false, error: "Each choice must be an object." };
-    }
-    const row = choice as Record<string, unknown>;
-    if (!isNonEmptyString(row.positionId) || !isUuid(row.positionId)) {
-      return { ok: false, error: "Each choice needs a valid positionId UUID." };
-    }
-    if (row.preferenceRank !== 1 && row.preferenceRank !== 2) {
-      return { ok: false, error: "preferenceRank must be 1 or 2." };
-    }
-    choices.push({
-      positionId: row.positionId,
-      preferenceRank: row.preferenceRank,
-    });
-  }
-
-  const ranks = new Set(choices.map((choice) => choice.preferenceRank));
-  if (ranks.size !== 2) {
-    return { ok: false, error: "choices must include ranks 1 and 2." };
-  }
-  if (choices[0].positionId === choices[1].positionId) {
-    return { ok: false, error: "choices must use two different positions." };
-  }
-
-  if (!isNonEmptyString(input.uploadSessionId) || !isUuid(input.uploadSessionId)) {
-    return { ok: false, error: "uploadSessionId must be a valid UUID." };
-  }
-
-  if (!isNonEmptyString(input.slotId) || !isUuid(input.slotId as string)) {
-    return { ok: false, error: "slotId must be a UUID." };
-  }
-
-  return {
-    ok: true,
-    value: {
-      firstName,
-      lastName,
-      email,
-      age: input.age as number,
-      birthday,
-      gender,
-      section,
-      studentNumber: input.studentNumber.trim(),
-      contactNumber,
-      facebookUrl: facebookCanonical,
-      motivation,
-      dataPrivacyAgreed: true,
-      ...(portfolioUrl ? { portfolioUrl } : {}),
-      ...(githubUrl ? { githubUrl } : {}),
-      slotId: (input.slotId as string).trim(),
-      choices,
-      uploadSessionId: input.uploadSessionId,
-    },
-  };
+  const result = createApplicationSchema.safeParse(body);
+  return result.success
+    ? { ok: true, value: result.data }
+    : { ok: false, error: result.error.issues[0].message };
 }
 
 applicationsRoutes.get("/", requireAuth, async (c) => {

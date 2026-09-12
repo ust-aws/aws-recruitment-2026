@@ -485,6 +485,13 @@ export const uploadSessions = pgTable(
     transcriptChecksumSha256: varchar("transcript_checksum_sha256", {
       length: 44,
     }).notNull(),
+    registrationFileName: varchar("registration_file_name", {
+      length: 255,
+    }).notNull(),
+    registrationSizeBytes: integer("registration_size_bytes").notNull(),
+    registrationChecksumSha256: varchar("registration_checksum_sha256", {
+      length: 44,
+    }).notNull(),
     uploadExpiresAt: timestamp("upload_expires_at", {
       withTimezone: true,
     }).notNull(),

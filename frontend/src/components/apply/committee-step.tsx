@@ -17,28 +17,19 @@ import {
   needsCreativesPortfolio,
   needsDevelopmentGithub,
 } from "@/lib/committee-apply"
+import type { CommitteeValues } from "@/components/apply/apply-schema"
 
 const stackClasses = "flex min-w-0 w-full flex-col gap-5"
 const urlHintClasses = "font-sans text-xs text-prelude"
 const textareaClasses = `${fieldControlClasses} h-auto min-h-28 py-3`
 
-export type CommitteeValues = {
-  firstCommittee: string
-  firstPositionId: string
-  secondCommittee: string
-  secondPositionId: string
-  motivation: string
-  slotId: string
-  portfolioUrl: string
-  githubUrl: string
-}
-
 type CommitteeStepProps = {
   values: CommitteeValues
   onChange: (patch: Partial<CommitteeValues>) => void
+  errors?: Partial<Record<keyof CommitteeValues, string>>
 }
 
-export function CommitteeStep({ values, onChange }: CommitteeStepProps) {
+export function CommitteeStep({ values, onChange, errors }: CommitteeStepProps) {
   const { positions, committees, loading, error } = useOpenPositions()
   const committeeGroups = groupedCommitteesForPicker(committees)
   const showPortfolio = needsCreativesPortfolio(
@@ -86,7 +77,7 @@ export function CommitteeStep({ values, onChange }: CommitteeStepProps) {
         <CommitteePickerSkeleton />
       ) : (
         <>
-          <Field label="First choice" htmlFor="firstChoice" required>
+          <Field label="First choice" htmlFor="firstChoice" required error={errors?.firstPositionId}>
             <CommitteeOfficePicker
               id="firstChoice"
               committee={values.firstCommittee}
@@ -99,13 +90,16 @@ export function CommitteeStep({ values, onChange }: CommitteeStepProps) {
             />
           </Field>
           {values.firstPositionId ? (
-            <ApplyInterviewSlotPicker
-              positionId={values.firstPositionId}
-              selectedSlotId={values.slotId}
-              onSelectedSlotIdChange={(slotId) => onChange({ slotId })}
-            />
+            <>
+              <ApplyInterviewSlotPicker
+                positionId={values.firstPositionId}
+                selectedSlotId={values.slotId}
+                onSelectedSlotIdChange={(slotId) => onChange({ slotId })}
+              />
+              {errors?.slotId ? <p role="alert" className="text-xs text-rose-glow">{errors.slotId}</p> : null}
+            </>
           ) : null}
-          <Field label="Second choice" htmlFor="secondChoice" required>
+          <Field label="Second choice" htmlFor="secondChoice" required error={errors?.secondPositionId}>
             <CommitteeOfficePicker
               id="secondChoice"
               committee={values.secondCommittee}
@@ -124,6 +118,7 @@ export function CommitteeStep({ values, onChange }: CommitteeStepProps) {
           label="Google Drive Portfolio Link"
           htmlFor="portfolioUrl"
           required
+          error={errors?.portfolioUrl}
         >
           <p className={urlHintClasses}>
             Paste a share link from Drive or Docs, e.g.{" "}
@@ -143,7 +138,7 @@ export function CommitteeStep({ values, onChange }: CommitteeStepProps) {
         </Field>
       ) : null}
       {showGithub ? (
-        <Field label="GitHub Profile Link (optional)" htmlFor="githubUrl">
+        <Field label="GitHub Profile Link (optional)" htmlFor="githubUrl" error={errors?.githubUrl}>
           <p className={urlHintClasses}>
             Profile URL only (not a repo), e.g.{" "}
             <span className="text-blue-chalk/90">{GITHUB_PROFILE_URL_EXAMPLE}</span>
@@ -160,7 +155,7 @@ export function CommitteeStep({ values, onChange }: CommitteeStepProps) {
           />
         </Field>
       ) : null}
-      <Field label="Why do you want to join AWS Builders - UST?" htmlFor="motivation" required>
+      <Field label="Why do you want to join AWS Builders - UST?" htmlFor="motivation" required error={errors?.motivation}>
         <Textarea
           id="motivation"
           name="motivation"

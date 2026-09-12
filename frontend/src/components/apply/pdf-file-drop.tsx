@@ -23,6 +23,7 @@ type PdfFileDropProps = {
   file: File | null
   displayName?: string
   required?: boolean
+  error?: string
   onFile: (file: File | null) => void
 }
 
@@ -32,6 +33,7 @@ export function PdfFileDrop({
   file,
   displayName,
   required = true,
+  error,
   onFile,
 }: PdfFileDropProps) {
   const id = useId()
@@ -54,7 +56,7 @@ export function PdfFileDrop({
   }
 
   return (
-    <Field label={label} htmlFor={id} required={required}>
+    <Field label={label} htmlFor={id} required={required} error={error}>
       {hint ? <p className={hintClasses}>{hint}</p> : null}
       <label
         htmlFor={id}

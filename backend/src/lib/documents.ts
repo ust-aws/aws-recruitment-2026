@@ -10,7 +10,7 @@ import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 
 export const MAX_DOCUMENT_SIZE_BYTES = 10_000_000;
-export const DOCUMENT_TYPES = ["resume", "transcript"] as const;
+export const DOCUMENT_TYPES = ["resume", "transcript", "registration"] as const;
 export type DocumentType = (typeof DOCUMENT_TYPES)[number];
 
 type UploadDocument = {
