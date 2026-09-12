@@ -13,16 +13,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { CommitteeOfficeCommitteePicker } from "@/components/committee-office-committee-picker"
 import { Field } from "@/components/field"
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select"
 import {
   createInterviewSlot,
   listInterviewSlots,
@@ -48,7 +40,7 @@ import {
   INTERVIEW_GRID_END_HOUR,
   INTERVIEW_GRID_START_HOUR,
 } from "@/lib/interview-season"
-import { fieldControlClasses, glassPanelClasses } from "@/lib/surface"
+import { glassPanelClasses } from "@/lib/surface"
 
 const panelClasses = `${glassPanelClasses} px-5 py-5`
 const toolbarClasses = "mt-4 flex flex-wrap items-end justify-between gap-4"
@@ -276,10 +268,11 @@ export function HrInterviewGrid({
       </h2>
       <p className={hintClasses}>
         Weeks run Sunday–Saturday; interviews are Monday–Saturday, 7:00 AM–9:30
-        PM. Open 30-minute cells when the director or EB is free. Booked slots
+        PM. Open 30-minute cells when a Director or Executive Boards member is
+        free. Booked slots
         stay locked until you close them or reset the committee schedule.
       </p>
-      <p className={`${hintClasses} ${seasonClasses}`}>
+      <div className={`${hintClasses} ${seasonClasses}`}>
         Interview Season:{" "}
         {seasonConfigured ? (
           <>
@@ -291,7 +284,7 @@ export function HrInterviewGrid({
         ) : (
           "Not configured — set dates above."
         )}
-      </p>
+      </div>
 
       {error ? <ActionFeedback type="error" message={error} /> : null}
       {!error && success ? (
@@ -300,32 +293,19 @@ export function HrInterviewGrid({
 
       <div className={toolbarClasses}>
         <Field label="Committee" htmlFor="hr-interview-committee" className="min-w-[14rem] flex-1">
-          <Select
-            value={committeeName || null}
+          <CommitteeOfficeCommitteePicker
+            id="hr-interview-committee"
+            committee={committeeName}
+            groups={groups}
             disabled={positionsLoading}
-            onValueChange={(value: string | null) => {
-              setCommitteeName(value ?? "")
+            placeholder="Select an office and committee"
+            onSelect={(name) => {
+              setCommitteeName(name)
               setSlots([])
               setError("")
-              setLoading(Boolean(value && seasonConfigured))
+              setLoading(Boolean(name && seasonConfigured))
             }}
-          >
-            <SelectTrigger id="hr-interview-committee" className={fieldControlClasses}>
-              <SelectValue placeholder="Select a committee" />
-            </SelectTrigger>
-            <SelectContent>
-              {groups.map((group) => (
-                <SelectGroup key={group.office}>
-                  <SelectLabel>{group.office}</SelectLabel>
-                  {group.committees.map((committee) => (
-                    <SelectItem key={committee} value={committee}>
-                      {committee}
-                    </SelectItem>
-                  ))}
-                </SelectGroup>
-              ))}
-            </SelectContent>
-          </Select>
+          />
         </Field>
 
         <div className={weekNavClasses}>

@@ -7,6 +7,7 @@ import {
   isNotNull,
   isNull,
 } from "drizzle-orm";
+import { randomUUID } from "node:crypto";
 import { db } from "../db";
 import {
   applicants,
@@ -15,8 +16,17 @@ import {
   applications,
   committees,
   positions,
+  uploadSessions,
   users,
 } from "../db/schema";
+import {
+  applicationKey,
+  copyIncomingDocuments,
+  deleteKeys,
+  incomingKey,
+  validateIncomingDocument,
+} from "./documents";
+import { freePlanEndDate } from "./free-plan";
 import {
   generateApplicationCode,
   recruitmentYearInt,
@@ -38,7 +48,9 @@ export type ApplicationChoiceJson = {
 export type ApplicationDocumentJson = {
   documentType: DocumentType;
   fileName: string;
-  s3Key: string;
+  fileSizeBytes: number;
+  uploadedAt: string;
+  availableUntil: string;
 };
 
 export type ApplicationJson = {
@@ -86,7 +98,7 @@ export type CreateApplicationInput = {
   githubUrl?: string;
   slotId: string;
   choices: { positionId: string; preferenceRank: 1 | 2 }[];
-  documents: { documentType: DocumentType; fileName: string; s3Key: string }[];
+  uploadSessionId: string;
 };
 
 export type ListFilters = {
@@ -198,7 +210,9 @@ async function attachRelations(
       applicationId: applicationDocuments.applicationId,
       documentType: applicationDocuments.documentType,
       fileName: applicationDocuments.fileName,
-      s3Key: applicationDocuments.s3Key,
+      fileSizeBytes: applicationDocuments.fileSizeBytes,
+      uploadedAt: applicationDocuments.uploadedAt,
+      availableUntil: applicationDocuments.availableUntil,
     })
     .from(applicationDocuments)
     .where(inArray(applicationDocuments.applicationId, ids));
@@ -222,7 +236,9 @@ async function attachRelations(
     list.push({
       documentType: doc.documentType,
       fileName: doc.fileName,
-      s3Key: doc.s3Key,
+      fileSizeBytes: doc.fileSizeBytes,
+      uploadedAt: iso(doc.uploadedAt),
+      availableUntil: iso(doc.availableUntil ?? freePlanEndDate() ?? new Date(0)),
     });
     documentsByApp.set(doc.applicationId, list);
   }
@@ -301,6 +317,31 @@ export async function getApplicationById(
   if (rows.length === 0) return null;
   const [mapped] = await attachRelations(rows);
   return mapped;
+}
+
+export async function getApplicationDocument(
+  applicationId: string,
+  type: DocumentType,
+): Promise<{
+  fileName: string;
+  s3Key: string;
+  availableUntil: Date | null;
+} | null> {
+  const [document] = await db
+    .select({
+      fileName: applicationDocuments.fileName,
+      s3Key: applicationDocuments.s3Key,
+      availableUntil: applicationDocuments.availableUntil,
+    })
+    .from(applicationDocuments)
+    .where(
+      and(
+        eq(applicationDocuments.applicationId, applicationId),
+        eq(applicationDocuments.documentType, type),
+      ),
+    )
+    .limit(1);
+  return document ?? null;
 }
 
 export async function listApplications(filters: ListFilters): Promise<{
@@ -387,119 +428,190 @@ export async function committeeNamesForPositions(
 
 export async function createApplication(
   input: CreateApplicationInput,
-): Promise<ApplicationJson> {
-  const id = await db.transaction(async (tx) => {
-    const existing = await tx
-      .select({ id: applicants.id })
-      .from(applicants)
-      .where(eq(applicants.email, input.email))
-      .limit(1);
+): Promise<{ application: ApplicationJson; created: boolean }> {
+  let copiedApplicationId: string | null = null;
+  let transactionComplete = false;
+  try {
+    const result = await db.transaction(async (tx) => {
+      const [session] = await tx
+        .select()
+        .from(uploadSessions)
+        .where(eq(uploadSessions.id, input.uploadSessionId))
+        .for("update");
 
-    let applicantId = existing[0]?.id;
-    const applicantProfile = {
-      firstName: input.firstName,
-      lastName: input.lastName,
-      age: input.age,
-      birthday: input.birthday,
-      gender: input.gender,
-      section: input.section,
-      studentNumber: input.studentNumber,
-      contactNumber: input.contactNumber,
-      facebookUrl: input.facebookUrl,
-    };
-    if (!applicantId) {
-      const [inserted] = await tx
-        .insert(applicants)
-        .values({
-          ...applicantProfile,
-          email: input.email,
-        })
-        .returning({ id: applicants.id });
-      applicantId = inserted.id;
-    } else {
-      await tx
-        .update(applicants)
-        .set(applicantProfile)
-        .where(eq(applicants.id, applicantId));
-    }
+      if (!session) throw new Error("Upload session was not found.");
+      if (session.status === "consumed" && session.applicationId) {
+        return { id: session.applicationId, created: false };
+      }
+      if (session.status !== "active" || session.expiresAt <= new Date()) {
+        if (session.status === "active") {
+          await tx
+            .update(uploadSessions)
+            .set({ status: "expired" })
+            .where(eq(uploadSessions.id, session.id));
+        }
+        throw new Error("Upload session has expired.");
+      }
 
-    const recruitmentYear = recruitmentYearInt();
-    const [existingForCycle] = await tx
-      .select({ id: applications.id })
-      .from(applications)
-      .where(
-        and(
-          eq(applications.applicantId, applicantId),
-          eq(applications.recruitmentYear, recruitmentYear),
-        ),
-      )
-      .limit(1);
+      const documents = [
+        {
+          documentType: "resume" as const,
+          fileName: session.resumeFileName,
+          sizeBytes: session.resumeSizeBytes,
+          checksumSha256: session.resumeChecksumSha256,
+        },
+        {
+          documentType: "transcript" as const,
+          fileName: session.transcriptFileName,
+          sizeBytes: session.transcriptSizeBytes,
+          checksumSha256: session.transcriptChecksumSha256,
+        },
+      ];
+      await Promise.all(
+        documents.map((document) => validateIncomingDocument(session.id, document)),
+      );
 
-    if (existingForCycle) {
-      throw new ApplicationAlreadySubmittedError();
-    }
+      const applicationId = randomUUID();
+      copiedApplicationId = applicationId;
+      await copyIncomingDocuments(session.id, applicationId);
 
-    const [application] = await (async () => {
-      for (let attempt = 0; attempt < 5; attempt++) {
-        try {
-          return await tx
-            .insert(applications)
-            .values({
-              applicantId,
-              applicationCode: generateApplicationCode(),
-              recruitmentYear,
-              status: "pending",
-              motivation: input.motivation,
-              dataPrivacyAgreedAt: new Date(),
-              portfolioUrl: input.portfolioUrl?.trim() || null,
-              githubUrl: input.githubUrl?.trim() || null,
-            })
-            .returning({ id: applications.id });
-        } catch (err) {
-          if (!isApplicationCodeCollision(err)) {
-            throw err;
+      const existing = await tx
+        .select({ id: applicants.id })
+        .from(applicants)
+        .where(eq(applicants.email, input.email))
+        .limit(1);
+
+      let applicantId = existing[0]?.id;
+      const applicantProfile = {
+        firstName: input.firstName,
+        lastName: input.lastName,
+        age: input.age,
+        birthday: input.birthday,
+        gender: input.gender,
+        section: input.section,
+        studentNumber: input.studentNumber,
+        contactNumber: input.contactNumber,
+        facebookUrl: input.facebookUrl,
+      };
+      if (!applicantId) {
+        const [inserted] = await tx
+          .insert(applicants)
+          .values({
+            ...applicantProfile,
+            email: input.email,
+          })
+          .returning({ id: applicants.id });
+        applicantId = inserted.id;
+      } else {
+        await tx
+          .update(applicants)
+          .set(applicantProfile)
+          .where(eq(applicants.id, applicantId));
+      }
+
+      const recruitmentYear = recruitmentYearInt();
+      const [existingForCycle] = await tx
+        .select({ id: applications.id })
+        .from(applications)
+        .where(
+          and(
+            eq(applications.applicantId, applicantId),
+            eq(applications.recruitmentYear, recruitmentYear),
+          ),
+        )
+        .limit(1);
+
+      if (existingForCycle) {
+        throw new ApplicationAlreadySubmittedError();
+      }
+
+      const [application] = await (async () => {
+        for (let attempt = 0; attempt < 5; attempt++) {
+          try {
+            return await tx
+              .insert(applications)
+              .values({
+                id: applicationId,
+                applicantId,
+                applicationCode: generateApplicationCode(),
+                recruitmentYear,
+                status: "pending",
+                motivation: input.motivation,
+                dataPrivacyAgreedAt: new Date(),
+                portfolioUrl: input.portfolioUrl?.trim() || null,
+                githubUrl: input.githubUrl?.trim() || null,
+              })
+              .returning({ id: applications.id });
+          } catch (err) {
+            if (!isApplicationCodeCollision(err)) {
+              throw err;
+            }
           }
         }
+        throw new Error("Could not generate a unique application code");
+      })();
+
+      await tx.insert(applicationChoices).values(
+        input.choices.map((choice) => ({
+          applicationId: application.id,
+          positionId: choice.positionId,
+          preferenceRank: choice.preferenceRank,
+        })),
+      );
+
+      await tx.insert(applicationDocuments).values(
+        documents.map((doc) => ({
+          applicationId: application.id,
+          documentType: doc.documentType,
+          fileName: doc.fileName,
+          fileSizeBytes: doc.sizeBytes,
+          s3Key: applicationKey(application.id, doc.documentType),
+          availableUntil: freePlanEndDate(),
+        })),
+      );
+
+      const firstChoice = input.choices.find((choice) => choice.preferenceRank === 1);
+      if (!firstChoice) {
+        throw new Error("Application is missing a first-choice position.");
       }
-      throw new Error("Could not generate a unique application code");
-    })();
+      await bookInterviewSlotForApplication(
+        tx,
+        application.id,
+        firstChoice.positionId,
+        input.slotId,
+      );
 
-    await tx.insert(applicationChoices).values(
-      input.choices.map((choice) => ({
-        applicationId: application.id,
-        positionId: choice.positionId,
-        preferenceRank: choice.preferenceRank,
-      })),
-    );
+      await tx
+        .update(uploadSessions)
+        .set({
+          status: "consumed",
+          applicationId: application.id,
+          consumedAt: new Date(),
+        })
+        .where(eq(uploadSessions.id, session.id));
 
-    await tx.insert(applicationDocuments).values(
-      input.documents.map((doc) => ({
-        applicationId: application.id,
-        documentType: doc.documentType,
-        fileName: doc.fileName,
-        s3Key: doc.s3Key,
-      })),
-    );
+      return { id: application.id, created: true };
+    });
+    transactionComplete = true;
 
-    const firstChoice = input.choices.find((choice) => choice.preferenceRank === 1);
-    if (!firstChoice) {
-      throw new Error("Application is missing a first-choice position.");
+    if (result.created) {
+      await deleteKeys([
+        incomingKey(input.uploadSessionId, "resume"),
+        incomingKey(input.uploadSessionId, "transcript"),
+      ]).catch((error) => console.error("Could not remove incoming documents", error));
     }
-    await bookInterviewSlotForApplication(
-      tx,
-      application.id,
-      firstChoice.positionId,
-      input.slotId,
-    );
-
-    return application.id;
-  });
-
-  const created = await getApplicationById(id);
-  if (!created) {
-    throw new Error("Created application could not be loaded");
+    const application = await getApplicationById(result.id);
+    if (!application) throw new Error("Created application could not be loaded.");
+    return { application, created: result.created };
+  } catch (error) {
+    if (!transactionComplete && copiedApplicationId) {
+      await deleteKeys([
+        applicationKey(copiedApplicationId, "resume"),
+        applicationKey(copiedApplicationId, "transcript"),
+      ]).catch(() => undefined);
+    }
+    throw error;
   }
-  return created;
 }
 
 export async function setApplicationArchived(

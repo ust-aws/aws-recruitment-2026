@@ -1,60 +1,10 @@
 "use client"
 
+import Image from "next/image"
 import { LazyMotion, domAnimation, m, useReducedMotion } from "motion/react"
 import { SectionHeader } from "@/components/section-header"
+import { ABOUT_EVENTS, type AboutEvent } from "@/lib/about-events"
 import { cn } from "@/lib/utils"
-
-type Moment = {
-  id: string
-  date: string
-  label: string
-  description: string
-}
-
-const MOMENTS: Moment[] = [
-  {
-    id: "kickoff",
-    date: "August 2024",
-    label: "Org kickoff and first builders meetup",
-    description:
-      "Eight co-founders welcomed the first builders, shared why cloud mattered on campus, and set the tone for committees, workshops, and the community we run today.",
-  },
-  {
-    id: "ga",
-    date: "October 2024",
-    label: "First general assembly of the academic year",
-    description:
-      "Members met officers, walked through the semester roadmap, and signed up for the committees where they wanted to learn, ship, and lead.",
-  },
-  {
-    id: "workshop",
-    date: "January 2025",
-    label: "AWS cloud workshop series",
-    description:
-      "Hands-on labs walked Thomasians through core AWS services with mentors from the builder community guiding each session.",
-  },
-  {
-    id: "recruitment",
-    date: "March 2025",
-    label: "Recruitment season opens to campus",
-    description:
-      "Applications opened for the next wave of members to join committees and help shape how AWS Builders – UST grows in the year ahead.",
-  },
-  {
-    id: "outreach",
-    date: "June 2025",
-    label: "Community outreach and partner events",
-    description:
-      "The club partnered with peers and industry guests to bring cloud learning beyond CICS and connect builders across the network.",
-  },
-  {
-    id: "builders-night",
-    date: "August 2025",
-    label: "Year-end builders night celebration",
-    description:
-      "Builders celebrated wins from the year with demos, shout-outs, and plans for what to ship together next.",
-  },
-]
 
 const sectionClasses = "flex w-full flex-col gap-[clamp(2rem,4vw,3.5rem)]"
 const timelineShellClasses = "relative mx-auto w-full max-w-5xl"
@@ -79,7 +29,8 @@ const mediaColLeftClasses = "md:order-1 md:pr-8 md:text-right"
 const dateClasses = "font-mono text-sm font-medium text-aquamarine"
 const labelClasses = "mt-1 font-sans text-sm font-medium leading-snug text-blue-chalk"
 const mediaClasses =
-  "glass mt-4 aspect-[4/3] w-full rounded-[14px] border border-blue-chalk/20 bg-meteorite/45"
+  "glass relative mt-4 aspect-[4/3] w-full overflow-hidden rounded-[14px] border border-blue-chalk/20 bg-meteorite/45"
+const mediaImageClasses = "object-cover"
 
 const revealSnap = { duration: 0 }
 const revealEase = { duration: 0.5, ease: [0.22, 1, 0.36, 1] as const }
@@ -101,12 +52,12 @@ const dotActive = {
 }
 
 type TimelineEntryProps = {
-  moment: Moment
+  event: AboutEvent
   index: number
   reducedMotion: boolean | null
 }
 
-function TimelineEntry({ moment, index, reducedMotion }: TimelineEntryProps) {
+function TimelineEntry({ event, index, reducedMotion }: TimelineEntryProps) {
   const mediaOnRight = index % 2 === 0
   const mediaEnterX = mediaOnRight ? 28 : -28
   const copyEnterX = mediaOnRight ? -20 : 20
@@ -135,7 +86,7 @@ function TimelineEntry({ moment, index, reducedMotion }: TimelineEntryProps) {
           viewport={{ once: true, amount: 0.35 }}
           transition={reducedMotion ? revealSnap : { ...revealEase, delay: 0.06 }}
         >
-          <p className={descriptionClasses}>{moment.description}</p>
+          <p className={descriptionClasses}>{event.description}</p>
         </m.div>
 
         <m.article
@@ -148,12 +99,12 @@ function TimelineEntry({ moment, index, reducedMotion }: TimelineEntryProps) {
           viewport={{ once: true, amount: 0.4 }}
           transition={reducedMotion ? revealSnap : revealEase}
         >
-          <time dateTime={moment.date} className={dateClasses}>
-            {moment.date}
+          <time dateTime={event.academicYear} className={dateClasses}>
+            {event.academicYear}
           </time>
-          <p className={labelClasses}>{moment.label}</p>
+          <p className={labelClasses}>{event.title}</p>
           <p className={cn(descriptionClasses, descriptionMobileClasses)}>
-            {moment.description}
+            {event.description}
           </p>
           <m.div
             className={mediaClasses}
@@ -163,8 +114,15 @@ function TimelineEntry({ moment, index, reducedMotion }: TimelineEntryProps) {
             transition={
               reducedMotion ? revealSnap : { ...revealEase, delay: 0.12 }
             }
-            aria-hidden
-          />
+          >
+            <Image
+              src={event.imageSrc}
+              alt={event.title}
+              fill
+              className={mediaImageClasses}
+              sizes="(max-width: 768px) 100vw, min(40rem, 45vw)"
+            />
+          </m.div>
         </m.article>
       </div>
     </li>
@@ -181,10 +139,10 @@ export function OurMoments() {
       className={sectionClasses}
     >
       <SectionHeader
-        eyebrow="// our moments"
+        eyebrow="// events"
         title={
           <span id="our-moments-title">
-            A lookback at what we&apos;ve built together
+            Workshops and milestones, in order
           </span>
         }
       />
@@ -193,10 +151,10 @@ export function OurMoments() {
         <div className={timelineShellClasses}>
           <div className={lineClasses} aria-hidden />
           <ol className={timelineClasses}>
-            {MOMENTS.map((moment, index) => (
+            {ABOUT_EVENTS.map((event, index) => (
               <TimelineEntry
-                key={moment.id}
-                moment={moment}
+                key={event.id}
+                event={event}
                 index={index}
                 reducedMotion={reducedMotion}
               />

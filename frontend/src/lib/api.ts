@@ -2,7 +2,6 @@ import { useEffect, useState } from "react"
 import type {
   Application,
   CreateApplicationInput,
-  DocumentType,
   Position,
 } from "./application-types"
 import type {
@@ -18,6 +17,8 @@ import {
   patchApplicationArchivedRequest,
   patchApplicationDecisionRequest,
   postApplication,
+  postUploadPresign,
+  type UploadPresignRequest,
 } from "./api-client"
 
 export {
@@ -164,36 +165,13 @@ export function useOpenPositions() {
 }
 
 export async function createApplication(
-  input: Omit<CreateApplicationInput, "documents"> & {
-    slotId: string
-    documents: { documentType: DocumentType; fileName: string }[]
-  }
+  input: CreateApplicationInput
 ): Promise<Application> {
-  const payload: CreateApplicationInput = {
-    firstName: input.firstName,
-    lastName: input.lastName,
-    email: input.email,
-    age: input.age,
-    birthday: input.birthday,
-    gender: input.gender,
-    section: input.section,
-    studentNumber: input.studentNumber,
-    contactNumber: input.contactNumber,
-    facebookUrl: input.facebookUrl,
-    dataPrivacyAgreed: input.dataPrivacyAgreed,
-    motivation: input.motivation,
-    portfolioUrl: input.portfolioUrl,
-    githubUrl: input.githubUrl,
-    slotId: input.slotId,
-    choices: input.choices,
-    documents: input.documents.map((doc) => ({
-      documentType: doc.documentType,
-      fileName: doc.fileName,
-      // Presign isn't in yet (#10); this string only exists so POST validation passes.
-      s3Key: `dev/uploads/${crypto.randomUUID()}/${doc.fileName}`,
-    })),
-  }
-  return postApplication(payload)
+  return postApplication(input)
+}
+
+export async function createUploadSession(input: UploadPresignRequest) {
+  return postUploadPresign(input)
 }
 
 export function patchApplicationDecision(

@@ -163,7 +163,7 @@ export function ApplyInterviewSlotPicker({
 
   return (
     <Field label="Interview time slot" required>
-      <p className={hintClasses}>
+      <div className={hintClasses}>
         Pick one open slot for your first-choice committee.
         {seasonConfigured ? (
           <>
@@ -172,13 +172,11 @@ export function ApplyInterviewSlotPicker({
             {seasonBounds!.endsAt.toLocaleDateString()}.
           </>
         ) : seasonLoading ? (
-          <span className="ml-1 inline-block align-middle">
-            <Skeleton className="inline-block h-4 w-40" />
-          </span>
+          <Skeleton className="ml-1 inline-block h-4 w-40 align-middle" />
         ) : (
           " Interview season is not configured yet."
         )}
-      </p>
+      </div>
       {committeeName ? (
         <p className={committeeClasses}>{committeeName}</p>
       ) : null}

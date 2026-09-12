@@ -2,14 +2,20 @@
 
 import { useId, useState } from "react"
 import { Field } from "@/components/field"
+import {
+  APPLICATION_DOCUMENT_PDF_MAX_SIZE_LABEL,
+  applicationDocumentPdfSizeLimitMessage,
+  isApplicationDocumentPdfWithinSizeLimit,
+} from "@/lib/apply-field-validation"
 import { cn } from "@/lib/utils"
 
 const hintClasses = "font-sans text-xs text-prelude"
+const dropErrorClasses = "font-sans text-xs text-rose-glow"
 const dropClasses =
   "flex min-h-24 cursor-pointer items-center justify-center rounded-[20px] border border-dashed border-biloba-flower/50 bg-haiti/35 px-4 py-6 text-center font-sans text-sm text-prelude transition-colors"
 const dropActiveClasses = "border-aquamarine/70 bg-haiti/55 text-blue-chalk"
 const inputClasses = "sr-only"
-export const pdfDropPlaceholder = "Please drag and drop or click to browse (.pdf)"
+export const pdfDropPlaceholder = `Drag and drop or browse (.pdf, max ${APPLICATION_DOCUMENT_PDF_MAX_SIZE_LABEL})`
 
 type PdfFileDropProps = {
   label: string
@@ -30,11 +36,20 @@ export function PdfFileDrop({
 }: PdfFileDropProps) {
   const id = useId()
   const [active, setActive] = useState(false)
+  const [rejectReason, setRejectReason] = useState("")
 
   function takeFile(list: FileList | null) {
     const next = list?.[0]
     if (!next) return
-    if (next.type !== "application/pdf") return
+    if (next.type !== "application/pdf") {
+      setRejectReason("Only PDF files (.pdf) are accepted.")
+      return
+    }
+    if (!isApplicationDocumentPdfWithinSizeLimit(next)) {
+      setRejectReason(applicationDocumentPdfSizeLimitMessage())
+      return
+    }
+    setRejectReason("")
     onFile(next)
   }
 
@@ -65,6 +80,11 @@ export function PdfFileDrop({
         className={inputClasses}
         onChange={(event) => takeFile(event.target.files)}
       />
+      {rejectReason ? (
+        <p className={dropErrorClasses} role="alert">
+          {rejectReason}
+        </p>
+      ) : null}
     </Field>
   )
 }

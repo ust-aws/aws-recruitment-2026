@@ -30,7 +30,7 @@ export function BoardToggle({ value, onChange }: BoardToggleProps) {
         )}
         onClick={() => onChange("executive-board")}
       >
-        Executive Board
+        Executive Boards
       </button>
       <button
         type="button"

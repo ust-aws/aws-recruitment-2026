@@ -1,6 +1,7 @@
 import type {
   Application,
   CreateApplicationInput,
+  DocumentType,
   Position,
 } from "./application-types"
 import type {
@@ -76,6 +77,33 @@ export function postApplication(body: CreateApplicationInput) {
     method: "POST",
     body: JSON.stringify(body),
   });
+}
+
+export type UploadPresignRequest = {
+  documents: {
+    documentType: DocumentType
+    fileName: string
+    sizeBytes: number
+    checksumSha256: string
+  }[]
+}
+
+export type UploadPresignResponse = {
+  uploadSessionId: string
+  uploadExpiresAt: string
+  sessionExpiresAt: string
+  uploads: {
+    documentType: DocumentType
+    url: string
+    fields: Record<string, string>
+  }[]
+}
+
+export function postUploadPresign(body: UploadPresignRequest) {
+  return apiFetch<UploadPresignResponse>("/uploads/presign", {
+    method: "POST",
+    body: JSON.stringify(body),
+  })
 }
 
 export function patchApplicationDecisionRequest(

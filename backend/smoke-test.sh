@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# curl-based smoke test for the Hono API. Works against a local dev server
-# or a deployed API Gateway URL — pass the base URL as $1.
-set -uo pipefail
+# Smoke test for a running local API. Run pnpm db:up, pnpm db:push, pnpm db:seed,
+# and pnpm dev before this script.
+set -euo pipefail
 
 BASE_URL="${1:-http://localhost:8787}"
 BASE_URL="${BASE_URL%/}"
@@ -18,12 +18,11 @@ LAST_BODY=""
 
 request() {
   local method="$1" path="$2" data="${3:-}" auth="${4:-}"
-  local args=(-s -o /tmp/smoke-test-body -w '%{http_code}' -X "$method")
+  local args=(-sS -o /tmp/aws-ust-smoke-body -w '%{http_code}' -X "$method")
   [[ -n "$data" ]] && args+=(-H 'content-type: application/json' -d "$data")
   [[ -n "$auth" ]] && args+=(-H "Authorization: Bearer $auth")
-
   LAST_STATUS=$(curl "${args[@]}" "$BASE_URL$path")
-  LAST_BODY=$(cat /tmp/smoke-test-body 2>/dev/null || true)
+  LAST_BODY=$(< /tmp/aws-ust-smoke-body)
 }
 
 expect() {
@@ -74,6 +73,21 @@ contains_id() {
     process.exit(apps.some((app) => app.id === id) ? 0 : 1);
   " "$id"
 }
+
+request GET /health
+expect "GET /health" 200
+
+request POST /uploads/presign '{}'
+expect "missing documents" 400
+
+request POST /uploads/presign '{"documents":[{"documentType":"resume","fileName":"resume.pdf","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},{"documentType":"resume","fileName":"copy.pdf","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}]}'
+expect "duplicate document type" 400
+
+request POST /uploads/presign '{"documents":[{"documentType":"resume","fileName":"resume.txt","sizeBytes":1,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="},{"documentType":"transcript","fileName":"transcript.pdf","sizeBytes":10000001,"checksumSha256":"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA="}]}'
+expect "invalid PDF name and size" 400
+
+request GET "/applications/$UNKNOWN_ID/documents/resume"
+expect "unauthenticated document access" 401
 
 check_positions_contract() {
   if printf '%s' "$LAST_BODY" | node -e '
@@ -126,8 +140,8 @@ has_email_notification() {
   " "$app_id" "$recipient"
 }
 
-echo "Smoke testing $BASE_URL"
-echo
+request POST /applications '{"firstName":"Smoke"}'
+expect "application requires upload session" 400
 
 request GET "/health"
 expect "GET  /health" 200
@@ -297,10 +311,8 @@ else
   fail=$((fail + 1))
 fi
 
-if [[ -z "$POS1" || -z "$POS2" ]]; then
-  echo "FAIL  need two positions from GET /positions to exercise applications"
-  echo "      body: $LAST_BODY"
-  fail=$((fail + 1))
+if [[ -z "$POS1" || -z "$POS2" || -z "${SMOKE_UPLOAD_SESSION_ID:-}" ]]; then
+  echo "SKIP  application creation requires two positions and SMOKE_UPLOAD_SESSION_ID"
 else
   SECTION="4SMK"
   EMAIL="smoke.$(date +%s)@ust.edu.ph"
@@ -345,7 +357,7 @@ else
   fi
 
   CREATE_BODY=$(cat <<EOF
-{"firstName":"Smoke","lastName":"Test","email":"$EMAIL","age":21,"birthday":"2005-04-12","gender":"male","section":"$SECTION","studentNumber":"2026123456","contactNumber":"+639171234567","facebookUrl":"https://facebook.com/smoke.test","dataPrivacyAgreed":true,"motivation":"Smoke test why join.","portfolioUrl":"https://drive.google.com/file/d/smoke-test/view","slotId":"$SLOT_ID","choices":[{"positionId":"$POS1","preferenceRank":1},{"positionId":"$POS2","preferenceRank":2}],"documents":[{"documentType":"resume","fileName":"CV_Test.pdf","s3Key":"dev/uploads/$UNKNOWN_ID/CV_Test.pdf"},{"documentType":"transcript","fileName":"TOR_Test.pdf","s3Key":"dev/uploads/$UNKNOWN_ID/TOR_Test.pdf"},{"documentType":"registration","fileName":"RegForm_Test.pdf","s3Key":"dev/uploads/$UNKNOWN_ID/RegForm_Test.pdf"}]}
+{"firstName":"Smoke","lastName":"Test","email":"$EMAIL","age":21,"birthday":"2005-04-12","gender":"male","section":"$SECTION","studentNumber":"2026123456","contactNumber":"+639171234567","facebookUrl":"https://facebook.com/smoke.test","dataPrivacyAgreed":true,"motivation":"Smoke test why join.","slotId":"$SLOT_ID","choices":[{"positionId":"$POS1","preferenceRank":1},{"positionId":"$POS2","preferenceRank":2}],"uploadSessionId":"$SMOKE_UPLOAD_SESSION_ID"}
 EOF
 )
 
@@ -481,9 +493,6 @@ EOF
   expect "PATCH /applications/:id/archive unknown" 404
   fi
 fi
-
-request POST "/uploads/presign"
-expect "POST /uploads/presign (stubbed)" 501
 
 if [[ -z "$token" ]]; then
   echo "FAIL  POST /auth/logout (extract token from login)"

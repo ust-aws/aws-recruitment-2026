@@ -63,10 +63,11 @@ export function QuizResults({ result, onRetake }: QuizResultsProps) {
           <p className={alsoLabelClasses}>Additional match · Executive Assistant</p>
           <p className="text-sm leading-relaxed text-blue-chalk">
             Your results also show strong potential for a role involving coordination,
-            organization, and close collaboration with an Executive Board officer.
+            organization, and close collaboration with an Executive Boards
+            officer.
           </p>
           <p className="text-sm text-prelude">
-            Potential EB match: {result.executiveAssistant.officer}
+            Potential Executive Boards match: {result.executiveAssistant.officer}
           </p>
         </aside>
       ) : null}

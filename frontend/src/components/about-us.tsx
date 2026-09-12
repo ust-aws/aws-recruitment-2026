@@ -20,7 +20,8 @@ const tagClasses =
   "rounded-pill border border-blue-chalk/25 px-4 py-1.5 font-mono text-xs text-blue-chalk"
 const storyClasses =
   "flex max-w-[52rem] flex-col gap-4 border-l border-biloba-flower/25 pl-5"
-const storyBodyClasses = "font-sans text-base leading-relaxed text-prelude"
+const storyBodyClasses =
+  "font-sans text-base leading-relaxed text-justify text-prelude"
 
 export function AboutUs() {
   return (
