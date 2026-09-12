@@ -7,28 +7,11 @@ import { PdfFileDrop } from "@/components/apply/pdf-file-drop"
 import { documentUploadFileHint } from "@/lib/apply-field-validation"
 
 import type { DocumentType } from "@/lib/application-types"
+import type { UploadValues } from "@/components/apply/apply-schema"
 
 
 
 const stackClasses = "flex flex-col gap-5"
-
-
-
-export type UploadValues = {
-
-  resume: File | null
-
-  transcript: File | null
-
-  registration: File | null
-
-  resumeDisplayName?: string
-
-  transcriptDisplayName?: string
-
-  registrationDisplayName?: string
-
-}
 
 
 
@@ -37,6 +20,8 @@ type UploadStepProps = {
   values: UploadValues
 
   onChange: (patch: Partial<UploadValues>) => void
+
+  errors?: Partial<Record<keyof UploadValues, string>>
 
 }
 
@@ -48,7 +33,7 @@ function fileHint(documentType: DocumentType) {
 
 
 
-export function UploadStep({ values, onChange }: UploadStepProps) {
+export function UploadStep({ values, onChange, errors }: UploadStepProps) {
 
   return (
 
@@ -64,6 +49,8 @@ export function UploadStep({ values, onChange }: UploadStepProps) {
 
         displayName={values.resumeDisplayName}
 
+        error={errors?.resume}
+
         onFile={(resume) => onChange({ resume, resumeDisplayName: undefined })}
 
       />
@@ -77,6 +64,8 @@ export function UploadStep({ values, onChange }: UploadStepProps) {
         file={values.transcript}
 
         displayName={values.transcriptDisplayName}
+
+        error={errors?.transcript}
 
         onFile={(transcript) =>
 
@@ -96,6 +85,8 @@ export function UploadStep({ values, onChange }: UploadStepProps) {
 
         displayName={values.registrationDisplayName}
 
+        error={errors?.registration}
+
         onFile={(registration) =>
 
           onChange({ registration, registrationDisplayName: undefined })
@@ -109,5 +100,4 @@ export function UploadStep({ values, onChange }: UploadStepProps) {
   )
 
 }
-
 

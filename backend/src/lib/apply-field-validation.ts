@@ -1,4 +1,4 @@
-import type { DocumentType } from "./applications";
+import type { DocumentType } from "./documents";
 import {
   isCreativesCommittee,
   isDevelopmentCommittee,

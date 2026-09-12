@@ -1,6 +1,7 @@
 "use client"
 
 import { Field } from "@/components/field"
+import type { PrivacyValues } from "@/components/apply/apply-schema"
 import { cn } from "@/lib/utils"
 
 const stackClasses = "flex flex-col gap-5"
@@ -13,21 +14,18 @@ const radioClasses =
   "mt-0.5 size-4 shrink-0 accent-aquamarine"
 const optionLabelClasses = "font-sans text-sm text-blue-chalk"
 
-export type PrivacyValues = {
-  dataPrivacyAgreed: boolean
-}
-
 type PrivacyStepProps = {
   values: PrivacyValues
   onChange: (patch: Partial<PrivacyValues>) => void
+  errors?: Partial<Record<keyof PrivacyValues, string>>
 }
 
-export function PrivacyStep({ values, onChange }: PrivacyStepProps) {
+export function PrivacyStep({ values, onChange, errors }: PrivacyStepProps) {
   const agreed = values.dataPrivacyAgreed
 
   return (
     <div className={stackClasses}>
-      <Field label="Data Privacy Agreement" required>
+      <Field label="Data Privacy Agreement" required error={errors?.dataPrivacyAgreed}>
         <p className={copyClasses}>
           By accepting this Data Privacy Statement, I am granting my free,
           voluntary and unconditional consent to the researchers to treat the

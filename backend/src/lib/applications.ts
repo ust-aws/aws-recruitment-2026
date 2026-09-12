@@ -25,8 +25,10 @@ import {
 import {
   applicationKey,
   copyIncomingDocuments,
+  DOCUMENT_TYPES,
   deleteKeys,
   incomingKey,
+  type DocumentType,
   validateIncomingDocument,
 } from "./documents";
 import { freePlanEndDate } from "./free-plan";
@@ -37,9 +39,9 @@ import {
 import { bookInterviewSlotForApplication } from "./interview-scheduling";
 import type { ApplicantGender } from "./applicant-gender";
 
-export type ApplicationStatus = "pending" | "approved" | "rejected";
-export type DocumentType = "resume" | "transcript" | "registration";
+export type { DocumentType } from "./documents";
 
+export type ApplicationStatus = "pending" | "approved" | "rejected";
 export type ApplicationChoiceJson = {
   preferenceRank: 1 | 2;
   positionId: string;
@@ -517,6 +519,12 @@ export async function createApplication(
           sizeBytes: session.transcriptSizeBytes,
           checksumSha256: session.transcriptChecksumSha256,
         },
+        {
+          documentType: "registration" as const,
+          fileName: session.registrationFileName,
+          sizeBytes: session.registrationSizeBytes,
+          checksumSha256: session.registrationChecksumSha256,
+        },
       ];
       await Promise.all(
         documents.map((document) => validateIncomingDocument(session.id, document)),
@@ -646,20 +654,19 @@ export async function createApplication(
     transactionComplete = true;
 
     if (result.created) {
-      await deleteKeys([
-        incomingKey(input.uploadSessionId, "resume"),
-        incomingKey(input.uploadSessionId, "transcript"),
-      ]).catch((error) => console.error("Could not remove incoming documents", error));
+      await deleteKeys(
+        DOCUMENT_TYPES.map((type) => incomingKey(input.uploadSessionId, type)),
+      ).catch((error) => console.error("Could not remove incoming documents", error));
     }
     const application = await getApplicationById(result.id);
     if (!application) throw new Error("Created application could not be loaded.");
     return { application, created: result.created };
   } catch (error) {
     if (!transactionComplete && copiedApplicationId) {
-      await deleteKeys([
-        applicationKey(copiedApplicationId, "resume"),
-        applicationKey(copiedApplicationId, "transcript"),
-      ]).catch(() => undefined);
+      const applicationId = copiedApplicationId;
+      await deleteKeys(
+        DOCUMENT_TYPES.map((type) => applicationKey(applicationId, type)),
+      ).catch(() => undefined);
     }
     throw error;
   }
