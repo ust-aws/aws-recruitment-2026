@@ -238,6 +238,7 @@ export function fullName(app: Application) {
 }
 
 export function firstChoiceCommittee(app: Application) {
+  if (app.applicationType === "member") return "Member-only"
   return (
     app.choices.find((choice) => choice.preferenceRank === 1)?.committee ?? "—"
   )

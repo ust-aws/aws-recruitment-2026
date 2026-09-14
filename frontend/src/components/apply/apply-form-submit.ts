@@ -12,6 +12,7 @@ type CompletedUploadSession = { fingerprint: string; id: string; expiresAt: stri
 
 export type ApplyFormSubmitSuccess = {
   applicationCode: string
+  applicationType: "position" | "member"
   successChoices: {
     firstCommittee: string
     secondCommittee: string
@@ -62,6 +63,7 @@ export async function submitApplyForm(
   const createdSecond = created.choices.find((choice) => choice.preferenceRank === 2)
   return {
     applicationCode: created.applicationCode,
+    applicationType: created.applicationType,
     successChoices: {
       firstCommittee: createdFirst?.committee ?? values.committee.firstCommittee,
       secondCommittee: createdSecond?.committee ?? values.committee.secondCommittee,

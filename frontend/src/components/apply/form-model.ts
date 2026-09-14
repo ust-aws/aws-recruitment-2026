@@ -22,11 +22,12 @@ export function toCreateApplicationInput(
   emailDomain: string,
   uploadSessionId: string,
 ): CreateApplicationInput {
-  const needsPortfolio = needsCreativesPortfolio(
+  const positionApplication = committee.applicationType === "position"
+  const needsPortfolio = positionApplication && needsCreativesPortfolio(
     committee.firstCommittee,
     committee.secondCommittee,
   )
-  const needsGithub = needsDevelopmentGithub(
+  const needsGithub = positionApplication && needsDevelopmentGithub(
     committee.firstCommittee,
     committee.secondCommittee,
     committee.firstPositionTitle,
@@ -46,15 +47,18 @@ export function toCreateApplicationInput(
     facebookUrl: general.facebookUrl.trim(),
     dataPrivacyAgreed: privacy.dataPrivacyAgreed,
     motivation: committee.motivation.trim(),
-    slotId: committee.slotId,
+    applicationType: committee.applicationType,
+    ...(positionApplication ? { slotId: committee.slotId } : {}),
     ...(needsPortfolio ? { portfolioUrl: committee.portfolioUrl.trim() } : {}),
     ...(needsGithub && committee.githubUrl.trim()
       ? { githubUrl: committee.githubUrl.trim() }
       : {}),
-    choices: [
-      { positionId: committee.firstPositionId, preferenceRank: 1 },
-      { positionId: committee.secondPositionId, preferenceRank: 2 },
-    ],
+    choices: positionApplication
+      ? [
+          { positionId: committee.firstPositionId, preferenceRank: 1 },
+          { positionId: committee.secondPositionId, preferenceRank: 2 },
+        ]
+      : [],
     uploadSessionId,
   }
 }

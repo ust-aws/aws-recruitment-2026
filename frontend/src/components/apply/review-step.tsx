@@ -41,7 +41,7 @@ export function ReviewStep({
         </div>
       </section>
       <section>
-        <h3 className={sectionTitleClasses}>Committee choices</h3>
+        <h3 className={sectionTitleClasses}>Application type</h3>
         <div className="mt-4">
           <CommitteeStep values={committee} onChange={onCommitteeChange} errors={committeeErrors} />
         </div>

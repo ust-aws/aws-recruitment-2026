@@ -36,6 +36,7 @@ type ApplyFormStepsProps = {
     upload: Partial<Record<keyof UploadValues, string>>
   }
   applicationCode: string
+  successApplicationType: "position" | "member"
   successChoices: {
     firstCommittee: string
     secondCommittee: string
@@ -61,6 +62,7 @@ export function ApplyFormSteps({
   updateUpload,
   currentStepErrors,
   applicationCode,
+  successApplicationType,
   successChoices,
 }: ApplyFormStepsProps) {
   return (
@@ -118,6 +120,7 @@ export function ApplyFormSteps({
         {step === 6 ? (
           <SuccessPanel
             applicationCode={applicationCode}
+            applicationType={successApplicationType}
             firstChoiceCommittee={successChoices.firstCommittee}
             secondChoiceCommittee={successChoices.secondCommittee}
             firstChoiceTitle={successChoices.firstTitle}

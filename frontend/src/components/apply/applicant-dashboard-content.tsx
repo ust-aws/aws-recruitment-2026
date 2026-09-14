@@ -10,6 +10,7 @@ const ApplicantInterviewScheduler = dynamic(() =>
   ),
 )
 import { ApplicantResultPanel } from "@/components/apply/applicant-result-panel"
+import { ApplicantMembershipStatus } from "@/components/apply/applicant-membership-status"
 import { ApplicantChoiceEditor } from "@/components/apply/applicant-choice-editor"
 import { ApplicantEditBanner } from "@/components/apply/applicant-edit-banner"
 import { ApplicantDashboardProfile } from "@/components/apply/applicant-dashboard-profile"
@@ -77,6 +78,7 @@ export function ApplicantDashboardContent({
   onSave,
   onApplicationUpdated,
 }: ApplicantDashboardContentProps) {
+  const positionApplication = application.applicationType === "position"
   const first = application.choices.find((choice) => choice.preferenceRank === 1)
   const second = application.choices.find((choice) => choice.preferenceRank === 2)
 
@@ -84,48 +86,54 @@ export function ApplicantDashboardContent({
     <>
       <ApplicantDashboardProfile application={application} />
 
-      {application.result ? (
-        <ApplicantResultPanel
-          result={application.result}
-          choices={application.choices}
-        />
-      ) : null}
+      {positionApplication ? (
+        <>
+          {application.result ? (
+            <ApplicantResultPanel
+              result={application.result}
+              choices={application.choices}
+            />
+          ) : null}
 
-      <div className="mt-6">
-        <ApplicantEditBanner
-          canEdit={application.canEdit}
-          editDeadline={application.editDeadline}
-          lockReason={application.lockReason}
-        />
-      </div>
+          <div className="mt-6">
+            <ApplicantEditBanner
+              canEdit={application.canEdit}
+              editDeadline={application.editDeadline}
+              lockReason={application.lockReason}
+            />
+          </div>
 
-      <div className="mt-8">
-        <ApplicantChoiceCards first={first} second={second} />
-      </div>
+          <div className="mt-8">
+            <ApplicantChoiceCards first={first} second={second} />
+          </div>
 
-      <LazyWhenVisible minHeight="18rem" className="mt-8">
-        <ApplicantInterviewScheduler
-          key={`${previewPositionId ?? "current-booking"}:${first?.committee ?? ""}`}
-          positionId={previewPositionId}
-          previewMode={Boolean(previewPositionId)}
-          selectedSlotId={previewPositionId ? previewSlotId : undefined}
-          onSelectedSlotIdChange={
-            previewPositionId ? onPreviewSlotIdChange : undefined
-          }
-        />
-      </LazyWhenVisible>
+          <LazyWhenVisible minHeight="18rem" className="mt-8">
+            <ApplicantInterviewScheduler
+              key={`${previewPositionId ?? "current-booking"}:${first?.committee ?? ""}`}
+              positionId={previewPositionId}
+              previewMode={Boolean(previewPositionId)}
+              selectedSlotId={previewPositionId ? previewSlotId : undefined}
+              onSelectedSlotIdChange={
+                previewPositionId ? onPreviewSlotIdChange : undefined
+              }
+            />
+          </LazyWhenVisible>
 
-      {application.canEdit ? (
-        <ApplicantChoiceEditor
-          application={application}
-          pending={pending}
-          error={saveError}
-          success={saveSuccess}
-          slotId={previewSlotId}
-          onPreviewPositionIdChange={onPreviewPositionIdChange}
-          onSave={onSave}
-        />
-      ) : null}
+          {application.canEdit ? (
+            <ApplicantChoiceEditor
+              application={application}
+              pending={pending}
+              error={saveError}
+              success={saveSuccess}
+              slotId={previewSlotId}
+              onPreviewPositionIdChange={onPreviewPositionIdChange}
+              onSave={onSave}
+            />
+          ) : null}
+        </>
+      ) : (
+        <ApplicantMembershipStatus application={application} />
+      )}
 
       <ApplicantDashboardDocuments
         application={application}

@@ -7,7 +7,7 @@ import {
   readApiErrorMessage,
   userFacingApiError,
 } from "./api-error-message"
-import type { DocumentType } from "./application-types"
+import type { ApplicationStatus, ApplicationType, DocumentType } from "./application-types"
 
 export type ApplicantChoice = {
   preferenceRank: 1 | 2
@@ -40,6 +40,9 @@ export type ApplicantResult = {
 
 export type ApplicantApplication = {
   applicationCode: string
+  status: ApplicationStatus
+  applicationType: ApplicationType
+  memberId: string | null
   firstName: string
   lastName: string
   email: string

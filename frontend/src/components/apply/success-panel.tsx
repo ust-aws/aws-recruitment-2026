@@ -17,6 +17,7 @@ const buttonClasses = "h-10 px-5 text-xs"
 
 type SuccessPanelProps = {
   applicationCode: string
+  applicationType: "position" | "member"
   firstChoiceCommittee?: string
   secondChoiceCommittee?: string
   firstChoiceTitle?: string
@@ -25,11 +26,13 @@ type SuccessPanelProps = {
 
 export function SuccessPanel({
   applicationCode,
+  applicationType,
   firstChoiceCommittee = "",
   secondChoiceCommittee = "",
   firstChoiceTitle = "",
   secondChoiceTitle = "",
 }: SuccessPanelProps) {
+  const positionApplication = applicationType === "position"
   const examCopy = needsDevExamSuccessCopy(
     firstChoiceCommittee,
     secondChoiceCommittee,
@@ -44,20 +47,25 @@ export function SuccessPanel({
       </div>
       <h2 className={titleClasses}>Application submitted!</h2>
       <p className={bodyClasses}>
-        Thanks for applying to AWS Builders - UST! Save your Application ID:
+        {positionApplication
+          ? "Thanks for applying to AWS Builders - UST! Save your Application ID:"
+          : "Thanks for registering as a member! Save your Application ID:"}
       </p>
       <p className="mt-2 font-mono text-base font-semibold tracking-wide text-blue-chalk">
         {applicationCode}
       </p>
       <p className={bodyClasses}>
-        Check your <span className={emphasisClasses}>UST email</span> for a
-        confirmation of your application.
+        Check your <span className={emphasisClasses}>UST email</span> for
+        {positionApplication
+          ? " a confirmation of your application."
+          : " confirmation that your membership registration was accepted."}
       </p>
       <p className={bodyClasses}>
-        Please prepare <span className={emphasisClasses}>₱250</span> for the
-        membership fee when you join.
+        {positionApplication
+          ? <>Please prepare <span className={emphasisClasses}>₱250</span> for the membership fee when you join.</>
+          : <>Membership payment will open after <span className={emphasisClasses}>R101</span>. Please wait for the official instructions and do not send a payment yet.</>}
       </p>
-      {examCopy.development ? (
+      {positionApplication && examCopy.development ? (
         <p className={bodyClasses}>
           Because you applied to the{" "}
           <span className={emphasisClasses}>Development Committee</span>, you
@@ -66,7 +74,7 @@ export function SuccessPanel({
           recruitment.
         </p>
       ) : null}
-      {examCopy.ctoEa ? (
+      {positionApplication && examCopy.ctoEa ? (
         <p className={bodyClasses}>
           Because you applied as the{" "}
           <span className={emphasisClasses}>Executive Assistant to the CTO</span>
@@ -76,10 +84,12 @@ export function SuccessPanel({
         </p>
       ) : null}
       <p className={bodyClasses}>
-        We&apos;ll reach out once R101 review wraps up.
+        {positionApplication
+          ? "We will reach out once R101 review wraps up."
+          : "We will email the payment details once the payment period opens."}
       </p>
       <p className={bodyClasses}>
-        If you wish to edit your application,{" "}
+        {positionApplication ? "If you wish to edit your application," : "You can review your registration status"}{" "}
         <Link href="/apply/status" className={linkClasses}>
           log in to your dashboard
         </Link>{" "}

@@ -20,5 +20,6 @@ export function StatusPill({
 }: {
   status: ApplicationStatus
 } & VariantProps<typeof pill> & { className?: string }) {
-  return <span className={pill({ status, className })}>{status}</span>
+  const label = status
+  return <span className={pill({ status, className })}>{label}</span>
 }

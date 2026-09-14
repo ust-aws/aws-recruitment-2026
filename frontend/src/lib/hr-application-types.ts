@@ -1,10 +1,9 @@
 import type {
   Application,
   ApplicationChoice,
-  ApplicationStatus,
 } from "./application-types"
 
-export type ChoiceDecisionStatus = ApplicationStatus
+export type ChoiceDecisionStatus = "pending" | "approved" | "rejected"
 
 export type HrApplicationChoice = ApplicationChoice & {
   decisionStatus: ChoiceDecisionStatus

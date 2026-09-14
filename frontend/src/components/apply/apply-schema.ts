@@ -46,6 +46,7 @@ export const generalInfoSchema = z.object({
 })
 
 export const committeeSchema = z.object({
+  applicationType: z.enum(["position", "member"]),
   firstCommittee: z.string(),
   firstPositionId: z.string(),
   firstPositionTitle: z.string(),
@@ -112,28 +113,30 @@ export const applySchema = z
     }
 
     const { committee } = value
-    if (!committee.firstPositionId) issue(["committee", "firstPositionId"], "Please select your first choice.")
-    if (!committee.secondPositionId) issue(["committee", "secondPositionId"], "Please select your second choice.")
-    if (committee.firstPositionId && committee.firstPositionId === committee.secondPositionId) {
-      issue(["committee", "secondPositionId"], "Pick two different positions so we can rank your committee preferences.")
+    if (committee.applicationType === "position") {
+      if (!committee.firstPositionId) issue(["committee", "firstPositionId"], "Please select your first choice.")
+      if (!committee.secondPositionId) issue(["committee", "secondPositionId"], "Please select your second choice.")
+      if (committee.firstPositionId && committee.firstPositionId === committee.secondPositionId) {
+        issue(["committee", "secondPositionId"], "Pick two different positions so we can rank your committee preferences.")
+      }
+      if (!committee.slotId) issue(["committee", "slotId"], "Pick an interview time slot for your first-choice committee.")
+      const needsPortfolio = needsCreativesPortfolio(committee.firstCommittee, committee.secondCommittee)
+      const needsGithub = needsDevelopmentGithub(
+        committee.firstCommittee,
+        committee.secondCommittee,
+        committee.firstPositionTitle,
+        committee.secondPositionTitle,
+      )
+      if (needsPortfolio && !committee.portfolioUrl.trim()) {
+        issue(["committee", "portfolioUrl"], "Add your Google Drive portfolio link for your Creatives committee choice.")
+      } else if (needsPortfolio && !isValidGoogleDriveUrl(committee.portfolioUrl)) {
+        issue(["committee", "portfolioUrl"], "Use a Google Drive or Docs share link (drive.google.com/file/d/… or docs.google.com/document/d/…).")
+      }
+      if (needsGithub && committee.githubUrl.trim() && !isValidGithubUrl(committee.githubUrl)) {
+        issue(["committee", "githubUrl"], "Use your GitHub profile link only (https://github.com/username), not a repository URL.")
+      }
     }
-    if (!committee.slotId) issue(["committee", "slotId"], "Pick an interview time slot for your first-choice committee.")
     if (!committee.motivation.trim()) issue(["committee", "motivation"], "Please complete all the required fields.")
-    const needsPortfolio = needsCreativesPortfolio(committee.firstCommittee, committee.secondCommittee)
-    const needsGithub = needsDevelopmentGithub(
-      committee.firstCommittee,
-      committee.secondCommittee,
-      committee.firstPositionTitle,
-      committee.secondPositionTitle,
-    )
-    if (needsPortfolio && !committee.portfolioUrl.trim()) {
-      issue(["committee", "portfolioUrl"], "Add your Google Drive portfolio link for your Creatives committee choice.")
-    } else if (needsPortfolio && !isValidGoogleDriveUrl(committee.portfolioUrl)) {
-      issue(["committee", "portfolioUrl"], "Use a Google Drive or Docs share link (drive.google.com/file/d/… or docs.google.com/document/d/…).")
-    }
-    if (needsGithub && committee.githubUrl.trim() && !isValidGithubUrl(committee.githubUrl)) {
-      issue(["committee", "githubUrl"], "Use your GitHub profile link only (https://github.com/username), not a repository URL.")
-    }
 
     for (const type of ["resume", "registration"] as const) {
       const file = value.upload[type]
@@ -156,6 +159,7 @@ export const applyFormDefaults: ApplyFormValues = {
     emailLocal: "", studentNumber: "", contactDigits: "", facebookUrl: "",
   },
   committee: {
+    applicationType: "position",
     firstCommittee: "",
     firstPositionId: "",
     firstPositionTitle: "",
@@ -181,6 +185,7 @@ export const applyFormDraftSchema = z.object({
     contactDigits: z.string().default(""), facebookUrl: z.string().default(""),
   }),
   committee: committeeSchema.extend({
+    applicationType: z.enum(["position", "member"]).default("position"),
     slotId: z.string().default(""), portfolioUrl: z.string().default(""), githubUrl: z.string().default(""),
   }),
   upload: z.object({

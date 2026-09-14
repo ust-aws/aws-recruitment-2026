@@ -1,4 +1,8 @@
-export type ApplicationStatus = "pending" | "approved" | "rejected"
+export type ApplicationStatus =
+  | "pending"
+  | "approved"
+  | "rejected"
+export type ApplicationType = "position" | "member"
 
 export type DocumentType = "resume" | "registration"
 
@@ -30,6 +34,8 @@ export type Application = {
   id: string
   applicationCode: string
   status: ApplicationStatus
+  applicationType: ApplicationType
+  memberId: string | null
   submittedAt: string
   firstName: string
   lastName: string
@@ -61,9 +67,10 @@ export type CreateApplicationInput = {
   facebookUrl: string
   dataPrivacyAgreed: boolean
   motivation: string
+  applicationType: ApplicationType
   portfolioUrl?: string
   githubUrl?: string
-  slotId: string
+  slotId?: string
   choices: { positionId: string; preferenceRank: 1 | 2 }[]
   uploadSessionId: string
 }

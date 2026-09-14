@@ -92,6 +92,9 @@ export function ApplyForm({ initialPositionId }: ApplyFormProps) {
   const [submitting, setSubmitting] = useState(false)
   const completedUploadRef = useRef<CompletedUploadSession | null>(null)
   const [applicationCode, setApplicationCode] = useState("")
+  const [successApplicationType, setSuccessApplicationType] = useState<
+    "position" | "member"
+  >("position")
   const [successChoices, setSuccessChoices] = useState({
     firstCommittee: "",
     secondCommittee: "",
@@ -170,6 +173,7 @@ export function ApplyForm({ initialPositionId }: ApplyFormProps) {
     listOpenPositions().then((rows) => {
       const position = rows.find((row) => row.id === initialPositionId)
       if (!cancelled && position) {
+        setValue("committee.applicationType", "position")
         setValue("committee.firstCommittee", position.committee)
         setValue("committee.firstPositionId", position.id)
         setValue("committee.firstPositionTitle", position.title)
@@ -222,6 +226,7 @@ export function ApplyForm({ initialPositionId }: ApplyFormProps) {
     try {
       const result = await submitApplyForm(values, UST_EMAIL_DOMAIN, completedUploadRef)
       setApplicationCode(result.applicationCode)
+      setSuccessApplicationType(result.applicationType)
       setSuccessChoices(result.successChoices)
       setStep(6)
       setDirection(1)
@@ -278,6 +283,7 @@ export function ApplyForm({ initialPositionId }: ApplyFormProps) {
               updateUpload={updateUpload}
               currentStepErrors={currentStepErrors}
               applicationCode={applicationCode}
+              successApplicationType={successApplicationType}
               successChoices={successChoices}
             />
           </div>
