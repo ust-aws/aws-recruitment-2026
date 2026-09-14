@@ -121,6 +121,35 @@ class BackendStack extends cdk.Stack {
       resources: [documentBucket.bucketArn],
     }));
 
+    const applicationEmailFunction = new NodejsFunction(
+      this,
+      "ApplicationEmailFunction",
+      {
+        entry: path.join(__dirname, "../src/application-email-worker.ts"),
+        handler: "handler",
+        runtime: lambda.Runtime.NODEJS_22_X,
+        memorySize: 512,
+        timeout: cdk.Duration.seconds(30),
+        logRetention: logs.RetentionDays.ONE_WEEK,
+        depsLockFilePath: path.join(__dirname, "../../pnpm-lock.yaml"),
+        bundling: {
+          minify: true,
+          sourceMap: true,
+          commandHooks: emailAssetBundlingHooks,
+        },
+        environment,
+      },
+    );
+    applicationEmailFunction.addToRolePolicy(new iam.PolicyStatement({
+      actions: ["s3:GetObject"],
+      resources: [documentBucket.arnForObjects("*")],
+    }));
+    apiFunction.addEnvironment(
+      "APPLICATION_EMAIL_WORKER_FUNCTION_NAME",
+      applicationEmailFunction.functionName,
+    );
+    applicationEmailFunction.grantInvoke(apiFunction);
+
     const cleanupFunction = new NodejsFunction(this, "DocumentCleanupFunction", {
       entry: path.join(__dirname, "../src/cleanup.ts"),
       handler: "handler",

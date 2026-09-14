@@ -29,6 +29,7 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@aws-sdk/client-lambda": "3.1126.0",
     "@aws-sdk/client-s3": "^3.1126.0",
     "@aws-sdk/s3-presigned-post": "^3.1126.0",
     "@aws-sdk/s3-request-presigner": "^3.1126.0",

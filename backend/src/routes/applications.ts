@@ -27,6 +27,7 @@ import {
   sendApplicationSubmitted,
   sendOfficerApplicationNotice,
 } from "../lib/email/service";
+import { dispatchApplicationSubmissionEmail } from "../lib/application-email-dispatch";
 import { InterviewScheduleError } from "../lib/interview-scheduling";
 import { resolveRecruitmentSeasonStatus } from "../lib/recruitment-window";
 import {
@@ -163,12 +164,27 @@ applicationsRoutes.post("/", async (c) => {
   try {
     const result = await createApplication(parsed.value);
     if (result.created) {
-      void sendApplicationSubmitted(result.application).catch((err) => {
-        logApiError(c, err, "submission email failed");
-      });
-      void sendOfficerApplicationNotice(result.application).catch((err) => {
-        logApiError(c, err, "officer application notice failed");
-      });
+      try {
+        const queued = await dispatchApplicationSubmissionEmail(
+          result.application.id,
+        );
+        if (!queued) {
+          void sendApplicationSubmitted(result.application).catch((err) => {
+            logApiError(c, err, "submission email failed");
+          });
+          void sendOfficerApplicationNotice(result.application).catch((err) => {
+            logApiError(c, err, "officer application notice failed");
+          });
+        }
+      } catch (err) {
+        logApiError(c, err, "application email queue failed");
+        void sendApplicationSubmitted(result.application).catch((error) => {
+          logApiError(c, error, "submission email fallback failed");
+        });
+        void sendOfficerApplicationNotice(result.application).catch((error) => {
+          logApiError(c, error, "officer email fallback failed");
+        });
+      }
     }
     return c.json(result.application, result.created ? 201 : 200);
   } catch (error) {
