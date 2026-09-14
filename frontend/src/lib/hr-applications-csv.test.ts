@@ -7,6 +7,8 @@ const application: HrApplication = {
   id: "11111111-1111-4111-8111-111111111111",
   applicationCode: "AP-2026-123456",
   status: "pending",
+  applicationType: "position",
+  memberId: null,
   submittedAt: "2026-09-11T08:00:00.000Z",
   archivedAt: null,
   firstName: "=Formula",

@@ -10,6 +10,7 @@ import {
 import {
   applicantOtpTemplate,
   applicationSubmittedTemplate,
+  memberRegistrationTemplate,
   officerApplicationNoticeTemplate,
   resultAcceptedTemplate,
   resultRejectedTemplate,
@@ -150,7 +151,19 @@ test("applicant email templates use compact, plain formatting", async (t) => {
     assert.match(rejected.html, /Yours in Thomasian Leadership,/);
   });
 
-  await t.test("application received includes dev exam copy when Development is a choice", () => {
+  await t.test("sends a Member-only registration email without payment details", () => {
+    const registration = memberRegistrationTemplate({
+      lastName: "Olmedo",
+      applicationCode: "AP-2026-288404",
+    });
+
+    assert.match(registration.subject, /Membership Registration/);
+    assert.match(registration.text, /has been accepted/);
+    assert.match(registration.text, /does not require an interview/);
+    assert.match(registration.text, /after R101/);
+    assert.match(registration.text, /do not send a payment yet/);
+    assert.doesNotMatch(registration.text, /₱250/);
+  });  await t.test("application received includes dev exam copy when Development is a choice", () => {
     const email = applicationSubmittedTemplate({
       lastName: "Olmedo",
       applicationCode: "AP-2026-288404",

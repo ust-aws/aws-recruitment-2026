@@ -16,6 +16,7 @@ function validForm() {
       facebookUrl: "https://facebook.com/juan.delacruz",
     },
     committee: {
+      applicationType: "position",
       firstCommittee: "Development Committee",
       firstPositionId: "first",
       firstPositionTitle: "Development Committee Staff",
@@ -52,4 +53,21 @@ test("apply schema validates document names against the applicant last name", ()
   const result = applySchema.safeParse(values)
   assert.equal(result.success, false)
   if (!result.success) assert.ok(result.error.issues.some((issue) => issue.message.includes("RegForm_Lastname.pdf")))
+})
+
+test("apply schema accepts Member-only applications without choices or interview slots", () => {
+  const values = validForm()
+  values.committee = {
+    ...values.committee,
+    applicationType: "member",
+    firstCommittee: "",
+    firstPositionId: "",
+    firstPositionTitle: "",
+    secondCommittee: "",
+    secondPositionId: "",
+    secondPositionTitle: "",
+    slotId: "",
+  }
+  const result = applySchema.safeParse(values)
+  assert.equal(result.success, true, result.success ? "" : JSON.stringify(result.error.issues))
 })

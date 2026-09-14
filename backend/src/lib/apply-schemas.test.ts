@@ -112,3 +112,31 @@ test("presign schema keeps existing leaf-error messages", () => {
     if (!result.success) assert.equal(result.error.issues[0].message, message);
   }
 });
+
+test("create schema accepts a Member-only application without positions or a slot", () => {
+  const result = createApplicationSchema.safeParse({
+    ...validApplication(),
+    applicationType: "member",
+    choices: [],
+    slotId: undefined,
+  });
+  assert.equal(result.success, true);
+  if (!result.success) return;
+  assert.equal(result.data.applicationType, "member");
+  assert.deepEqual(result.data.choices, []);
+  assert.equal(result.data.slotId, undefined);
+});
+
+test("create schema rejects committee data on a Member-only application", () => {
+  const result = createApplicationSchema.safeParse({
+    ...validApplication(),
+    applicationType: "member",
+  });
+  assert.equal(result.success, false);
+  if (!result.success) {
+    assert.equal(
+      result.error.issues[0]?.message,
+      "Member-only applications cannot include committee choices or an interview slot.",
+    );
+  }
+});
