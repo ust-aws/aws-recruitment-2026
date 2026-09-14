@@ -67,6 +67,10 @@ export function applicantDevExamSubject(applicationCode: string): string {
   return `AWS Builders - UST | Exam Specifications (${applicationCode})`;
 }
 
+export function memberRegistrationSubject(applicationCode: string): string {
+  return `AWS Builders - UST | Membership Registration (${applicationCode})`;
+}
+
 /** Accepted result (Marc #10 Release Results). */
 export const resultAcceptedSubject =
   "Welcome Aboard! Your AWS Builders - UST R101 Results";

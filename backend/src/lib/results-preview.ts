@@ -8,6 +8,7 @@ import {
   positions,
 } from "../db/schema";
 import { recruitmentYearInt } from "./application-code";
+import type { ApplicationStatus } from "./applications";
 
 export type ResultClassification = "accepted" | "rejected" | "incomplete";
 export type ChoiceDecisionStatus = "pending" | "approved" | "rejected";
@@ -28,7 +29,7 @@ export type ResultPreviewApplication = {
     fullName: string;
     email: string;
   };
-  applicationStatus: "pending" | "approved" | "rejected";
+  applicationStatus: ApplicationStatus;
   submittedAt: string;
   classification: ResultClassification;
   blockingReason: string | null;
@@ -137,7 +138,10 @@ async function queryResultsPreview(
     (row) => row.archivedAt === null && row.resultsReleasedAt !== null,
   ).length;
   const pendingRows = rows.filter(
-    (row) => row.archivedAt === null && row.resultsReleasedAt === null,
+    (row) =>
+      row.archivedAt === null &&
+      row.resultsReleasedAt === null &&
+      row.status === "pending",
   );
   const pendingIds = pendingRows.map((row) => row.id);
 

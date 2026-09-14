@@ -1,6 +1,7 @@
 import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../db";
 import { applications, emailNotifications, users } from "../db/schema";
+import { allocateMemberIds } from "./member-id";
 import { getResultsPreviewForUpdate } from "./results-preview";
 
 export type ResultsReleaseSummary = {
@@ -24,24 +25,6 @@ export class ResultsReleaseBlockedError extends Error {
     this.name = "ResultsReleaseBlockedError";
     this.incomplete = incomplete;
   }
-}
-
-function highestMemberSequence(
-  memberIds: (string | null)[],
-  recruitmentYear: number,
-): number {
-  const pattern = new RegExp(`^AWS-${recruitmentYear}-(\\d{4})$`);
-  return memberIds.reduce((highest, memberId) => {
-    const match = memberId?.match(pattern);
-    return match ? Math.max(highest, Number(match[1])) : highest;
-  }, 0);
-}
-
-function formatMemberId(recruitmentYear: number, sequence: number): string {
-  if (sequence > 9999) {
-    throw new Error(`Member ID capacity reached for ${recruitmentYear}.`);
-  }
-  return `AWS-${recruitmentYear}-${String(sequence).padStart(4, "0")}`;
 }
 
 export async function releaseResults(
@@ -72,11 +55,7 @@ export async function releaseResults(
     const memberIdByApplication = new Map(
       memberRows.map((row) => [row.id, row.memberId]),
     );
-    let nextSequence =
-      highestMemberSequence(
-        memberRows.map((row) => row.memberId),
-        preview.recruitmentYear,
-      ) + 1;
+    let nextMemberId = 0;
     let memberIdsGenerated = 0;
     const releasedAt = new Date();
     const notificationIds: string[] = [];
@@ -93,12 +72,21 @@ export async function releaseResults(
     const applicationsToRelease = [...preview.applications].sort((a, b) =>
       a.submittedAt.localeCompare(b.submittedAt),
     );
+    const memberIds = await allocateMemberIds(
+      tx,
+      preview.recruitmentYear,
+      applicationsToRelease.filter(
+        (application) =>
+          application.classification === "accepted" &&
+          !memberIdByApplication.get(application.id),
+      ).length,
+    );
     for (const application of applicationsToRelease) {
       const accepted = application.classification === "accepted";
       let memberId = memberIdByApplication.get(application.id) ?? null;
       if (accepted && !memberId) {
-        memberId = formatMemberId(preview.recruitmentYear, nextSequence);
-        nextSequence += 1;
+        memberId = memberIds[nextMemberId];
+        nextMemberId += 1;
         memberIdsGenerated += 1;
       }
 

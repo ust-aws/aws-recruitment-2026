@@ -82,6 +82,7 @@ export async function getApplicantEditableApplication(applicationId: string) {
     .select({
       applicationCode: applications.applicationCode,
       status: applications.status,
+      applicationType: applications.applicationType,
       archivedAt: applications.archivedAt,
       resultsReleasedAt: applications.resultsReleasedAt,
       finalPositionId: applications.finalPositionId,
@@ -134,7 +135,14 @@ export async function getApplicantEditableApplication(applicationId: string) {
       ),
     );
 
-  const eligibility = await resolveApplicantEditEligibility(application, choices);
+  const eligibility =
+    application.applicationType === "member"
+      ? {
+          canEdit: false,
+          editDeadline: null,
+          lockReason: "Member-only applications cannot be edited.",
+        }
+      : await resolveApplicantEditEligibility(application, choices);
   const sortedChoices = [...choices].sort(
     (a, b) => a.preferenceRank - b.preferenceRank,
   );
@@ -144,6 +152,9 @@ export async function getApplicantEditableApplication(applicationId: string) {
 
   return {
     applicationCode: application.applicationCode,
+    status: application.status,
+    applicationType: application.applicationType,
+    memberId: application.memberId,
     firstName: application.firstName,
     lastName: application.lastName,
     email: application.email,
@@ -197,6 +208,7 @@ export async function updateApplicantApplication(
   const [applicationPreview] = await db
     .select({
       status: applications.status,
+      applicationType: applications.applicationType,
       archivedAt: applications.archivedAt,
       resultsReleasedAt: applications.resultsReleasedAt,
     })
@@ -208,6 +220,13 @@ export async function updateApplicantApplication(
     throw new ApplicantEditError(
       "application_not_found",
       "Application not found.",
+    );
+  }
+
+  if (applicationPreview.applicationType !== "position") {
+    throw new ApplicantEditError(
+      "application_locked",
+      "Member-only applications cannot be edited.",
     );
   }
 
@@ -238,6 +257,7 @@ export async function updateApplicantApplication(
       const [application] = await tx
         .select({
           status: applications.status,
+          applicationType: applications.applicationType,
           archivedAt: applications.archivedAt,
           resultsReleasedAt: applications.resultsReleasedAt,
           portfolioUrl: applications.portfolioUrl,
@@ -254,6 +274,13 @@ export async function updateApplicantApplication(
         throw new ApplicantEditError(
           "application_not_found",
           "Application not found.",
+        );
+      }
+
+      if (application.applicationType !== "position") {
+        throw new ApplicantEditError(
+          "application_locked",
+          "Member-only applications cannot be edited.",
         );
       }
 

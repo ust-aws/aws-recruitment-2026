@@ -20,6 +20,7 @@ export type ApplicationDecisionErrorCode =
   | "choice_not_found"
   | "invalid_final_placement"
   | "review_locked"
+  | "member_application"
   | "choices_incomplete";
 
 export class ApplicationDecisionError extends Error {
@@ -41,6 +42,7 @@ export async function updateApplicationDecision(
     const [application] = await tx
       .select({
         finalPositionId: applications.finalPositionId,
+        applicationType: applications.applicationType,
         resultsReleasedAt: applications.resultsReleasedAt,
         archivedAt: applications.archivedAt,
       })
@@ -53,6 +55,12 @@ export async function updateApplicationDecision(
       throw new ApplicationDecisionError(
         "application_not_found",
         "Application not found.",
+      );
+    }
+    if (application.applicationType === "member") {
+      throw new ApplicationDecisionError(
+        "member_application",
+        "Member-only applications do not need committee decisions.",
       );
     }
     if (application.resultsReleasedAt || application.archivedAt) {

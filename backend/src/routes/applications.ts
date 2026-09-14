@@ -25,6 +25,7 @@ import { freePlanEndDate } from "../lib/free-plan";
 import {
   listEmailNotificationsByApplicationId,
   sendApplicationSubmitted,
+  sendMemberRegistration,
   sendOfficerApplicationNotice,
 } from "../lib/email/service";
 import { InterviewScheduleError } from "../lib/interview-scheduling";
@@ -96,7 +97,10 @@ applicationsRoutes.get("/", requireAuth, async (c) => {
   if (query.length > 200) {
     return c.json({ error: "query must be at most 200 characters." }, 400);
   }
-  if (status && !["pending", "approved", "rejected"].includes(status)) {
+  if (
+    status &&
+    !["pending", "approved", "rejected"].includes(status)
+  ) {
     return c.json(
       { error: "status must be pending, approved, or rejected." },
       400,
@@ -124,7 +128,9 @@ applicationsRoutes.get("/", requireAuth, async (c) => {
     position: position || undefined,
     section: section || undefined,
     query: query || undefined,
-    status: status ? (status as "pending" | "approved" | "rejected") : undefined,
+    status: status
+      ? (status as "pending" | "approved" | "rejected")
+      : undefined,
     archive: archive as "active" | "archived" | "all",
     page,
     pageSize,
@@ -144,33 +150,41 @@ applicationsRoutes.post("/", async (c) => {
     return c.json({ error: parsed.error }, 400);
   }
 
-  const positionIds = parsed.value.choices.map((choice) => choice.positionId);
-  const known = await positionsExist(positionIds);
-  if (!known) {
-    return c.json({ error: "One or more positions do not exist." }, 400);
-  }
+  if (parsed.value.applicationType === "position") {
+    const positionIds = parsed.value.choices.map((choice) => choice.positionId);
+    const known = await positionsExist(positionIds);
+    if (!known) {
+      return c.json({ error: "One or more positions do not exist." }, 400);
+    }
 
-  const choiceRefs = await choiceRefsForPositions(positionIds);
-  const urlError = validateChoiceUrls(
-    choiceRefs,
-    parsed.value.portfolioUrl,
-    parsed.value.githubUrl,
-  );
-  if (urlError) {
-    return c.json({ error: urlError }, 400);
+    const choiceRefs = await choiceRefsForPositions(positionIds);
+    const urlError = validateChoiceUrls(
+      choiceRefs,
+      parsed.value.portfolioUrl,
+      parsed.value.githubUrl,
+    );
+    if (urlError) {
+      return c.json({ error: urlError }, 400);
+    }
   }
 
   try {
     const result = await createApplication(parsed.value);
     if (result.created) {
-      await Promise.all([
-        sendApplicationSubmitted(result.application).catch((err) => {
-          logApiError(c, err, "submission email failed");
-        }),
-        sendOfficerApplicationNotice(result.application).catch((err) => {
-          logApiError(c, err, "officer application notice failed");
-        }),
-      ]);
+      if (result.application.applicationType === "member") {
+        await sendMemberRegistration(result.application).catch((err) => {
+          logApiError(c, err, "membership registration email failed");
+        });
+      } else {
+        await Promise.all([
+          sendApplicationSubmitted(result.application).catch((err) => {
+            logApiError(c, err, "submission email failed");
+          }),
+          sendOfficerApplicationNotice(result.application).catch((err) => {
+            logApiError(c, err, "officer application notice failed");
+          }),
+        ]);
+      }
     }
     return c.json(result.application, result.created ? 201 : 200);
   } catch (error) {

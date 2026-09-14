@@ -9,6 +9,7 @@ export type EmailMessageType =
   | "officer_first_choice_joined"
   | "officer_interview_rescheduled"
   | "applicant_dev_exam"
+  | "member_registration"
   | "result_accepted"
   | "result_rejected";
 

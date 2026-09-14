@@ -12,6 +12,7 @@ import {
   applicantInterviewReminderSubject,
   applicationSubmittedSubject,
   officerApplicationNoticeSubject,
+  memberRegistrationSubject,
   resultAcceptedSubject,
   resultRejectedSubject,
 } from "./subjects";
@@ -370,6 +371,38 @@ The AWS Builders - UST Executive Board`;
   };
 }
 
+export function memberRegistrationTemplate(input: {
+  lastName: string;
+  applicationCode: string;
+}): RenderedEmail {
+  const statusUrl = `${appBaseUrl()}/apply/status`;
+  const honorific = `Mx. ${input.lastName}`;
+  const text = `Greetings from the Clouds!\n\nGood day, ${honorific},\n\nThank you for registering to join AWS Builders - UST as a member. Your membership registration has been accepted and does not require an interview.\n\nApplication ID: ${input.applicationCode}\n\nMembership payment will open after R101. Please wait for the official payment instructions and do not send a payment yet.\n\nView your application: ${statusUrl}\n\nYours in Thomasian Leadership,\nThe AWS Builders - UST Executive Board`;
+
+  const html = wrapBrandedHtml({
+    eyebrow: "AWS BUILDERS – UST",
+    bannerTitle: "MEMBERSHIP REGISTRATION",
+    bannerSub: input.applicationCode,
+    heading: "Registration Accepted",
+    headerImageUrl: `cid:${APPLICATION_RECEIVED_HEADER_CID}`,
+    headerImageAlt: "AWS Builders - UST — It's Always Day One",
+    inner: `<p style="margin:0 0 8px;font-weight:bold;">Greetings from the Clouds!</p>
+<p style="margin:0 0 20px;font-weight:bold;">Good day, ${escapeHtml(honorific)},</p>
+<p style="margin:0 0 16px;">Thank you for registering to join AWS Builders - UST as a member. Your membership registration has been accepted and does not require an interview.</p>
+<p style="margin:0 0 16px;"><strong>Application ID:</strong> ${escapeHtml(input.applicationCode)}</p>
+<p style="margin:0 0 16px;">Membership payment will open after <strong>R101</strong>. Please wait for the official payment instructions and <strong>do not send a payment yet</strong>.</p>
+${ctaButton(statusUrl, "View your application")}
+<p style="margin:24px 0 0;">Yours in Thomasian Leadership,</p>
+<p style="margin:4px 0 28px;font-weight:bold;">The AWS Builders - UST Executive Board</p>`,
+  });
+
+  return {
+    subject: memberRegistrationSubject(input.applicationCode),
+    text,
+    html,
+    inline: [brandedEmailHeaderInline()],
+  };
+}
 export function resultAcceptedTemplate(input: {
   lastName: string;
   position: string;

@@ -43,6 +43,7 @@ import type { ApplicantGender } from "./applicant-gender";
 export type { DocumentType } from "./documents";
 
 export type ApplicationStatus = "pending" | "approved" | "rejected";
+export type ApplicationType = "position" | "member";
 export type ApplicationChoiceJson = {
   preferenceRank: 1 | 2;
   positionId: string;
@@ -63,6 +64,8 @@ export type ApplicationJson = {
   id: string;
   applicationCode: string;
   status: ApplicationStatus;
+  applicationType: ApplicationType;
+  memberId: string | null;
   submittedAt: string;
   archivedAt: string | null;
   firstName: string;
@@ -99,10 +102,11 @@ export type CreateApplicationInput = {
   contactNumber: string;
   facebookUrl: string;
   motivation: string;
+  applicationType: ApplicationType;
   dataPrivacyAgreed: true;
   portfolioUrl?: string;
   githubUrl?: string;
-  slotId: string;
+  slotId?: string;
   choices: { positionId: string; preferenceRank: 1 | 2 }[];
   uploadSessionId: string;
 };
@@ -164,6 +168,8 @@ type ApplicationRow = {
   id: string;
   applicationCode: string;
   status: ApplicationStatus;
+  applicationType: ApplicationType;
+  memberId: string | null;
   submittedAt: Date;
   archivedAt: Date | null;
   firstName: string;
@@ -270,6 +276,8 @@ async function attachRelations(
       id: row.id,
       applicationCode: row.applicationCode,
       status: row.status,
+      applicationType: row.applicationType,
+      memberId: row.memberId,
       submittedAt: iso(row.submittedAt),
       archivedAt: row.archivedAt ? iso(row.archivedAt) : null,
       firstName: row.firstName,
@@ -302,6 +310,8 @@ const applicationSelect = {
   id: applications.id,
   applicationCode: applications.applicationCode,
   status: applications.status,
+  applicationType: applications.applicationType,
+  memberId: applications.memberId,
   submittedAt: applications.submittedAt,
   archivedAt: applications.archivedAt,
   firstName: applicants.firstName,
@@ -613,7 +623,8 @@ export async function createApplication(
                 applicantId,
                 applicationCode: generateApplicationCode(),
                 recruitmentYear,
-                status: "pending",
+                status: input.applicationType === "member" ? "approved" : "pending",
+                applicationType: input.applicationType,
                 motivation: input.motivation,
                 dataPrivacyAgreedAt: new Date(),
                 portfolioUrl: input.portfolioUrl?.trim() || null,
@@ -629,13 +640,15 @@ export async function createApplication(
         throw new Error("Could not generate a unique application code");
       })();
 
-      await tx.insert(applicationChoices).values(
-        input.choices.map((choice) => ({
-          applicationId: application.id,
-          positionId: choice.positionId,
-          preferenceRank: choice.preferenceRank,
-        })),
-      );
+      if (input.applicationType === "position") {
+        await tx.insert(applicationChoices).values(
+          input.choices.map((choice) => ({
+            applicationId: application.id,
+            positionId: choice.positionId,
+            preferenceRank: choice.preferenceRank,
+          })),
+        );
+      }
 
       await tx.insert(applicationDocuments).values(
         documents.map((doc) => ({
@@ -648,16 +661,20 @@ export async function createApplication(
         })),
       );
 
-      const firstChoice = input.choices.find((choice) => choice.preferenceRank === 1);
-      if (!firstChoice) {
-        throw new Error("Application is missing a first-choice position.");
+      if (input.applicationType === "position") {
+        const firstChoice = input.choices.find(
+          (choice) => choice.preferenceRank === 1,
+        );
+        if (!firstChoice || !input.slotId) {
+          throw new Error("Application is missing a first-choice position or interview slot.");
+        }
+        await bookInterviewSlotForApplication(
+          tx,
+          application.id,
+          firstChoice.positionId,
+          input.slotId,
+        );
       }
-      await bookInterviewSlotForApplication(
-        tx,
-        application.id,
-        firstChoice.positionId,
-        input.slotId,
-      );
 
       await tx
         .update(uploadSessions)

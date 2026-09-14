@@ -20,6 +20,10 @@ export const applicationStatus = pgEnum("application_status", [
   "approved",
   "rejected",
 ]);
+export const applicationType = pgEnum("application_type", [
+  "position",
+  "member",
+]);
 export const applicationChoiceStatus = pgEnum("application_choice_status", [
   "pending",
   "approved",
@@ -46,6 +50,7 @@ export const emailMessageType = pgEnum("email_message_type", [
   "officer_first_choice_joined",
   "officer_interview_rescheduled",
   "applicant_dev_exam",
+  "member_registration",
   "result_accepted",
   "result_rejected",
 ]);
@@ -165,6 +170,9 @@ export const applications = pgTable(
       .notNull()
       .references(() => applicants.id, { onDelete: "cascade" }),
     status: applicationStatus().notNull().default("pending"),
+    applicationType: applicationType("application_type")
+      .notNull()
+      .default("position"),
     // Apply-form "Why do you want to join AWS Builders - UST?" — on the application, not the applicant.
     // default("") is for drizzle-kit push against existing rows; seed and POST always send a real answer.
     motivation: text().notNull().default(""),
@@ -228,6 +236,7 @@ export const applications = pgTable(
     unique().on(t.applicantId, t.recruitmentYear),
     index("idx_applications_applicant").on(t.applicantId),
     index("idx_applications_status").on(t.status),
+    index("idx_applications_type").on(t.applicationType),
     index("idx_applications_recruitment_year").on(t.recruitmentYear),
     index("idx_applications_final_position").on(t.finalPositionId),
     index("idx_applications_results_released_at").on(t.resultsReleasedAt),

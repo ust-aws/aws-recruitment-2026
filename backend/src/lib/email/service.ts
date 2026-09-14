@@ -27,6 +27,7 @@ import {
   applicationSubmittedTemplate,
   interviewReminderTemplate,
   officerApplicationNoticeTemplate,
+  memberRegistrationTemplate,
   resultAcceptedTemplate,
   resultRejectedTemplate,
 } from "./templates";
@@ -333,6 +334,20 @@ export async function sendApplicationSubmitted(
   });
 }
 
+export async function sendMemberRegistration(
+  application: ApplicationJson,
+): Promise<void> {
+  const rendered = memberRegistrationTemplate({
+    lastName: application.lastName,
+    applicationCode: application.applicationCode,
+  });
+  await deliverEmail({
+    applicationId: application.id,
+    messageType: "member_registration",
+    recipient: application.email,
+    rendered,
+  });
+}
 export async function sendInterviewReminder(input: {
   applicationId: string;
   applicationCode: string;

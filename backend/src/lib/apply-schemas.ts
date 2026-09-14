@@ -53,6 +53,7 @@ const optionalUrl = z
 
 export const createApplicationSchema = z
   .object({
+    applicationType: z.enum(["position", "member"]).default("position"),
     dataPrivacyAgreed: z.literal(true, {
       error: "dataPrivacyAgreed must be true before submitting.",
     }),
@@ -128,19 +129,40 @@ export const createApplicationSchema = z
         ),
         { error: "choices must contain exactly two items." },
       )
-      .length(2, { error: "choices must contain exactly two items." }),
+      .max(2, { error: "choices must contain at most two items." }),
     uploadSessionId: z
       .string({ error: "uploadSessionId must be a valid UUID." })
       .trim()
       .refine((value) => UUID_RE.test(value), {
         error: "uploadSessionId must be a valid UUID.",
       }),
-    slotId: z
-      .string({ error: "slotId must be a UUID." })
-      .trim()
-      .refine((value) => UUID_RE.test(value), { error: "slotId must be a UUID." }),
+    slotId: z.string({ error: "slotId must be a UUID." }).trim().optional(),
   }, { error: "Request body must be a JSON object." })
   .superRefine((value, ctx) => {
+    if (value.applicationType === "member") {
+      if (value.choices.length > 0 || value.slotId !== undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Member-only applications cannot include committee choices or an interview slot.",
+        });
+      }
+      if (value.portfolioUrl || value.githubUrl) {
+        ctx.addIssue({
+          code: "custom",
+          message: "Member-only applications cannot include committee links.",
+        });
+      }
+      return;
+    }
+
+    if (value.choices.length !== 2) {
+      ctx.addIssue({
+        code: "custom",
+        message: "choices must contain exactly two items.",
+        path: ["choices"],
+      });
+      return;
+    }
     const ranks = new Set(value.choices.map((choice) => choice.preferenceRank));
     if (ranks.size !== 2) {
       ctx.addIssue({ code: "custom", message: "choices must include ranks 1 and 2.", path: ["choices"] });
@@ -148,8 +170,10 @@ export const createApplicationSchema = z
     if (value.choices[0]?.positionId === value.choices[1]?.positionId) {
       ctx.addIssue({ code: "custom", message: "choices must use two different positions.", path: ["choices"] });
     }
-  })
-  .transform(({ portfolioUrl, githubUrl, ...value }): CreateApplicationInput => ({
+    if (!value.slotId || !UUID_RE.test(value.slotId)) {
+      ctx.addIssue({ code: "custom", message: "slotId must be a UUID.", path: ["slotId"] });
+    }
+  })  .transform(({ portfolioUrl, githubUrl, ...value }): CreateApplicationInput => ({
     ...value,
     ...(portfolioUrl ? { portfolioUrl } : {}),
     ...(githubUrl ? { githubUrl } : {}),
