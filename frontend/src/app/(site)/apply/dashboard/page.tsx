@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation"
 import { ApplicantDashboard } from "@/components/apply/applicant-dashboard"
-import { SectionHeader } from "@/components/section-header"
-import { getApplicantServerSession } from "@/lib/applicant-session-server"
-import { applyFlowShellClasses } from "@/lib/surface"
+import { SectionHeader } from "@/components/shared/section-header"
+import { getApplicantServerSession } from "@/lib/auth/applicant-session-server"
+import { applyFlowShellClasses } from "@/lib/site/surface"
 
 export default async function ApplicantDashboardPage() {
   const session = await getApplicantServerSession()

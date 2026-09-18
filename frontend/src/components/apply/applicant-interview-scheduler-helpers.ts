@@ -1,11 +1,11 @@
 import type { SlotGridCell } from "@/components/interview/slot-grid"
-import type { ApplicantInterviewSchedule } from "@/lib/applicant-api"
+import type { ApplicantInterviewSchedule } from "@/lib/api/applicant"
 import {
   clampWeekStart,
   slotKeyFromIso,
   startOfWeek,
   type InterviewSeasonBounds,
-} from "@/lib/interview-season"
+} from "@/lib/season/interview"
 
 export function buildApplicantCells(
   schedule: ApplicantInterviewSchedule,

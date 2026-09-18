@@ -3,14 +3,14 @@
 import { useCallback, useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { ApplicantDashboardContent } from "@/components/apply/applicant-dashboard-content"
-import { ApiError } from "@/lib/api-client"
+import { ApiError } from "@/lib/api/client"
 import {
   getApplicantApplication,
   updateApplicantChoices,
   type ApplicantApplication,
-} from "@/lib/applicant-api"
+} from "@/lib/api/applicant"
 import { ApplicantDashboardSkeleton } from "@/components/apply/applicant-dashboard-skeleton"
-import { glassPanelClasses } from "@/lib/surface"
+import { glassPanelClasses } from "@/lib/site/surface"
 
 const panelClasses = `${glassPanelClasses} min-w-0 w-full max-w-full overflow-x-clip px-4 py-8 md:px-10`
 const missingClasses = "mt-8 font-sans text-sm text-prelude"

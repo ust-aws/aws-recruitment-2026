@@ -1,5 +1,5 @@
-import { getApplicationDocument } from "../applications";
-import { fetchObjectBytes } from "../documents";
+import { getApplicationDocument } from "../applications/applications";
+import { fetchObjectBytes } from "../applications/documents";
 import type { EmailFileAttachment } from "./types";
 
 export async function loadOfficerApplicantAttachments(

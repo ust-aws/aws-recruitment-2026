@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect } from "react"
-import { EspiErrorPage } from "@/components/espi-error-page"
+import { EspiErrorPage } from "@/components/site/espi-error-page"
 
 export default function ErrorPage({
   error,

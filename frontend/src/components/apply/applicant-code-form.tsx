@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import { Button } from "@/components/ui/button"
 import {
   InputOTP,
@@ -12,13 +12,13 @@ import {
   requestApplicantCode,
   verifyApplicantCode,
   type ApplicantIdentity,
-} from "@/lib/applicant-auth-api"
+} from "@/lib/api/applicant-auth"
 import { APPLICANT_OTP_RESEND_SECONDS } from "@/lib/constants"
 import {
   glassPanelClasses,
   ghostPillButtonClasses,
-} from "@/lib/surface"
-import { useOtpResendCooldown } from "@/lib/use-otp-resend-cooldown"
+} from "@/lib/site/surface"
+import { useOtpResendCooldown } from "@/hooks/use-otp-resend-cooldown"
 
 const panelClasses = `mx-auto mt-10 w-full max-w-xl ${glassPanelClasses} px-6 py-8 md:px-10`
 const formClasses = "flex flex-col gap-5"

@@ -29,7 +29,7 @@ import {
 } from "@/components/apply/apply-form-draft-files"
 import { applyMappedServerError } from "@/components/apply/apply-form-server-field"
 import { Button } from "@/components/ui/button"
-import { SectionHeader } from "@/components/section-header"
+import { SectionHeader } from "@/components/shared/section-header"
 import { listOpenPositions } from "@/lib/api"
 import { submitApplyForm } from "@/components/apply/apply-form-submit"
 import { ApplyFormSteps } from "@/components/apply/apply-form-steps"
@@ -38,7 +38,7 @@ import {
   applyFlowShellClasses,
   glassPanelClasses,
   ghostPillButtonClasses,
-} from "@/lib/surface"
+} from "@/lib/site/surface"
 import { cn } from "@/lib/utils"
 
 type FormStep = 1 | 2 | 3 | 4 | 5 | 6

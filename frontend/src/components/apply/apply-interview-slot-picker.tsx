@@ -4,13 +4,13 @@ import { useEffect, useEffectEvent, useMemo, useState } from "react"
 import { SlotGrid, type SlotGridCell } from "@/components/interview/slot-grid"
 import { InterviewWeekNav } from "@/components/interview/week-nav"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import { useInterviewWindow } from "@/hooks/use-interview-window"
-import { listPositionInterviewSlots } from "@/lib/api-client"
+import { listPositionInterviewSlots } from "@/lib/api/client"
 import {
   formatInterviewSlotLabel,
   formatSeasonBoundsRange,
-} from "@/lib/display-datetime"
+} from "@/lib/datetime/display"
 import {
   addDays,
   canGoNextWeek,
@@ -20,7 +20,7 @@ import {
   slotKeyFromIso,
   startOfWeek,
   weekDaysInSeason,
-} from "@/lib/interview-season"
+} from "@/lib/season/interview"
 
 const hintClasses = "font-sans text-sm text-prelude"
 const committeeClasses = "mt-1 font-mono text-xs text-aquamarine"

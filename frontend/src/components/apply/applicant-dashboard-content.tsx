@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic"
 import { ApplicantChoiceCards } from "@/components/apply/applicant-choice-cards"
-import { LazyWhenVisible } from "@/components/lazy-when-visible"
+import { LazyWhenVisible } from "@/components/shared/lazy-when-visible"
 
 const ApplicantInterviewScheduler = dynamic(() =>
   import("@/components/apply/applicant-interview-scheduler").then(
@@ -14,7 +14,7 @@ import { ApplicantMembershipStatus } from "@/components/apply/applicant-membersh
 import { ApplicantChoiceEditor } from "@/components/apply/applicant-choice-editor"
 import { ApplicantEditBanner } from "@/components/apply/applicant-edit-banner"
 import { ApplicantDashboardProfile } from "@/components/apply/applicant-dashboard-profile"
-import type { ApplicantApplication } from "@/lib/applicant-api"
+import type { ApplicantApplication } from "@/lib/api/applicant"
 import { ApplicantDocumentEditor } from "@/components/apply/applicant-document-editor"
 
 const docsClasses = "mt-8 font-sans text-sm text-prelude"

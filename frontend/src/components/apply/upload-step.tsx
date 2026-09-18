@@ -4,9 +4,9 @@
 
 import { PdfFileDrop } from "@/components/apply/pdf-file-drop"
 
-import { documentUploadFileHint } from "@/lib/apply-field-validation"
+import { documentUploadFileHint } from "@/lib/apply/field-validation"
 
-import type { DocumentType } from "@/lib/application-types"
+import type { DocumentType } from "@/lib/types/application"
 import type { UploadValues } from "@/components/apply/apply-schema"
 
 

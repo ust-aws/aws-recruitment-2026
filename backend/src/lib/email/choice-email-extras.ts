@@ -1,10 +1,10 @@
-import type { ChoiceRef } from "../committee-apply";
+import type { ChoiceRef } from "../apply/committee";
 import {
   isCtoExecutiveAssistant,
   isDevelopmentCommittee,
   officerFirstChoiceShowsGithub,
   officerFirstChoiceShowsPortfolio,
-} from "../committee-apply";
+} from "../apply/committee";
 import { escapeHtmlForEmail } from "./template-kit";
 
 export function officerFirstChoiceLinkExtras(input: {

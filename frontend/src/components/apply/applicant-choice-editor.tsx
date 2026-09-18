@@ -1,16 +1,16 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import { Input } from "@/components/ui/input"
 import { CommitteeOfficePicker } from "@/components/apply/committee-office-picker"
 import { CommitteePickerSkeleton } from "@/components/apply/committee-picker-skeleton"
 import {
   GITHUB_PROFILE_URL_EXAMPLE,
   GOOGLE_DRIVE_URL_EXAMPLE,
-} from "@/lib/apply-field-validation"
-import type { ApplicantApplication } from "@/lib/applicant-api"
-import { fieldControlClasses } from "@/lib/surface"
+} from "@/lib/apply/field-validation"
+import type { ApplicantApplication } from "@/lib/api/applicant"
+import { fieldControlClasses } from "@/lib/site/surface"
 import { useApplicantChoiceEditorState } from "@/components/apply/applicant-choice-editor-state"
 
 const stackClasses = "mt-6 flex flex-col gap-4"

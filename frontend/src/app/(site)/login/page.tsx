@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { getServerSession } from "@/lib/session-server"
+import { getServerSession } from "@/lib/auth/session-server"
 import { LoginForm } from "./login-form"
 
 export default async function LoginPage({

@@ -1,15 +1,15 @@
 "use client"
 
 import Link from "next/link"
-import { SectionHeader } from "@/components/section-header"
+import { SectionHeader } from "@/components/shared/section-header"
 import { Button } from "@/components/ui/button"
-import { recruitmentClosedMessage } from "@/lib/recruitment-season"
-import type { RecruitmentWindow } from "@/lib/api-client"
+import { recruitmentClosedMessage } from "@/lib/season/recruitment"
+import type { RecruitmentWindow } from "@/lib/api/client"
 import {
   applyFlowShellClasses,
   glassPanelClasses,
   ghostPillButtonClasses,
-} from "@/lib/surface"
+} from "@/lib/site/surface"
 
 const panelClasses = `mx-auto w-full min-w-0 max-w-2xl ${glassPanelClasses} px-6 py-10 md:px-10`
 const copyClasses = "font-sans text-base leading-relaxed text-prelude"

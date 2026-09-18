@@ -1,5 +1,5 @@
 import { Skeleton } from "@/components/ui/skeleton"
-import { glassPanelClasses } from "@/lib/surface"
+import { glassPanelClasses } from "@/lib/site/surface"
 
 const panelClasses = `${glassPanelClasses} min-w-0 w-full max-w-full overflow-x-clip px-4 py-8 md:px-10`
 const metaRowClasses = "mt-6 flex flex-wrap gap-x-8 gap-y-3"

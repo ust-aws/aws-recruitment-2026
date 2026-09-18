@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { EventsSection } from "@/components/events-section"
+import { EventsSection } from "@/components/events/events-section"
 
 export const metadata: Metadata = {
   title: "Events – AWS Builders – UST",

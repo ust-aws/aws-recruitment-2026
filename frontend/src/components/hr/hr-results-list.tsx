@@ -2,7 +2,7 @@ import Link from "next/link"
 import type {
   ResultClassification,
   ResultPreviewApplication,
-} from "@/lib/api-client"
+} from "@/lib/api/client"
 import { cn } from "@/lib/utils"
 
 const listClasses = "flex flex-col gap-3"

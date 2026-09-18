@@ -2,8 +2,8 @@
 
 import { useEffect, useRef, useState } from "react"
 import { usePathname } from "next/navigation"
-import { ActionFeedback } from "@/components/action-feedback"
-import { SectionHeader } from "@/components/section-header"
+import { ActionFeedback } from "@/components/shared/action-feedback"
+import { SectionHeader } from "@/components/shared/section-header"
 import {
   ApplicationFilters,
   type HrFilters,
@@ -21,10 +21,10 @@ import {
   hrPageFromListSearch,
   mergeHrFilters,
   type HrListSearchParamsInput,
-} from "@/lib/hr-filters-search-params"
-import { pageShellClasses } from "@/lib/surface"
+} from "@/lib/hr/filters-search-params"
+import { pageShellClasses } from "@/lib/site/surface"
 import { cn } from "@/lib/utils"
-import type { HrApplication } from "@/lib/hr-application-types"
+import type { HrApplication } from "@/lib/types/hr-application"
 
 const toolbarClasses =
   "mt-8 flex flex-col gap-3 xl:flex-row xl:items-center"

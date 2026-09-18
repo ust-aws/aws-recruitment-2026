@@ -11,10 +11,10 @@ import {
   isValidGoogleDriveUrl,
   isValidSection,
   isValidStudentNumber,
-} from "@/lib/apply-field-validation"
-import { isApplicantGender } from "@/lib/applicant-gender"
-import { needsCreativesPortfolio, needsDevelopmentGithub } from "@/lib/committee-apply"
-import { isValidBirthdayYmd } from "@/lib/date-local"
+} from "@/lib/apply/field-validation"
+import { isApplicantGender } from "@/lib/apply/applicant-gender"
+import { needsCreativesPortfolio, needsDevelopmentGithub } from "@/lib/apply/committee"
+import { isValidBirthdayYmd } from "@/lib/datetime/date-local"
 
 const FILE_ERROR = "Please attach your Curriculum Vitae and Registration Form."
 const PDF_ERROR = "Please attach both files as PDFs (.pdf), then try again."

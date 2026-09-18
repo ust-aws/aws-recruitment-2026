@@ -1,8 +1,8 @@
 import { formatAppliedDate } from "@/lib/api"
-import type { HrApplication } from "@/lib/hr-application-types"
-import { formatApplicantGender } from "@/lib/applicant-gender"
-import { formatDateDisplay } from "@/lib/date-local"
-import { safeExternalHref } from "@/lib/safe-external-href"
+import type { HrApplication } from "@/lib/types/hr-application"
+import { formatApplicantGender } from "@/lib/apply/applicant-gender"
+import { formatDateDisplay } from "@/lib/datetime/date-local"
+import { safeExternalHref } from "@/lib/site/safe-external-href"
 
 const metaGridClasses =
   "grid min-w-0 grid-cols-1 gap-3 font-sans text-sm text-blue-chalk sm:grid-cols-2 sm:gap-x-8 sm:gap-y-3"

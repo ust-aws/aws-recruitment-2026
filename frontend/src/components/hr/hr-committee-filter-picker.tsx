@@ -13,8 +13,8 @@ import {
 import {
   officeForCommittee,
   type CommitteeOfficeGroup,
-} from "@/lib/committee-groups"
-import { fieldControlClasses } from "@/lib/surface"
+} from "@/lib/apply/committee-groups"
+import { fieldControlClasses } from "@/lib/site/surface"
 import { cn } from "@/lib/utils"
 
 const triggerClasses = cn(

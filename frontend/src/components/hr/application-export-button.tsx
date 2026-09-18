@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button"
 import {
   listAllApplications,
   type ApplicationListParams,
-} from "@/lib/api-client"
-import { applicationsToCsv } from "@/lib/hr-applications-csv"
+} from "@/lib/api/client"
+import { applicationsToCsv } from "@/lib/hr/applications-csv"
 
 const exportButtonClasses = "h-10 gap-2 px-5 font-mono text-xs"
 

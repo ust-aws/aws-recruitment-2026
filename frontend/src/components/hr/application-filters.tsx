@@ -10,14 +10,14 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { HrCommitteeFilterPicker } from "@/components/hr/hr-committee-filter-picker"
-import { groupedCommitteesForPicker } from "@/lib/committee-groups"
-import { fieldControlClasses } from "@/lib/surface"
+import { groupedCommitteesForPicker } from "@/lib/apply/committee-groups"
+import { fieldControlClasses } from "@/lib/site/surface"
 import { useOpenPositions } from "@/lib/api"
 import { cn } from "@/lib/utils"
 import type {
   ApplicationStatus,
   ApplicationType,
-} from "@/lib/application-types"
+} from "@/lib/types/application"
 
 const rowClasses =
   "flex flex-col gap-3 md:flex-row md:flex-wrap md:items-center xl:flex-nowrap"

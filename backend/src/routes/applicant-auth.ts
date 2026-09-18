@@ -9,13 +9,13 @@ import {
   requireApplicantAuth,
   signApplicantToken,
 } from "../applicant-auth";
-import { unavailableApiError } from "../lib/api-errors";
+import { unavailableApiError } from "../lib/core/api-errors";
 import {
   OTP_RESEND_SECONDS,
   OTP_REQUEST_WINDOW_SECONDS,
   issueApplicantOtp,
   verifyApplicantOtp,
-} from "../lib/applicant-otp";
+} from "../lib/applicant/otp";
 
 export const applicantAuthRoutes = new Hono();
 

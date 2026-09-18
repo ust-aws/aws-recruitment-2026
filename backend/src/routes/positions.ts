@@ -6,13 +6,13 @@ import { authenticateHrRequest, requireAuth } from "../auth";
 import {
   InterviewScheduleError,
   listOpenInterviewSlotsForPosition,
-} from "../lib/interview-scheduling";
+} from "../lib/interview/scheduling";
 import {
   positionCreateSchema,
   positionPatchSchema,
   zodErrorMessage,
-} from "../lib/hr-schemas";
-import { logHrAudit } from "../lib/hr-audit";
+} from "../lib/hr/schemas";
+import { logHrAudit } from "../lib/hr/audit";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

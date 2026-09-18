@@ -6,7 +6,7 @@ import { useParams, useSearchParams } from "next/navigation"
 import { HrApplicationDetailContent } from "@/components/hr/hr-application-detail-content"
 import { HrApplicationDetailSkeleton } from "@/components/hr/application-detail-skeleton"
 import { useApplication } from "@/lib/api"
-import { pageShellClasses } from "@/lib/surface"
+import { pageShellClasses } from "@/lib/site/surface"
 
 const backClasses =
   "mb-3 mt-3 inline-flex font-mono text-xs text-prelude hover:text-blue-chalk"

@@ -3,8 +3,8 @@
 import { ApplyForm } from "@/components/apply/apply-form"
 import { ApplySeasonClosed } from "@/components/apply/apply-season-closed"
 import { useRecruitmentWindow } from "@/hooks/use-recruitment-window"
-import { applyFlowShellClasses, glassPanelClasses } from "@/lib/surface"
-import { SectionHeader } from "@/components/section-header"
+import { applyFlowShellClasses, glassPanelClasses } from "@/lib/site/surface"
+import { SectionHeader } from "@/components/shared/section-header"
 
 const loadingPanelClasses = `mx-auto w-full min-w-0 max-w-2xl ${glassPanelClasses} px-6 py-10 font-sans text-sm text-prelude md:px-10`
 

@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { getCookie } from "hono/cookie";
 import { sign, verify } from "hono/jwt";
 import type { Context, MiddlewareHandler } from "hono";
-import { usesSecureCookies } from "./lib/secure-cookie";
+import { usesSecureCookies } from "./lib/auth/secure-cookie";
 
 export const APPLICANT_AUTH_COOKIE_NAME = "applicant_token";
 export const APPLICANT_SESSION_SECONDS = 60 * 60;

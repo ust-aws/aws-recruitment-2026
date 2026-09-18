@@ -1,4 +1,4 @@
-import type { ApplicantChoice } from "@/lib/applicant-api"
+import type { ApplicantChoice } from "@/lib/api/applicant"
 
 const choicesClasses = "grid min-w-0 gap-4 md:grid-cols-2"
 const choiceCardClasses = "min-w-0 rounded-[22px] bg-haiti/70 px-5 py-5"

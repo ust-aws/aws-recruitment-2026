@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
-import { getServerSession } from "@/lib/session-server"
+import { getServerSession } from "@/lib/auth/session-server"
 
 const API_BASE = process.env.API_URL ?? "http://localhost:8787"
 const AUTH_COOKIE_NAME = "hr_token"

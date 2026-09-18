@@ -3,7 +3,7 @@ import {
   getApplicantSession,
   requireApplicantAuth,
 } from "../applicant-auth";
-import { unavailableApiError } from "../lib/api-errors";
+import { unavailableApiError } from "../lib/core/api-errors";
 import { fireInterviewRescheduleNotification } from "../lib/email/service";
 import {
   INTERVIEW_CALENDAR_FILENAME,
@@ -14,7 +14,7 @@ import {
   getApplicantInterviewSchedule,
   getBookedInterviewBooking,
   InterviewScheduleError,
-} from "../lib/interview-scheduling";
+} from "../lib/interview/scheduling";
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

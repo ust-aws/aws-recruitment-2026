@@ -2,14 +2,14 @@ import { useMemo, useState } from "react"
 import {
   isValidGithubUrl,
   isValidGoogleDriveUrl,
-} from "@/lib/apply-field-validation"
+} from "@/lib/apply/field-validation"
 import {
   needsCreativesPortfolio,
   needsDevelopmentGithub,
-} from "@/lib/committee-apply"
+} from "@/lib/apply/committee"
 import { useOpenPositions } from "@/lib/api"
-import type { ApplicantApplication } from "@/lib/applicant-api"
-import { groupedCommitteesForPicker } from "@/lib/committee-groups"
+import type { ApplicantApplication } from "@/lib/api/applicant"
+import { groupedCommitteesForPicker } from "@/lib/apply/committee-groups"
 
 type ChoicePair = { committee: string; positionId: string }
 

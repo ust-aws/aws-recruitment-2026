@@ -5,11 +5,11 @@ import { applicationDocuments, uploadSessions } from "../db/schema";
 import {
   createDocumentUpload,
   type UploadDocumentType,
-} from "../lib/documents";
-import { uploadPresignSchema } from "../lib/apply-schemas";
-import { uploadsAreClosed } from "../lib/free-plan";
-import { resolveRecruitmentSeasonStatus } from "../lib/recruitment-window";
-import { internalApiError } from "../lib/api-errors";
+} from "../lib/applications/documents";
+import { uploadPresignSchema } from "../lib/apply/schemas";
+import { uploadsAreClosed } from "../lib/core/free-plan";
+import { resolveRecruitmentSeasonStatus } from "../lib/recruitment/window";
+import { internalApiError } from "../lib/core/api-errors";
 
 const UPLOAD_EXPIRY_SECONDS = 10 * 60;
 const SESSION_EXPIRY_MS = 24 * 60 * 60 * 1000;

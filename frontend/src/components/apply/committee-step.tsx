@@ -1,14 +1,14 @@
 "use client"
 
 import { Textarea } from "@/components/ui/textarea"
-import { Field } from "@/components/field"
-import { groupedCommitteesForPicker } from "@/lib/committee-groups"
-import { fieldControlClasses } from "@/lib/surface"
+import { Field } from "@/components/shared/field"
+import { groupedCommitteesForPicker } from "@/lib/apply/committee-groups"
+import { fieldControlClasses } from "@/lib/site/surface"
 import { useOpenPositions } from "@/lib/api"
 import {
   needsCreativesPortfolio,
   needsDevelopmentGithub,
-} from "@/lib/committee-apply"
+} from "@/lib/apply/committee"
 import type { CommitteeValues } from "@/components/apply/apply-schema"
 import { CommitteeStepApplicationType } from "@/components/apply/committee-step-application-type"
 import {

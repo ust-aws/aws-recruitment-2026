@@ -1,13 +1,13 @@
-import { ActionFeedback } from "@/components/action-feedback"
+import { ActionFeedback } from "@/components/shared/action-feedback"
 import { SlotGrid, type SlotGridCell } from "@/components/interview/slot-grid"
 import { InterviewWeekNav } from "@/components/interview/week-nav"
 import { Button } from "@/components/ui/button"
-import type { ApplicantInterviewSchedule } from "@/lib/applicant-api"
+import type { ApplicantInterviewSchedule } from "@/lib/api/applicant"
 import {
   ApplicantInterviewSchedulerFullStatus,
   ApplicantInterviewSchedulerIntro,
 } from "@/components/apply/applicant-interview-scheduler-full-status"
-import type { InterviewSeasonBounds } from "@/lib/interview-season"
+import type { InterviewSeasonBounds } from "@/lib/season/interview"
 
 const sectionClasses = "mt-8 border-t border-biloba-flower/20 pt-8"
 const lockClasses =

@@ -9,17 +9,17 @@ import {
   documentFileNameMatches,
   documentUploadFileHint,
   isApplicationDocumentPdfWithinSizeLimit,
-} from "@/lib/apply-field-validation"
+} from "@/lib/apply/field-validation"
 import {
   createApplicantUploadSession,
   updateApplicantDocuments,
-} from "@/lib/applicant-api"
-import type { ApplicantApplication, ApplicantDocument } from "@/lib/applicant-api"
-import type { DocumentType } from "@/lib/application-types"
+} from "@/lib/api/applicant"
+import type { ApplicantApplication, ApplicantDocument } from "@/lib/api/applicant"
+import type { DocumentType } from "@/lib/types/application"
 import {
   documentUploadMetadata,
   uploadDocumentFiles,
-} from "@/lib/document-upload"
+} from "@/lib/apply/document-upload"
 
 const stackClasses = "mt-8 flex flex-col gap-5"
 const headingClasses = "font-sans text-sm font-semibold text-biloba-flower"

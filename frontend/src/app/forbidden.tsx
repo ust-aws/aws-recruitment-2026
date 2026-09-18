@@ -1,4 +1,4 @@
-import { EspiErrorPage } from "@/components/espi-error-page"
+import { EspiErrorPage } from "@/components/site/espi-error-page"
 
 export default function Forbidden() {
   return <EspiErrorPage code={403} />

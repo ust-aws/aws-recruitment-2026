@@ -3,15 +3,15 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ApplicantCodeForm } from "@/components/apply/applicant-code-form"
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { requestApplicantCode } from "@/lib/applicant-auth-api"
+import { requestApplicantCode } from "@/lib/api/applicant-auth"
 import { UST_EMAIL_DOMAIN } from "@/lib/constants"
 import {
   fieldControlClasses,
   glassPanelClasses,
-} from "@/lib/surface"
+} from "@/lib/site/surface"
 
 const panelClasses = `mx-auto mt-10 w-full max-w-xl ${glassPanelClasses} px-6 py-8 md:px-10`
 const formClasses = "flex flex-col gap-5"

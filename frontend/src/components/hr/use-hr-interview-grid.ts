@@ -8,8 +8,8 @@ import {
   useOpenPositions,
   type HrInterviewSlot,
 } from "@/lib/api"
-import { groupedCommitteesForPicker } from "@/lib/committee-groups"
-import type { InterviewSeasonBounds } from "@/lib/interview-season"
+import { groupedCommitteesForPicker } from "@/lib/apply/committee-groups"
+import type { InterviewSeasonBounds } from "@/lib/season/interview"
 import {
   clampWeekStart,
   formatWeekRange,
@@ -17,7 +17,7 @@ import {
   startOfWeek,
   weekDaysInSeason,
   weekQueryRange,
-} from "@/lib/interview-season"
+} from "@/lib/season/interview"
 
 import {
   buildHrInterviewGridCells,

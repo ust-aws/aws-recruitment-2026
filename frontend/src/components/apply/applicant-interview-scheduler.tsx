@@ -5,7 +5,7 @@ import {
   ApplicantInterviewSchedulerFull,
 } from "@/components/apply/applicant-interview-scheduler-ui"
 import { useApplicantInterviewScheduler } from "@/components/apply/use-applicant-interview-scheduler"
-import type { ApplicantInterviewSchedule } from "@/lib/applicant-api"
+import type { ApplicantInterviewSchedule } from "@/lib/api/applicant"
 
 type ApplicantInterviewSchedulerProps = {
   positionId?: string

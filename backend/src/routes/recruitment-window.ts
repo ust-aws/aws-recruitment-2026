@@ -4,12 +4,12 @@ import {
   getRecruitmentWindowPayload,
   RecruitmentWindowError,
   upsertRecruitmentWindow,
-} from "../lib/recruitment-window";
-import { logHrAudit } from "../lib/hr-audit";
+} from "../lib/recruitment/window";
+import { logHrAudit } from "../lib/hr/audit";
 import {
   recruitmentWindowPatchSchema,
   zodErrorMessage,
-} from "../lib/hr-schemas";
+} from "../lib/hr/schemas";
 
 export const recruitmentWindowRoutes = new Hono();
 

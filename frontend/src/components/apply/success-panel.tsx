@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { Check } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { needsDevExamSuccessCopy } from "@/lib/committee-apply"
+import { needsDevExamSuccessCopy } from "@/lib/apply/committee"
 
 const contentClasses =
   "flex flex-col items-center px-4 py-6 text-center md:px-8 md:py-8"

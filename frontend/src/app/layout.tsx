@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Poppins, JetBrains_Mono } from "next/font/google";
 import Script from "next/script";
-import { ScrollToTop } from "@/components/scroll-to-top";
-import { SiteFooterGate } from "@/components/site-footer-gate";
-import { homeSplashSkipBootstrapScript } from "@/lib/home-splash";
+import { ScrollToTop } from "@/components/site/scroll-to-top";
+import { SiteFooterGate } from "@/components/site/site-footer-gate";
+import { homeSplashSkipBootstrapScript } from "@/lib/site/home-splash";
 import "./globals.css";
 
 const poppins = Poppins({

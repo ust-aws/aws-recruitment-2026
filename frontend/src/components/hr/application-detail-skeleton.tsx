@@ -1,6 +1,6 @@
 import Link from "next/link"
 import { Skeleton } from "@/components/ui/skeleton"
-import { glassPanelClasses, pageShellClasses } from "@/lib/surface"
+import { glassPanelClasses, pageShellClasses } from "@/lib/site/surface"
 
 const backClasses =
   "mb-3 mt-3 inline-flex font-mono text-xs text-prelude hover:text-blue-chalk"

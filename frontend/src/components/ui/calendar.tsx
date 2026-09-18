@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { formatDisplayDate } from "@/lib/display-datetime"
+import { formatDisplayDate } from "@/lib/datetime/display"
 import { cn } from "@/lib/utils"
 import {
   DayPicker,

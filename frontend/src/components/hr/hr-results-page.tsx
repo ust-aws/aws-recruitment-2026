@@ -1,18 +1,18 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { ActionFeedback } from "@/components/action-feedback"
+import { ActionFeedback } from "@/components/shared/action-feedback"
 import { HrReleaseResultsDialog } from "@/components/hr/hr-release-results-dialog"
 import { HrResultsList } from "@/components/hr/hr-results-list"
 import { HrResultsSummary } from "@/components/hr/hr-results-summary"
-import { SectionHeader } from "@/components/section-header"
+import { SectionHeader } from "@/components/shared/section-header"
 import {
   getResultsPreview,
   releaseResultsRequest,
   retryFailedResultEmailsRequest,
   type ResultsPreview,
-} from "@/lib/api-client"
-import { pageShellClasses } from "@/lib/surface"
+} from "@/lib/api/client"
+import { pageShellClasses } from "@/lib/site/surface"
 
 const contentClasses = "mt-8 flex flex-col gap-8"
 const listHeadingClasses = "font-sans text-xl font-bold text-blue-chalk"

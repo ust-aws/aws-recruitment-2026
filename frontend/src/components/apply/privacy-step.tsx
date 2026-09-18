@@ -1,6 +1,6 @@
 "use client"
 
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import type { PrivacyValues } from "@/components/apply/apply-schema"
 import { cn } from "@/lib/utils"
 

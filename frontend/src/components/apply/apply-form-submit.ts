@@ -6,7 +6,7 @@ import { createApplication, createUploadSession } from "@/lib/api"
 import {
   documentUploadMetadata,
   uploadDocumentFiles,
-} from "@/lib/document-upload"
+} from "@/lib/apply/document-upload"
 
 type CompletedUploadSession = { fingerprint: string; id: string; expiresAt: string }
 

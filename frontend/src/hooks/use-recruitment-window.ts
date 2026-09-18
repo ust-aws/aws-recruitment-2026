@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { getRecruitmentWindow, type RecruitmentWindow } from "@/lib/api-client"
+import { getRecruitmentWindow, type RecruitmentWindow } from "@/lib/api/client"
 
 export function useRecruitmentWindow() {
   const [window, setWindow] = useState<RecruitmentWindow | null>(null)

@@ -14,8 +14,8 @@ import {
   partsFromDatetimeLocal,
   partsToDatetimeLocal,
   type DatetimeParts,
-} from "@/lib/datetime-local"
-import { fieldControlClasses } from "@/lib/surface"
+} from "@/lib/datetime/datetime-local"
+import { fieldControlClasses } from "@/lib/site/surface"
 import { cn } from "@/lib/utils"
 
 const panelClasses = "flex flex-col gap-4 p-1 sm:flex-row sm:gap-0"

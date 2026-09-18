@@ -7,7 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import type { ResultsPreview } from "@/lib/api-client"
+import type { ResultsPreview } from "@/lib/api/client"
 
 type Props = {
   open: boolean

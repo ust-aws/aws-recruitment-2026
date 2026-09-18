@@ -11,32 +11,32 @@ import {
   deleteArchivedApplication,
   DeleteArchivedApplicationError,
   type CreateApplicationInput,
-} from "../lib/applications";
+} from "../lib/applications/applications";
 import {
   ApplicationDecisionError,
   updateApplicationDecision,
   type ChoiceDecisionStatus,
-} from "../lib/application-decisions";
-import { validateChoiceUrls } from "../lib/apply-field-validation";
-import { createApplicationSchema } from "../lib/apply-schemas";
+} from "../lib/applications/application-decisions";
+import { validateChoiceUrls } from "../lib/apply/field-validation";
+import { createApplicationSchema } from "../lib/apply/schemas";
 import { requireAuth } from "../auth";
-import { createDocumentDownload } from "../lib/documents";
-import { freePlanEndDate } from "../lib/free-plan";
+import { createDocumentDownload } from "../lib/applications/documents";
+import { freePlanEndDate } from "../lib/core/free-plan";
 import {
   listEmailNotificationsByApplicationId,
   sendApplicationSubmitted,
   sendMemberRegistration,
   sendOfficerApplicationNotice,
 } from "../lib/email/service";
-import { InterviewScheduleError } from "../lib/interview-scheduling";
-import { resolveRecruitmentSeasonStatus } from "../lib/recruitment-window";
+import { InterviewScheduleError } from "../lib/interview/scheduling";
+import { resolveRecruitmentSeasonStatus } from "../lib/recruitment/window";
 import {
   applicationArchivePatchSchema,
   applicationDecisionPatchSchema,
   zodErrorMessage,
-} from "../lib/hr-schemas";
-import { logHrAudit } from "../lib/hr-audit";
-import { internalApiError, logApiError } from "../lib/api-errors";
+} from "../lib/hr/schemas";
+import { logHrAudit } from "../lib/hr/audit";
+import { internalApiError, logApiError } from "../lib/core/api-errors";
 
 export const applicationsRoutes = new Hono();
 

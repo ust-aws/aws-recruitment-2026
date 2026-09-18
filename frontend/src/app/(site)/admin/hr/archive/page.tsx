@@ -2,7 +2,7 @@ import { HrApplicationList } from "@/components/hr/application-list"
 import {
   firstSearchParam,
   hrListSearchFromPageSearchParams,
-} from "@/lib/hr-filters-search-params"
+} from "@/lib/hr/filters-search-params"
 
 export default async function HrArchivePage({
   searchParams,

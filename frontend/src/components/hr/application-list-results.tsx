@@ -2,7 +2,7 @@ import { ApplicationPagination } from "@/components/hr/application-pagination"
 import { ApplicationRow } from "@/components/hr/application-row"
 import { ApplicationListSkeleton } from "@/components/hr/application-list-skeleton"
 import { pageCount } from "@/components/hr/application-pagination-utils"
-import type { HrApplication } from "@/lib/hr-application-types"
+import type { HrApplication } from "@/lib/types/hr-application"
 
 const listClasses = "mt-8 flex min-w-0 flex-col gap-3"
 const emptyClasses = "mt-8 font-sans text-sm text-prelude"

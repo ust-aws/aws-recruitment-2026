@@ -4,12 +4,12 @@ import {
   getInterviewWindowPayload,
   InterviewWindowError,
   upsertInterviewWindow,
-} from "../lib/interview-window";
-import { logHrAudit } from "../lib/hr-audit";
+} from "../lib/interview/window";
+import { logHrAudit } from "../lib/hr/audit";
 import {
   interviewWindowPatchSchema,
   zodErrorMessage,
-} from "../lib/hr-schemas";
+} from "../lib/hr/schemas";
 
 export const interviewWindowRoutes = new Hono();
 

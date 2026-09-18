@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { fullName, setApplicationArchived } from "@/lib/api"
-import type { HrApplication } from "@/lib/hr-application-types"
+import type { HrApplication } from "@/lib/types/hr-application"
 
 const errorClasses = "text-sm text-rose-glow"
 

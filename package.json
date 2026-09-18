@@ -15,7 +15,7 @@
     "test": "pnpm --filter backend test",
     "deploy": "pnpm --filter backend deploy",
     "doctor": "npx react-doctor@latest",
-    "test:csv": "pnpm --filter backend exec tsx --test ../frontend/src/lib/hr-applications-csv.test.ts",
+    "test:csv": "pnpm --filter backend exec tsx --tsconfig ../frontend/tsconfig.json --test ../frontend/src/lib/hr/applications-csv.test.ts",
     "test:validation": "pnpm --filter backend test:validation",
     "test:schemas": "pnpm --filter backend test:schemas && pnpm --filter backend exec tsx --tsconfig ../frontend/tsconfig.json --test ../frontend/src/components/apply/apply-schema.test.ts"
   },

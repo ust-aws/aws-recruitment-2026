@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { SectionHeader } from "@/components/section-header"
+import { SectionHeader } from "@/components/shared/section-header"
 import { BoardToggle, type PeopleView } from "@/components/people/board-toggle"
 import { PersonCard } from "@/components/people/person-card"
 import { COMMITTEE_DIRECTORS, EXECUTIVE_BOARD } from "@/lib/people"

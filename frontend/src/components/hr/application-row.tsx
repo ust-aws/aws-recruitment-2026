@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button"
 import { StatusPill } from "@/components/hr/status-pill"
 import { cn } from "@/lib/utils"
 import { firstChoiceCommittee, fullName } from "@/lib/api"
-import type { HrApplication } from "@/lib/hr-application-types"
+import type { HrApplication } from "@/lib/types/hr-application"
 
 const rowClasses =
   "glass flex min-w-0 items-center gap-2 rounded-[22px] border border-blue-chalk/20 bg-meteorite/40 px-3 py-3 transition-colors hover:border-biloba-flower/70 sm:gap-3 sm:rounded-pill sm:px-5 sm:py-3.5"

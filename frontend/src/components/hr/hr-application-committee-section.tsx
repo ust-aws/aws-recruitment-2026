@@ -1,6 +1,6 @@
 import { ChoiceCards } from "@/components/hr/choice-cards"
 import { HrCommitteeDecisionPanel } from "@/components/hr/hr-committee-decision-panel"
-import type { HrApplication } from "@/lib/hr-application-types"
+import type { HrApplication } from "@/lib/types/hr-application"
 
 const archivedNoticeClasses =
   "mt-8 rounded-[14px] border border-biloba-flower/35 bg-daisy-bush/20 px-4 py-3 font-sans text-sm text-blue-chalk"

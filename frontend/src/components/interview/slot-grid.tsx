@@ -6,7 +6,7 @@ import {
   formatDisplayDate,
   formatDisplayDateTime,
   formatDisplayTime,
-} from "@/lib/display-datetime"
+} from "@/lib/datetime/display"
 import {
   INTERVIEW_TIME_LABELS,
   INTERVIEW_GRID_END_HOUR,
@@ -14,7 +14,7 @@ import {
   INTERVIEW_SLOT_MINUTES,
   slotKey,
   slotStartsAt,
-} from "@/lib/interview-season"
+} from "@/lib/season/interview"
 
 export type SlotGridCellState =
   | "hidden"

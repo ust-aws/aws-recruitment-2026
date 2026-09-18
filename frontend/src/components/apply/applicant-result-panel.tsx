@@ -2,9 +2,9 @@ import { StatusPill } from "@/components/hr/status-pill"
 import type {
   ApplicantChoice,
   ApplicantResult,
-} from "@/lib/applicant-api"
-import { formatDatetimeDisplay } from "@/lib/datetime-local"
-import { glassPanelClasses } from "@/lib/surface"
+} from "@/lib/api/applicant"
+import { formatDatetimeDisplay } from "@/lib/datetime/datetime-local"
+import { glassPanelClasses } from "@/lib/site/surface"
 
 const panelClasses = `${glassPanelClasses} mt-6 rounded-[22px] px-5 py-5`
 const eyebrowClasses =

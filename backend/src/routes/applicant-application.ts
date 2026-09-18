@@ -8,7 +8,7 @@ import {
   getApplicantEditableApplication,
   updateApplicantApplication,
   type UpdateApplicantApplicationInput,
-} from "../lib/applicant-editing";
+} from "../lib/applications/applicant-editing";
 import {
   fireApplicantChoiceEditNotifications,
   loadApplicantEditEmailSnapshot,

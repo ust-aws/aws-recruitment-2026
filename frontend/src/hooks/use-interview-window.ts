@@ -4,11 +4,11 @@ import { useCallback, useEffect, useState } from "react"
 import {
   getInterviewWindow,
   type InterviewWindow,
-} from "@/lib/api-client"
+} from "@/lib/api/client"
 import {
   interviewSeasonBoundsFromPayload,
   type InterviewSeasonBounds,
-} from "@/lib/interview-season"
+} from "@/lib/season/interview"
 
 export function useInterviewWindow() {
   const [bounds, setBounds] = useState<InterviewSeasonBounds>(null)

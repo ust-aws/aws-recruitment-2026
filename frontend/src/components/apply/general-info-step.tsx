@@ -9,13 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import {
   APPLICANT_GENDER_OPTIONS,
   formatApplicantGender,
-} from "@/lib/applicant-gender"
-import { sanitizeSectionInput } from "@/lib/apply-field-validation"
-import { fieldControlClasses } from "@/lib/surface"
+} from "@/lib/apply/applicant-gender"
+import { sanitizeSectionInput } from "@/lib/apply/field-validation"
+import { fieldControlClasses } from "@/lib/site/surface"
 import { UST_EMAIL_DOMAIN } from "@/lib/constants"
 import type { GeneralInfoValues } from "@/components/apply/apply-schema"
 

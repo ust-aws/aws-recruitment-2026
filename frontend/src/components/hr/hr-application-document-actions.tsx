@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { formatAppliedDate } from "@/lib/api"
-import type { ApplicationDocument } from "@/lib/application-types"
+import type { ApplicationDocument } from "@/lib/types/application"
 
 const missingClasses = "font-sans text-sm text-prelude"
 const documentCardClasses =

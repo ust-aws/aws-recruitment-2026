@@ -5,12 +5,12 @@ import { StatusPill } from "@/components/hr/status-pill"
 import { HrArchiveApplicantDialog } from "@/components/hr/hr-archive-applicant-dialog"
 import { HrDeleteApplicantDialog } from "@/components/hr/hr-delete-applicant-dialog"
 import { HrApplicationDetailPanel } from "@/components/hr/hr-application-detail-panel"
-import type { HrApplication } from "@/lib/hr-application-types"
+import type { HrApplication } from "@/lib/types/hr-application"
 import {
   displayTitleLeadingClasses,
   glassPanelClasses,
   pageShellClasses,
-} from "@/lib/surface"
+} from "@/lib/site/surface"
 import { cn } from "@/lib/utils"
 import Link from "next/link"
 

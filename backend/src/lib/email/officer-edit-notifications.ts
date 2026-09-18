@@ -1,7 +1,7 @@
-import { getApplicationById } from "../applications";
-import type { ChoiceRef } from "../committee-apply";
-import { newlyRequiresDevExam } from "../committee-apply";
-import { getBookedInterviewStartsAt } from "../interview-scheduling";
+import { getApplicationById } from "../applications/applications";
+import type { ChoiceRef } from "../apply/committee";
+import { newlyRequiresDevExam } from "../apply/committee";
+import { getBookedInterviewStartsAt } from "../interview/scheduling";
 import { lookupOfficerRecipient } from "./officer-recipients";
 import {
   applicantDevExamTemplate,

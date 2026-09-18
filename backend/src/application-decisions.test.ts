@@ -13,7 +13,7 @@ import {
   positions,
   users,
 } from "./db/schema";
-import { getApplicantEditableApplication } from "./lib/applicant-editing";
+import { getApplicantEditableApplication } from "./lib/applications/applicant-editing";
 import { originHeaders } from "./test-support/request";
 
 const databaseUrl = process.env.DATABASE_URL;

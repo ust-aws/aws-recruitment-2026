@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button"
-import type { ResultsPreview } from "@/lib/api-client"
-import { glassPanelClasses } from "@/lib/surface"
+import type { ResultsPreview } from "@/lib/api/client"
+import { glassPanelClasses } from "@/lib/site/surface"
 
 const summaryGridClasses = "grid gap-3 sm:grid-cols-2 xl:grid-cols-5"
 const summaryCardClasses = `${glassPanelClasses} rounded-[20px] px-5 py-4`

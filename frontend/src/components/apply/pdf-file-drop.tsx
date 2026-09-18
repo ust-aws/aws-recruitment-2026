@@ -1,12 +1,12 @@
 "use client"
 
 import { useId, useState } from "react"
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import {
   APPLICATION_DOCUMENT_PDF_MAX_SIZE_LABEL,
   applicationDocumentPdfSizeLimitMessage,
   isApplicationDocumentPdfWithinSizeLimit,
-} from "@/lib/apply-field-validation"
+} from "@/lib/apply/field-validation"
 import { cn } from "@/lib/utils"
 
 const hintClasses = "font-sans text-xs text-prelude"

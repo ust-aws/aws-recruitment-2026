@@ -1,5 +1,5 @@
 import { cva, type VariantProps } from "class-variance-authority"
-import type { ApplicationStatus } from "@/lib/application-types"
+import type { ApplicationStatus } from "@/lib/types/application"
 
 const pill = cva(
   "inline-flex items-center rounded-pill px-3 py-0.5 font-mono text-[11px] capitalize",

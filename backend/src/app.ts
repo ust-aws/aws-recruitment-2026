@@ -21,9 +21,9 @@ import {
   signToken,
   verifyHrCredentials,
 } from "./auth";
-import { logApiError } from "./lib/api-errors";
-import { loginTokenInJsonAllowed } from "./lib/secure-cookie";
-import { requireTrustedOrigin } from "./lib/trusted-origin";
+import { logApiError } from "./lib/core/api-errors";
+import { loginTokenInJsonAllowed } from "./lib/auth/secure-cookie";
+import { requireTrustedOrigin } from "./lib/auth/trusted-origin";
 
 type Bindings = {
   event: LambdaEvent;

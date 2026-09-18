@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 import { db } from "./db";
 import { users } from "./db/schema";
-import { usesSecureCookies } from "./lib/secure-cookie";
+import { usesSecureCookies } from "./lib/auth/secure-cookie";
 
 export const AUTH_COOKIE_NAME = "hr_token";
 

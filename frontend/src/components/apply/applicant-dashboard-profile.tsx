@@ -1,8 +1,8 @@
 import type { ReactNode } from "react"
-import { formatDateDisplay } from "@/lib/date-local"
-import { formatApplicantGender } from "@/lib/applicant-gender"
-import type { ApplicantApplication } from "@/lib/applicant-api"
-import { safeExternalHref } from "@/lib/safe-external-href"
+import { formatDateDisplay } from "@/lib/datetime/date-local"
+import { formatApplicantGender } from "@/lib/apply/applicant-gender"
+import type { ApplicantApplication } from "@/lib/api/applicant"
+import { safeExternalHref } from "@/lib/site/safe-external-href"
 import { cn } from "@/lib/utils"
 
 const metaGridClasses =

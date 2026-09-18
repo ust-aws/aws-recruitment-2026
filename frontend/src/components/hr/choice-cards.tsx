@@ -1,4 +1,4 @@
-import type { ApplicationChoice } from "@/lib/application-types"
+import type { ApplicationChoice } from "@/lib/types/application"
 
 const choicesClasses = "mt-8 grid gap-4 md:grid-cols-2"
 const choiceCardClasses = "rounded-[22px] bg-haiti/70 px-5 py-5"

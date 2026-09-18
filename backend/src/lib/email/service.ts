@@ -1,11 +1,11 @@
-import { getApplicationById, type ApplicationJson } from "../applications";
-import type { ChoiceRef } from "../committee-apply";
-import { applicationRequiresDevExam } from "../committee-apply";
+import { getApplicationById, type ApplicationJson } from "../applications/applications";
+import type { ChoiceRef } from "../apply/committee";
+import { applicationRequiresDevExam } from "../apply/committee";
 import {
   getBookedInterviewBooking,
   getBookedInterviewStartsAt,
   INTERVIEW_SLOT_MINUTES,
-} from "../interview-scheduling";
+} from "../interview/scheduling";
 import { emailEnabled, hasGmailCredentials } from "./config";
 import { awsDevAssessmentAttachment } from "./email-assets";
 import { sendViaGmail } from "./gmail-client";

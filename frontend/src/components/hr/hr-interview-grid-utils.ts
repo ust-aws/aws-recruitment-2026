@@ -6,7 +6,7 @@ import {
   slotStartsAt,
   INTERVIEW_GRID_END_HOUR,
   INTERVIEW_GRID_START_HOUR,
-} from "@/lib/interview-season"
+} from "@/lib/season/interview"
 
 export function committeeOptions(
   positions: { committee: string; committee_id?: string }[],

@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { SectionHeader } from "@/components/section-header"
+import { SectionHeader } from "@/components/shared/section-header"
 import {
   MOCK_COMMITTEES,
   MOCK_POSITIONS,

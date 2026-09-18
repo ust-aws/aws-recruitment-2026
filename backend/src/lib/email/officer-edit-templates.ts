@@ -1,4 +1,4 @@
-import type { ChoiceRef } from "../committee-apply";
+import type { ChoiceRef } from "../apply/committee";
 import { devExamParagraphs, officerFirstChoiceLinkExtras } from "./choice-email-extras";
 import { isExecutiveOfficeCommittee } from "./officer-recipients";
 import {

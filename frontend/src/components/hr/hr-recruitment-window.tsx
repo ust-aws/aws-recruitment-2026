@@ -1,18 +1,18 @@
 "use client"
 
 import { type FormEvent, useEffect, useState } from "react"
-import { ActionFeedback } from "@/components/action-feedback"
+import { ActionFeedback } from "@/components/shared/action-feedback"
 import { Button } from "@/components/ui/button"
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import { getRecruitmentWindow, patchRecruitmentWindow } from "@/lib/api"
 import {
   recruitmentWeekEndIsoFromYmd,
   recruitmentWeekStartIsoFromYmd,
   recruitmentWeekYmdFromIso,
-} from "@/lib/recruitment-window-season"
+} from "@/lib/season/recruitment-window"
 import { DatetimeFieldsSkeleton } from "@/components/hr/datetime-fields-skeleton"
 import { InterviewSeasonDatePicker } from "@/components/hr/interview-season-date-picker"
-import { glassPanelClasses } from "@/lib/surface"
+import { glassPanelClasses } from "@/lib/site/surface"
 
 const panelClasses = `${glassPanelClasses} px-5 py-5`
 const formClasses = "mt-4 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end"

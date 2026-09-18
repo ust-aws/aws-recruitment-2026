@@ -1,10 +1,10 @@
-import type { ApplicantInterviewSchedule } from "@/lib/applicant-api"
+import type { ApplicantInterviewSchedule } from "@/lib/api/applicant"
 import { Button } from "@/components/ui/button"
 import {
   formatInterviewSlotLabel,
   formatSeasonBoundsRange,
-} from "@/lib/display-datetime"
-import type { InterviewSeasonBounds } from "@/lib/interview-season"
+} from "@/lib/datetime/display"
+import type { InterviewSeasonBounds } from "@/lib/season/interview"
 
 const hintClasses = "mt-1 font-sans text-sm text-prelude"
 const committeeClasses = "mt-2 font-mono text-xs text-aquamarine"

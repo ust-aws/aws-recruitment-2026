@@ -1,5 +1,5 @@
-import type { ApplicantApplication } from "@/lib/applicant-api"
-import { glassPanelClasses } from "@/lib/surface"
+import type { ApplicantApplication } from "@/lib/api/applicant"
+import { glassPanelClasses } from "@/lib/site/surface"
 
 const panelClasses = `${glassPanelClasses} mt-6 rounded-[22px] px-5 py-5`
 const eyebrowClasses =

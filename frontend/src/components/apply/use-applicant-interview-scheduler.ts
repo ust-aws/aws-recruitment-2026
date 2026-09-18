@@ -4,7 +4,7 @@ import {
   getApplicantInterviewSlots,
   putApplicantInterviewBooking,
   type ApplicantInterviewSchedule,
-} from "@/lib/applicant-api"
+} from "@/lib/api/applicant"
 import { useInterviewWindow } from "@/hooks/use-interview-window"
 import {
   addDays,
@@ -15,7 +15,7 @@ import {
   slotKeyFromIso,
   startOfWeek,
   weekDaysInSeason,
-} from "@/lib/interview-season"
+} from "@/lib/season/interview"
 import {
   applyInterviewSchedule,
   buildApplicantCells,

@@ -1,11 +1,11 @@
 "use client"
 
-import { SectionHeader } from "@/components/section-header"
+import { SectionHeader } from "@/components/shared/section-header"
 import { HrInterviewGrid } from "@/components/hr/hr-interview-grid"
 import { HrInterviewWindow } from "@/components/hr/hr-interview-window"
 import { HrRecruitmentWindow } from "@/components/hr/hr-recruitment-window"
 import { useInterviewWindow } from "@/hooks/use-interview-window"
-import { pageShellClasses } from "@/lib/surface"
+import { pageShellClasses } from "@/lib/site/surface"
 
 const stackClasses = "mt-8 flex flex-col gap-4"
 

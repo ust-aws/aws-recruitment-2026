@@ -4,14 +4,14 @@ import type {
   PrivacyValues,
   UploadValues,
 } from "@/components/apply/apply-schema"
-import type { CreateApplicationInput } from "@/lib/application-types"
+import type { CreateApplicationInput } from "@/lib/types/application"
 import {
   APPLY_MISSING_DOCUMENTS_ERROR,
   APPLY_UNEXPECTED_ERROR,
   isApplicantUploadFailureMessage,
-} from "@/lib/api-error-message"
-import { formatContactDigits, sanitizeSectionInput } from "@/lib/apply-field-validation"
-import { needsCreativesPortfolio, needsDevelopmentGithub } from "@/lib/committee-apply"
+} from "@/lib/api/error-message"
+import { formatContactDigits, sanitizeSectionInput } from "@/lib/apply/field-validation"
+import { needsCreativesPortfolio, needsDevelopmentGithub } from "@/lib/apply/committee"
 
 /** Converts validated form values into the API's create-application payload. */
 export function toCreateApplicationInput(

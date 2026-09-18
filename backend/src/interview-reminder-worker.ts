@@ -1,4 +1,4 @@
-import { sendDueInterviewReminders } from "./lib/interview-reminders";
+import { sendDueInterviewReminders } from "./lib/interview/reminders";
 
 export async function handler() {
   const result = await sendDueInterviewReminders();

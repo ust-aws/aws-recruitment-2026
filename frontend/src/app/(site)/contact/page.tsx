@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { ContactSection } from "@/components/contact-section"
+import { ContactSection } from "@/components/home/contact-section"
 
 export const metadata: Metadata = {
   title: "Contact – AWS Builders – UST",

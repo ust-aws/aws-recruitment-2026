@@ -1,6 +1,6 @@
 "use client"
 
-import { ActionFeedback } from "@/components/action-feedback"
+import { ActionFeedback } from "@/components/shared/action-feedback"
 import { SlotGrid } from "@/components/interview/slot-grid"
 import { InterviewWeekNav } from "@/components/interview/week-nav"
 import { Button } from "@/components/ui/button"
@@ -13,17 +13,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
-import { CommitteeOfficeCommitteePicker } from "@/components/committee-office-committee-picker"
-import { Field } from "@/components/field"
-import { formatSeasonBoundsRange } from "@/lib/display-datetime"
-import type { InterviewSeasonBounds } from "@/lib/interview-season"
+import { CommitteeOfficeCommitteePicker } from "@/components/shared/committee-office-committee-picker"
+import { Field } from "@/components/shared/field"
+import { formatSeasonBoundsRange } from "@/lib/datetime/display"
+import type { InterviewSeasonBounds } from "@/lib/season/interview"
 import {
   addDays,
   canGoNextWeek,
   canGoPrevWeek,
   clampWeekStart,
-} from "@/lib/interview-season"
-import { glassPanelClasses } from "@/lib/surface"
+} from "@/lib/season/interview"
+import { glassPanelClasses } from "@/lib/site/surface"
 import { cn } from "@/lib/utils"
 import type { useHrInterviewGrid } from "@/components/hr/use-hr-interview-grid"
 

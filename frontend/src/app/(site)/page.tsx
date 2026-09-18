@@ -1,9 +1,9 @@
 import dynamic from "next/dynamic"
-import { Hero } from "@/components/hero"
-import { HomeSplash } from "@/components/home-splash"
+import { Hero } from "@/components/home/hero"
+import { HomeSplash } from "@/components/home/splash"
 
 const HomeDeferredSections = dynamic(() =>
-  import("@/components/home-deferred-sections").then(
+  import("@/components/home/deferred-sections").then(
     (mod) => mod.HomeDeferredSections,
   ),
 )

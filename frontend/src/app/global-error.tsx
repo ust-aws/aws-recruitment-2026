@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { Poppins, JetBrains_Mono } from "next/font/google"
-import { EspiErrorPage } from "@/components/espi-error-page"
+import { EspiErrorPage } from "@/components/site/espi-error-page"
 import "./globals.css"
 
 const poppins = Poppins({

@@ -1,7 +1,7 @@
 import {
   needsCreativesPortfolio,
   needsDevelopmentGithub,
-} from "@/lib/committee-apply"
+} from "@/lib/apply/committee"
 import type { CommitteeValues } from "@/components/apply/apply-schema"
 
 export const memberChoicePatch: Partial<CommitteeValues> = {

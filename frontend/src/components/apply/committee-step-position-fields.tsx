@@ -1,16 +1,16 @@
 import { CommitteeOfficePicker } from "@/components/apply/committee-office-picker"
 import { ApplyInterviewSlotPicker } from "@/components/apply/apply-interview-slot-picker"
 import { CommitteePickerSkeleton } from "@/components/apply/committee-picker-skeleton"
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import { Input } from "@/components/ui/input"
-import { fieldControlClasses } from "@/lib/surface"
+import { fieldControlClasses } from "@/lib/site/surface"
 import {
   GOOGLE_DRIVE_URL_EXAMPLE,
   GITHUB_PROFILE_URL_EXAMPLE,
-} from "@/lib/apply-field-validation"
+} from "@/lib/apply/field-validation"
 import type { CommitteeValues } from "@/components/apply/apply-schema"
-import type { Position } from "@/lib/application-types"
-import type { CommitteeOfficeGroup } from "@/lib/committee-groups"
+import type { Position } from "@/lib/types/application"
+import type { CommitteeOfficeGroup } from "@/lib/apply/committee-groups"
 
 const urlHintClasses = "font-sans text-xs text-prelude"
 

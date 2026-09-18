@@ -5,7 +5,7 @@ import {
   APPLY_MISSING_DOCUMENTS_ERROR,
   APPLY_UNEXPECTED_ERROR,
   isApplicantUploadFailureMessage,
-} from "@/lib/api-error-message"
+} from "@/lib/api/error-message"
 
 type FormStep = 1 | 2 | 3 | 4 | 5 | 6
 

@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button"
-import { Field } from "@/components/field"
+import { Field } from "@/components/shared/field"
 import type { CommitteeValues } from "@/components/apply/apply-schema"
 
 const typeOptionsClasses = "grid gap-3 sm:grid-cols-2"

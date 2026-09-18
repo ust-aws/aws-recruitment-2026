@@ -3,13 +3,13 @@ import { requireAuth } from "../auth";
 import {
   deliverResultNotifications,
   retryFailedResultEmails,
-} from "../lib/result-email-delivery";
+} from "../lib/hr/result-email-delivery";
 import {
   releaseResults,
   ResultsReleaseBlockedError,
-} from "../lib/results-release";
-import { getResultsPreview } from "../lib/results-preview";
-import { logHrAudit } from "../lib/hr-audit";
+} from "../lib/hr/results-release";
+import { getResultsPreview } from "../lib/hr/results-preview";
+import { logHrAudit } from "../lib/hr/audit";
 
 export const resultsRoutes = new Hono();
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ActionFeedback } from "@/components/action-feedback"
+import { ActionFeedback } from "@/components/shared/action-feedback"
 import { StatusPill } from "@/components/hr/status-pill"
 import { Button } from "@/components/ui/button"
 import { patchApplicationDecision } from "@/lib/api"
@@ -9,7 +9,7 @@ import type {
   ChoiceDecisionStatus,
   HrApplication,
   UpdateApplicationDecisionInput,
-} from "@/lib/hr-application-types"
+} from "@/lib/types/hr-application"
 
 const panelClasses =
   "mt-8 min-w-0 overflow-x-clip rounded-[22px] border border-biloba-flower/30 bg-haiti/55 px-4 py-5 sm:px-5"

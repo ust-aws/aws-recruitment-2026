@@ -1,6 +1,6 @@
 import { ApplicantAccessForm } from "@/components/apply/applicant-access-form"
-import { SectionHeader } from "@/components/section-header"
-import { pageShellClasses } from "@/lib/surface"
+import { SectionHeader } from "@/components/shared/section-header"
+import { pageShellClasses } from "@/lib/site/surface"
 
 export default function ApplicantStatusPage() {
   return (

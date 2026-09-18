@@ -1,11 +1,11 @@
 "use client"
 
 import { Button } from "@/components/ui/button"
-import type { HrApplication } from "@/lib/hr-application-types"
+import type { HrApplication } from "@/lib/types/hr-application"
 import { HrApplicationDocumentActions } from "@/components/hr/hr-application-document-actions"
 import { HrApplicationCommitteeSection } from "@/components/hr/hr-application-committee-section"
 import { HrApplicationMetaGrid } from "@/components/hr/hr-application-meta-grid"
-import { hrApplicationDocuments } from "@/lib/hr-application-documents"
+import { hrApplicationDocuments } from "@/lib/hr/application-documents"
 
 const whyLabelClasses =
   "mt-8 font-sans text-sm font-semibold text-biloba-flower"
