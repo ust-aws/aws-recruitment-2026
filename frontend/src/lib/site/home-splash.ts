@@ -19,7 +19,7 @@ type HomeSplashWindow = Window &
 
 export function homeSplashSkipBootstrapScript(): string {
   const css = HOME_SPLASH_LOCK_CSS.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
-  return `try{var p=location.pathname;if(p!=="/"&&p!=="")return;var s=sessionStorage.getItem("${HOME_SPLASH_SEEN_KEY}");if(s)window.${HOME_SPLASH_SKIP_GLOBAL}=1;else{var el=document.createElement("style");el.id="${HOME_SPLASH_LOCK_STYLE_ID}";el.textContent="${css}";(document.head||document.documentElement).appendChild(el);setTimeout(function(){document.getElementById("${HOME_SPLASH_LOCK_STYLE_ID}")?.remove()},${HOME_SPLASH_LOCK_FAILSAFE_MS})}}catch(e){}`
+  return `try{var p=location.pathname;if(p==="/"||p===""){var s=sessionStorage.getItem("${HOME_SPLASH_SEEN_KEY}");if(s)window.${HOME_SPLASH_SKIP_GLOBAL}=1;else{var el=document.createElement("style");el.id="${HOME_SPLASH_LOCK_STYLE_ID}";el.textContent="${css}";(document.head||document.documentElement).appendChild(el);setTimeout(function(){document.getElementById("${HOME_SPLASH_LOCK_STYLE_ID}")?.remove()},${HOME_SPLASH_LOCK_FAILSAFE_MS})}}}catch(e){}`
 }
 
 export function clearHomeSplashActiveLock() {
