@@ -194,7 +194,7 @@ const COMMITTEE_DIRECTOR_BY_COMMITTEE: Record<
   },
   "Media Committee": {
     title: "Media Committee Director",
-    name: "Zander Belen Estuista",
+    name: "Allen Zander Estuista",
   },
   "Publicity Committee": {
     title: "Publication Committee Director",

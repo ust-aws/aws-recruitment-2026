@@ -2,6 +2,8 @@ import { z } from "zod";
 import type { CreateApplicationInput } from "../applications/applications";
 import {
   canonicalizeHttpsUrl,
+  formatLastName,
+  formatPersonName,
   hasValidLastNameFileToken,
   isValidApplicantName,
   isValidContactNumber,
@@ -56,16 +58,19 @@ const createApplicationFields = {
   dataPrivacyAgreed: z.literal(true, {
     error: "dataPrivacyAgreed must be true before submitting.",
   }),
-  firstName: requiredString.refine(isValidApplicantName, {
-    error: "firstName and lastName must use letters only (max 100 characters).",
-  }),
+  firstName: requiredString
+    .refine(isValidApplicantName, {
+      error: "firstName and lastName must use letters only (max 100 characters).",
+    })
+    .transform(formatPersonName),
   lastName: requiredString
     .refine(isValidApplicantName, {
       error: "firstName and lastName must use letters only (max 100 characters).",
     })
     .refine((value) => !isValidApplicantName(value) || hasValidLastNameFileToken(value), {
       error: "lastName must include at least one letter for document file names.",
-    }),
+    })
+    .transform(formatLastName),
   email: requiredString
     .transform((value) => value.toLowerCase())
     .refine(isValidUstApplicantEmail, {
