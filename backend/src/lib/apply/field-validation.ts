@@ -97,6 +97,42 @@ export function isValidApplicantName(value: string): boolean {
   );
 }
 
+const GENERATIONAL_SUFFIX_RE = /^(ii|iii|iv)$/i;
+
+function capitalizeNamePart(part: string): string {
+  if (GENERATIONAL_SUFFIX_RE.test(part)) return part.toUpperCase();
+  // All lower or all upper is re-cased; mixed case ("McDonald") is the person's own.
+  const uniform = part === part.toLowerCase() || part === part.toUpperCase();
+  const [first = "", ...rest] = part;
+  return first.toUpperCase() + (uniform ? rest.join("").toLowerCase() : rest.join(""));
+}
+
+/** Surname particles that stay as typed when written in lowercase ("de Leon", "de la Cruz"). */
+const LAST_NAME_PARTICLES = new Set([
+  "de", "del", "dela", "della", "delos", "di", "da", "du", "van", "von", "der", "la", "las", "los",
+]);
+
+function capitalizeWords(value: string, keepParticles: boolean): string {
+  const words = value.trim().split(/\s+/);
+  return words
+    .map((word, index) =>
+      keepParticles && index < words.length - 1 && LAST_NAME_PARTICLES.has(word)
+        ? word
+        : word.split(/(['-])/).map(capitalizeNamePart).join(""),
+    )
+    .join(" ");
+}
+
+/** Capitalizes the first letter of every word, and of each part after a hyphen or apostrophe. */
+export function formatPersonName(value: string): string {
+  return capitalizeWords(value, false);
+}
+
+/** Like `formatPersonName`, but a lowercase particle before the surname stays lowercase. "De Leon" stays "De Leon". */
+export function formatLastName(value: string): string {
+  return capitalizeWords(value, true);
+}
+
 export function isValidUstApplicantEmail(value: string): boolean {
   const email = value.trim().toLowerCase();
   return /^[^\s@]+@ust\.edu\.ph$/i.test(email);

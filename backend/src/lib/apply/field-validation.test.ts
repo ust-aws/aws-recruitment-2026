@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   documentFileNameMatches,
+  formatLastName,
+  formatPersonName,
   hasValidLastNameFileToken,
   isValidApplicantName,
   isValidGithubUrl,
@@ -25,6 +27,28 @@ test("applicant text guards", () => {
   assert.equal(isValidUstApplicantEmail("juan@gmail.com"), false);
   assert.equal(isValidMotivation("I want to join."), true);
   assert.equal(hasValidLastNameFileToken("---"), false);
+});
+
+test("applicant names are capitalized word by word", () => {
+  assert.equal(formatPersonName("juan dela cruz"), "Juan Dela Cruz");
+  assert.equal(formatPersonName("  MARIA   SANTOS "), "Maria Santos");
+  assert.equal(formatPersonName("ana-marie o'brien"), "Ana-Marie O'Brien");
+  assert.equal(formatPersonName("antonio axellance iii"), "Antonio Axellance III");
+  assert.equal(formatPersonName("nicole mcDonald"), "Nicole McDonald");
+  assert.equal(formatPersonName("hannah muñoz"), "Hannah Muñoz");
+  assert.equal(formatPersonName("ñico ÑUÑEZ"), "Ñico Ñuñez");
+});
+
+test("last names keep a lowercase particle as typed", () => {
+  assert.equal(formatLastName("de leon"), "de Leon");
+  assert.equal(formatLastName("de Mesa"), "de Mesa");
+  assert.equal(formatLastName("De Leon"), "De Leon");
+  assert.equal(formatLastName("DE LEON"), "De Leon");
+  assert.equal(formatLastName("de la cruz"), "de la Cruz");
+  assert.equal(formatLastName("dela cruz"), "dela Cruz");
+  assert.equal(formatLastName("santos"), "Santos");
+  assert.equal(formatLastName("de"), "De");
+  assert.equal(formatLastName("o'brien-smith"), "O'Brien-Smith");
 });
 
 test("document file names", () => {

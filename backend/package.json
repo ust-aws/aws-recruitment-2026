@@ -34,6 +34,7 @@
     "db:sync": "node --env-file-if-exists=../.env scripts/sync-schema.mjs",
     "db:seed": "tsx --env-file=../.env src/db/seed.ts",
     "db:seed-officers": "tsx --env-file=../.env src/db/seed-officers.ts",
+    "db:format-names": "tsx --env-file=../.env src/db/format-names.ts",
     "db:studio": "drizzle-kit studio",
     "test:overview": "tsx --test --test-concurrency=1 src/season-overview.test.ts",
     "test:outbox":"tsx --test --test-concurrency=1 src/email-outbox.test.ts"

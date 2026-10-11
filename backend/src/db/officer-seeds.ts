@@ -2,6 +2,7 @@ import {
   executiveOfficeCommittees,
   staffCommittees,
 } from "../lib/apply/committee-office-groups";
+import { formatLastName, formatPersonName } from "../lib/apply/field-validation";
 import { lookupOfficerRecipient } from "../lib/email/officer-recipients";
 
 export type OfficerSeedKind = "eb" | "director" | "adviser";
@@ -44,7 +45,7 @@ const DIRECTOR_BY_COMMITTEE_ORDER: { name: string; title: string }[] = [
   { name: "Paulyn Gamban", title: "Finance Committee Director" },
   { name: "Lorraine Alexandra Tamondong", title: "Human Resources Committee Director" },
   { name: "Aldrhey Jave Agsunod", title: "Documentation Committee Director" },
-  { name: "Zander Belen Estuista", title: "Media Committee Director" },
+  { name: "Allen Zander Estuista", title: "Media Committee Director" },
   { name: "Elleinrich Jarina", title: "Publication Committee Director" },
 ];
 
@@ -79,8 +80,8 @@ function seatFromPerson(
     seatKey: committee,
     committee,
     title: person.title,
-    firstName,
-    lastName: recipient.lastName,
+    firstName: formatPersonName(firstName),
+    lastName: formatLastName(recipient.lastName),
     email: recipient.email,
     sortOrder,
   };
@@ -107,8 +108,8 @@ export function officerSeedList(): OfficerSeed[] {
         seatKey: adviser.seatKey,
         committee: null,
         title: adviser.title,
-        firstName: adviser.firstName,
-        lastName: adviser.lastName,
+        firstName: formatPersonName(adviser.firstName),
+        lastName: formatLastName(adviser.lastName),
         email: null,
         sortOrder: index,
       }),
