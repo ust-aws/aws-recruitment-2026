@@ -14,7 +14,7 @@ const menuClasses = "w-full gap-0.5 group-data-[collapsible=icon]:items-center"
 const itemClasses =
   "w-full group-data-[collapsible=icon]:flex group-data-[collapsible=icon]:justify-center"
 export const rowClasses =
-  "h-9 w-full justify-start gap-3 rounded-pill border border-transparent px-3 text-left text-sm font-medium text-prelude transition-[background-color,border-color,color,transform] duration-200 ease-out hover:bg-blue-chalk/8 hover:text-blue-chalk active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-aquamarine/60 pointer-coarse:h-11 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:p-0 motion-reduce:transition-none motion-reduce:active:scale-100"
+  "h-9 w-full justify-start gap-3 rounded-pill border border-transparent px-3 text-left text-sm font-medium text-prelude transition-[background-color,border-color,color] duration-200 ease-out hover:bg-blue-chalk/8 hover:text-blue-chalk focus-visible:ring-2 focus-visible:ring-aquamarine/60 pointer-coarse:h-11 group-data-[collapsible=icon]:mx-auto group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:gap-0 group-data-[collapsible=icon]:rounded-full group-data-[collapsible=icon]:p-0 motion-reduce:transition-none"
 // The current page is the one lit thing: a filled pill and an aquamarine icon.
 const activeRowClasses =
   "border-biloba-flower/40 bg-daisy-bush/55 text-blue-chalk hover:bg-daisy-bush/55 [&_svg]:text-aquamarine"

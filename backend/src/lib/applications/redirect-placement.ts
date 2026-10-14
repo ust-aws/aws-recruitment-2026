@@ -7,7 +7,6 @@ import {
   positions,
 } from "../../db/schema";
 import { kickEmailOutbox } from "../email/outbox-kick";
-import { inviteToOpenCampaign } from "../membership/campaigns";
 import { seatHuntWinner } from "../officer-hunt/seats";
 import { getApplicationById, type ApplicationJson } from "./applications";
 
@@ -186,7 +185,6 @@ export async function recordRedirectResponse(
   }
 
   const respondedAt = new Date();
-  let paymentNotificationIds: string[] = [];
   if (response === "accepted") {
     try {
       await db.transaction(async (tx) => {
@@ -201,11 +199,7 @@ export async function recordRedirectResponse(
           })
           .where(eq(applications.id, applicationId));
         // In the officer hunt, taking the offered seat makes them an officer now.
-        if (application.track === "officer_hunt") {
-          await seatHuntWinner(tx, applicationId);
-        } else {
-          paymentNotificationIds = await inviteToOpenCampaign(tx, [applicationId]);
-        }
+        if (application.track === "officer_hunt") await seatHuntWinner(tx, applicationId);
       });
     } catch (error) {
       if (application.track === "officer_hunt" && isSeatTaken(error)) {
@@ -213,25 +207,18 @@ export async function recordRedirectResponse(
       }
       throw error;
     }
+    if (application.track === "officer_hunt") await kickEmailOutbox().catch(() => undefined);
   } else {
-    await db.transaction(async (tx) => {
-      await tx
-        .update(applications)
-        .set({
-          redirectResponse: "declined",
-          redirectRespondedAt: respondedAt,
-          status: "rejected",
-          finalPositionId: null,
-          updatedAt: new Date(),
-        })
-        .where(eq(applications.id, applicationId));
-      if (application.track === "r101") {
-        paymentNotificationIds = await inviteToOpenCampaign(tx, [applicationId]);
-      }
-    });
-  }
-  if (application.track === "officer_hunt" || paymentNotificationIds.length > 0) {
-    await kickEmailOutbox().catch(() => undefined);
+    await db
+      .update(applications)
+      .set({
+        redirectResponse: "declined",
+        redirectRespondedAt: respondedAt,
+        status: "rejected",
+        finalPositionId: null,
+        updatedAt: new Date(),
+      })
+      .where(eq(applications.id, applicationId));
   }
 
   const updated = await getApplicationById(applicationId);
