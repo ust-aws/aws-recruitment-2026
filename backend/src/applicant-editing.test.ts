@@ -14,12 +14,10 @@ import {
   applicationDocuments,
   applications,
   committees,
-  emailNotifications,
   interviewBookings,
   interviewSlots,
   membershipPaymentCampaigns,
   membershipPaymentChatLinks,
-  membershipPayments,
   positions,
   recruitmentWindows,
 } from "./db/schema";
@@ -38,7 +36,6 @@ if (!/(^|[_-])test([_-]|$)/i.test(databaseName)) {
 process.env.APPLICANT_AUTH_SECRET =
   "applicant-editing-test-secret-at-least-32-characters";
 process.env.EMAIL_ENABLED = "false";
-process.env.RECRUITMENT_YEAR = "2096";
 
 const futureDeadline = () =>
   new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
@@ -719,7 +716,7 @@ test("applicant editing", async (t) => {
     assert.equal(update.status, 503);
   });
 
-  await t.test("applicants accept or decline a redirect from the dashboard", async (t) => {
+  await t.test("applicants accept or decline a redirect from the dashboard", async () => {
     await resetApplication();
     const offerRedirect = () =>
       db
@@ -735,23 +732,6 @@ test("applicant editing", async (t) => {
         .where(eq(applications.id, applicationId));
     const respond = (response: string) =>
       applicantRequest("/applicant/application/redirect-response", "POST", { response });
-
-    const [campaign] = await db
-      .insert(membershipPaymentCampaigns)
-      .values({
-        recruitmentYear: 2096,
-        amountCents: 25000,
-        opensAt: new Date("2096-09-01T00:00:00.000Z"),
-        deadlineAt: new Date("2096-12-01T00:00:00.000Z"),
-        isOpen: true,
-        openedAt: new Date("2096-09-01T00:00:00.000Z"),
-      })
-      .returning({ id: membershipPaymentCampaigns.id });
-    t.after(() =>
-      db
-        .delete(membershipPaymentCampaigns)
-        .where(eq(membershipPaymentCampaigns.id, campaign.id)),
-    );
 
     await offerRedirect();
     const unauthenticated = await app.request("/applicant/application/redirect-response", {
@@ -780,29 +760,6 @@ test("applicant editing", async (t) => {
       .where(eq(applications.id, applicationId));
     assert.equal(row.finalPositionId, positionA2Id);
     assert.equal((await respond("declined")).status, 409);
-    assert.equal(
-      (
-        await db
-          .select({ id: membershipPayments.id })
-          .from(membershipPayments)
-          .where(eq(membershipPayments.applicationId, applicationId))
-      ).length,
-      1,
-    );
-    assert.equal(
-      (
-        await db
-          .select({ id: emailNotifications.id })
-          .from(emailNotifications)
-          .where(
-            and(
-              eq(emailNotifications.applicationId, applicationId),
-              eq(emailNotifications.messageType, "payment_invitation"),
-            ),
-          )
-      ).length,
-      1,
-    );
 
     await offerRedirect();
     const declined = (await (await respond("declined")).json()) as {

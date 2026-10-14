@@ -26,7 +26,7 @@ export function HrShell({
     <TooltipProvider>
       <SidebarProvider className={providerClasses}>
         <HrSidebar role={role} />
-        <SidebarInset className={insetClasses} data-hr-workspace>
+        <SidebarInset className={insetClasses}>
           <SidebarTrigger
             className={mobileTriggerClasses}
             aria-label="Open dashboard navigation"

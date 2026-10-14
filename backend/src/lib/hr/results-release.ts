@@ -2,7 +2,6 @@ import { and, eq, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import { applications, emailNotifications, users } from "../../db/schema";
 import type { RecruitmentTrack } from "../applications/recruitment-scope";
-import { inviteToOpenCampaign } from "../membership/campaigns";
 import { seatHuntWinner } from "../officer-hunt/seats";
 import { getResultsPreviewForUpdate } from "./results-preview";
 
@@ -117,17 +116,6 @@ export async function releaseResults(
         })
         .returning({ id: emailNotifications.id });
       notificationIds.push(notification.id);
-    }
-
-    if (track === "r101") {
-      notificationIds.push(
-        ...(await inviteToOpenCampaign(
-          tx,
-          applicationsToRelease.flatMap((application) =>
-            application.classification === "redirected" ? [] : [application.id],
-          ),
-        )),
-      );
     }
 
     return {
