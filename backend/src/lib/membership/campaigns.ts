@@ -445,9 +445,9 @@ async function createPaymentsAndInvitations(
 }
 
 /**
- * For someone who becomes eligible after payments opened (a newly elected
- * officer): invites them now, since "Open payments" has already run. Does
- * nothing while payments are closed; opening them will pick them up.
+ * For someone who becomes eligible after payments opened: invites them now,
+ * since "Open payments" has already run. Does nothing while payments are
+ * closed; opening them will pick them up.
  */
 export async function inviteToOpenCampaign(
   tx: Tx,
