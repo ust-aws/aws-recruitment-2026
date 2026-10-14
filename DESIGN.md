@@ -219,6 +219,10 @@ type above are unchanged, but the working areas differ from the public site.
   rows are two lines.
 - **One accent job.** `aquamarine` marks the single thing that needs work on a
   screen (the lit station on the stage line, counts that need an officer).
+- **Dashboard motion.** The sidebar and dashboard shell stay fixed while newly
+  selected page content settles in over 220ms. Buttons respond in 180ms and
+  navigation rows show a short pressed state. Reduced motion removes spatial
+  movement and keeps only a brief opacity cue.
 - **Stage line.** The recruitment stages (Applied, Interview booked, Decided,
   Released, Payment sent, Member) are drawn as one vertical line of stations in
   the Overview rail. Counts are running totals defined once in
