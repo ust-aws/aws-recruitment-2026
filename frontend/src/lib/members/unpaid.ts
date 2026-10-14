@@ -8,6 +8,10 @@ export type UnpaidEntry = {
   key: string
   fullName: string
   email: string
+  birthday: string | null
+  gender: string | null
+  section: string | null
+  facebookUrl: string | null
   position: string
   committee: string | null
   status: UnpaidStatus
@@ -47,6 +51,10 @@ export function buildUnpaidEntries(payments: PaymentListItem[]): UnpaidEntry[] {
       key: payment.paymentId,
       fullName: `${payment.firstName} ${payment.lastName}`.trim(),
       email: payment.email,
+      birthday: payment.birthday,
+      gender: payment.gender,
+      section: payment.section,
+      facebookUrl: payment.facebookUrl,
       position: positionLabel(payment),
       committee: payment.committee,
       status: payment.status,

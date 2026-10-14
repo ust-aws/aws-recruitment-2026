@@ -13,6 +13,9 @@ function member(patch: Partial<DirectoryMember>): DirectoryMember {
   return {
     memberId: "AWS-2627-0001",
     fullName: "Test Member",
+    birthday: "2005-06-15",
+    gender: "female",
+    facebookUrl: "https://facebook.com/test.member",
     studentNumber: "2023100001",
     section: "3CSC",
     role: "general",
@@ -35,6 +38,10 @@ function payment(patch: Partial<PaymentListItem>): PaymentListItem {
     firstName: "Ana",
     lastName: "Cruz",
     email: "someone@ust.edu.ph",
+    birthday: "2004-07-20",
+    gender: "male",
+    section: "4ITB",
+    facebookUrl: "https://facebook.com/ana.cruz",
     status: "awaiting_payment",
     membershipStatus: "inactive",
     verifiedAt: null,
@@ -71,6 +78,9 @@ test("paid members come first with their Member ID, then the officers with their
 test("seeded officers show the number held for their seat until they pay", () => {
   const ceo: PendingOfficer = {
     fullName: "Sydney Alison Padua",
+    birthday: null,
+    gender: null,
+    facebookUrl: null,
     position: "Chief Executive Officer",
     role: "eb",
     committee: "Office of the Chief Executive Officer",
@@ -179,10 +189,12 @@ test("CSV exports quote cells and guard against spreadsheet formulas", () => {
   const entries = buildMemberEntries([member({ fullName: "=SUM(A1)", position: 'Says "hi", twice' })])
   const csv = membersToCsv(entries.slice(0, 1))
   const [header, row] = csv.split("\r\n")
-  assert.equal(header, '"Full name","Position","Role","Committee","Member ID","Student number","Section","ID issued"')
+  assert.equal(header, '"Full name","Birthday","Gender","Facebook link","Year level","Course","Section","Position","Role","Committee","Member ID","Student number","ID issued"')
   assert.ok(row.startsWith(`"'=SUM`))
   assert.ok(row.includes('"Says ""hi"", twice"'))
+  assert.ok(row.includes('"3rd Year","CS"'))
   const unpaid = unpaidToCsv(buildUnpaidEntries([payment({})]))
+  assert.ok(unpaid.includes('"4th Year","IT"'))
   assert.ok(unpaid.split("\r\n")[1].includes('"Awaiting payment"'))
 })
 

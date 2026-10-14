@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  academicDetailsFromSection,
   documentFileNameMatches,
   formatLastName,
   formatPersonName,
@@ -18,6 +19,14 @@ test("section format", () => {
   assert.equal(isValidSection("4CSC"), true);
   assert.equal(isValidSection("4csc"), true);
   assert.equal(isValidSection("BSCS"), false);
+  assert.deepEqual(academicDetailsFromSection("4CSC"), {
+    yearLevel: "4th Year",
+    course: "CS",
+  });
+  assert.deepEqual(academicDetailsFromSection(null), {
+    yearLevel: null,
+    course: null,
+  });
 });
 
 test("applicant text guards", () => {

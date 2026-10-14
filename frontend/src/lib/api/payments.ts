@@ -52,6 +52,10 @@ export type PaymentListItem = {
   firstName: string
   lastName: string
   email: string
+  birthday: string | null
+  gender: string | null
+  section: string | null
+  facebookUrl: string | null
   status: PaymentStatus
   membershipStatus: "inactive" | "active" | "revoked"
   verifiedAt: string | null
@@ -256,6 +260,9 @@ export type DirectoryMemberRole = "eb" | "director" | "adviser" | "ea" | "staff"
 export type DirectoryMember = {
   memberId: string
   fullName: string
+  birthday: string | null
+  gender: string | null
+  facebookUrl: string | null
   studentNumber: string | null
   section: string | null
   role: DirectoryMemberRole
@@ -267,6 +274,9 @@ export type DirectoryMember = {
 /** A board member or director who has not paid yet, with the Member ID held for their seat. */
 export type PendingOfficer = {
   fullName: string
+  birthday: string | null
+  gender: string | null
+  facebookUrl: string | null
   position: string
   role: "eb" | "director" | "ea"
   committee: string
