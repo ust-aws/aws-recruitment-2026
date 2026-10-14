@@ -11,6 +11,8 @@ import {
   applications,
   committees,
   emailNotifications,
+  membershipPaymentCampaigns,
+  membershipPayments,
   positions,
   users,
 } from "./db/schema";
@@ -50,6 +52,9 @@ let hrToken = "";
 
 after(async () => {
   try {
+    await db
+      .delete(membershipPaymentCampaigns)
+      .where(eq(membershipPaymentCampaigns.recruitmentYear, 2095));
     await db
       .delete(applicants)
       .where(inArray(applicants.id, [...applicantIds, memberApplicantId]));
@@ -671,6 +676,14 @@ test("results release preview", async (t) => {
       applicationType: "member",
       status: "approved",
     });
+    await db.insert(membershipPaymentCampaigns).values({
+      recruitmentYear: 2095,
+      amountCents: 25000,
+      opensAt: new Date("2095-01-01T00:00:00.000Z"),
+      deadlineAt: new Date("2095-12-01T00:00:00.000Z"),
+      isOpen: true,
+      openedAt: new Date("2095-01-01T00:00:00.000Z"),
+    });
 
     const previewResponse = await hrRequest();
     assert.equal(previewResponse.status, 200);
@@ -749,7 +762,7 @@ test("results release preview", async (t) => {
         accepted: 1,
         rejected: 0,
         memberIdsGenerated: 0,
-        emailDelivery: { queued: 1 },
+        emailDelivery: { queued: 2 },
       },
     );
 
@@ -769,6 +782,14 @@ test("results release preview", async (t) => {
       .select({ messageType: emailNotifications.messageType })
       .from(emailNotifications)
       .where(eq(emailNotifications.applicationId, memberApplicationId));
-    assert.deepEqual(memberNotifications, [{ messageType: "result_accepted" }]);
+    assert.deepEqual(
+      memberNotifications.map((row) => row.messageType).sort(),
+      ["payment_invitation", "result_accepted"],
+    );
+    const [payment] = await db
+      .select({ status: membershipPayments.status })
+      .from(membershipPayments)
+      .where(eq(membershipPayments.applicationId, memberApplicationId));
+    assert.equal(payment.status, "awaiting_payment");
   });
 });
