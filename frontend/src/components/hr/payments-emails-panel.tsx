@@ -80,7 +80,7 @@ export function PaymentsEmailsPanel({ payments, onChanged }: PaymentsEmailsPanel
   const send = () =>
     run(async () => {
       const { queued, alreadyWaiting } = await sendPaymentInvitations(ids)
-      const waiting = alreadyWaiting > 0 ? ` ${alreadyWaiting} ${alreadyWaiting === 1 ? "was" : "were"} already waiting to send.` : ""
+      const waiting = alreadyWaiting > 0 ? ` ${alreadyWaiting} ${alreadyWaiting === 1 ? "was" : "were"} already in line; the sender was started for them.` : ""
       return `${queued === 0 ? "Nothing new to send." : `Sending ${queued} payment ${queued === 1 ? "email" : "emails"} in the background.`}${waiting}`
     })
   const markDelivered = () =>

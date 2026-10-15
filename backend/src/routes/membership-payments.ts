@@ -254,7 +254,8 @@ membershipPaymentRoutes.post(
     if (!parsed.success) return c.json({ error: "Pick at least one person." }, 400);
     try {
       const result = await sendPaymentInvitations(parsed.data.paymentIds);
-      if (result.queued > 0) await kickEmailOutbox();
+      // Start the sender for already-waiting emails too: it only runs when started.
+      if (result.queued > 0 || result.alreadyWaiting > 0) await kickEmailOutbox();
       return c.json(result);
     } catch (error) {
       const result = paymentError(error);
