@@ -55,6 +55,9 @@ export function PaymentsEmailsPanel({ payments, onChanged }: PaymentsEmailsPanel
     picked.has(payment.paymentId) && payment.invitation === "uncertain" ? [payment.paymentId] : [],
   )
   const allPicked = rows.length > 0 && ids.length === rows.length
+  const unpaidIds = payments.flatMap((payment) =>
+    payment.status === "awaiting_payment" && !payment.archivedAt ? [payment.paymentId] : [],
+  )
 
   function toggle(id: string, on: boolean) {
     const next = new Set(picked)
@@ -88,6 +91,14 @@ export function PaymentsEmailsPanel({ payments, onChanged }: PaymentsEmailsPanel
       const { marked } = await markPaymentInvitationsDelivered(uncertainIds)
       return `Marked ${marked} ${marked === 1 ? "email" : "emails"} as delivered.`
     })
+  const remindUnpaid = () =>
+    run(async () => {
+      const { queued, alreadyWaiting } = await sendPaymentInvitations(unpaidIds)
+      const waiting = alreadyWaiting > 0
+        ? ` ${alreadyWaiting} ${alreadyWaiting === 1 ? "email is" : "emails are"} already waiting to send.`
+        : ""
+      return `${queued === 0 ? "No new follow-up emails to send." : `Sending ${queued} payment follow-up ${queued === 1 ? "email" : "emails"} in the background.`}${waiting}`
+    })
 
   return (
     <>
@@ -96,7 +107,7 @@ export function PaymentsEmailsPanel({ payments, onChanged }: PaymentsEmailsPanel
         <p className={helpClasses}>
           Tick the people to send the payment email to. For ones marked &quot;May Not Have Arrived&quot;, search the
           sender account&apos;s Sent folder first: resend if it is missing, or mark it as delivered if you find it.
-          Someone who already paid is not listed as not sent.
+          Someone who already paid is not listed as not sent. Follow Up Unpaid resends the payment email to everyone still awaiting payment.
         </p>
         {rows.length === 0 ? (
           <p className={cn(helpClasses, "mt-4")}>No one is in this group.</p>
@@ -131,6 +142,9 @@ export function PaymentsEmailsPanel({ payments, onChanged }: PaymentsEmailsPanel
           </>
         )}
         <div className={actionsClasses}>
+          <Button type="button" color="purple" className={actionClasses} disabled={pending || unpaidIds.length === 0} onClick={() => void remindUnpaid()}>
+            {pending ? "Working." : `Follow Up Unpaid (${unpaidIds.length})`}
+          </Button>
           <Button type="button" color="cyan" className={actionClasses} disabled={pending || ids.length === 0} onClick={() => void send()}>
             {pending ? "Working…" : `Send Selected (${ids.length})`}
           </Button>
