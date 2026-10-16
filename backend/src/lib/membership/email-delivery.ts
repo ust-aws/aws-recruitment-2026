@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull } from "drizzle-orm";
 import { db } from "../../db";
 import {
   applicants,
@@ -171,14 +171,17 @@ export async function retryFailedMembershipEmails(
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
+type LatestInvitation = { id: string; status: string; nextAttemptAt: Date | null };
+
 /** The newest payment invitation per application, for deciding what a resend should do. */
 async function latestInvitations(executor: Tx | typeof db, applicationIds: string[]) {
-  if (applicationIds.length === 0) return new Map<string, { id: string; status: string }>();
+  if (applicationIds.length === 0) return new Map<string, LatestInvitation>();
   const rows = await executor
     .select({
       id: emailNotifications.id,
       applicationId: emailNotifications.applicationId,
       status: emailNotifications.status,
+      nextAttemptAt: emailNotifications.nextAttemptAt,
     })
     .from(emailNotifications)
     .where(
@@ -188,10 +191,10 @@ async function latestInvitations(executor: Tx | typeof db, applicationIds: strin
       ),
     )
     .orderBy(desc(emailNotifications.createdAt));
-  const latest = new Map<string, { id: string; status: string }>();
+  const latest = new Map<string, LatestInvitation>();
   for (const row of rows) {
     if (row.applicationId && !latest.has(row.applicationId)) {
-      latest.set(row.applicationId, { id: row.id, status: row.status });
+      latest.set(row.applicationId, { id: row.id, status: row.status, nextAttemptAt: row.nextAttemptAt });
     }
   }
   return latest;
@@ -200,8 +203,10 @@ async function latestInvitations(executor: Tx | typeof db, applicationIds: strin
 /**
  * Sends the payment invitation to the chosen people, whatever its state:
  * a new email for anyone who never had one (or who has one that was sent and
- * needs another), and the same email again for one that failed or may not have
- * arrived. An email that is still waiting to go out is left alone.
+ * needs another), the same email again for one that failed or may not have
+ * arrived, and right away for one held back or scheduled for later (an officer
+ * seeded on hold, with their held welcome email released alongside). An email
+ * already due is left alone; the caller starts the sender for it.
  */
 export async function sendPaymentInvitations(paymentIds: readonly string[]) {
   return db.transaction(async (tx) => {
@@ -238,7 +243,12 @@ export async function sendPaymentInvitations(paymentIds: readonly string[]) {
       const current = latest.get(row.applicationId);
       return current?.status === "failed" ? [current.id] : [];
     });
-    const waiting = rows.length - toCreate.length - toRequeue.length;
+    const now = new Date();
+    const held = rows.filter((row) => {
+      const current = latest.get(row.applicationId);
+      return current?.status === "pending" && current.nextAttemptAt !== null && current.nextAttemptAt > now;
+    });
+    const waiting = rows.length - toCreate.length - toRequeue.length - held.length;
 
     if (toCreate.length > 0) {
       await tx.insert(emailNotifications).values(
@@ -255,7 +265,20 @@ export async function sendPaymentInvitations(paymentIds: readonly string[]) {
         .set({ status: "pending", nextAttemptAt: new Date(), claimedAt: null })
         .where(inArray(emailNotifications.id, toRequeue));
     }
-    return { queued: toCreate.length + toRequeue.length, alreadyWaiting: waiting };
+    if (held.length > 0) {
+      await tx
+        .update(emailNotifications)
+        .set({ nextAttemptAt: now, claimedAt: null })
+        .where(
+          and(
+            inArray(emailNotifications.messageType, ["payment_invitation", "officer_welcome"]),
+            eq(emailNotifications.status, "pending"),
+            gt(emailNotifications.nextAttemptAt, now),
+            inArray(emailNotifications.applicationId, held.map((row) => row.applicationId)),
+          ),
+        );
+    }
+    return { queued: toCreate.length + toRequeue.length + held.length, alreadyWaiting: waiting };
   });
 }
 
