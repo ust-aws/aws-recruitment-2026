@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { z } from "zod";
 import { getCurrentUser, requireRoles } from "../auth";
+import { academicDetailsFromSection } from "../lib/apply/field-validation";
 import {
   closeCurrentPaymentCampaign,
   completeCurrentPaymentQrUpload,
@@ -290,6 +291,12 @@ membershipPaymentRoutes.get("/export", async (c) => {
     "First Name",
     "Last Name",
     "Email",
+    "Birthday",
+    "Gender",
+    "Facebook link",
+    "Year level",
+    "Course",
+    "Section",
     "Applicant Type",
     "Committee",
     "Position",
@@ -297,21 +304,30 @@ membershipPaymentRoutes.get("/export", async (c) => {
   ];
   const csv = [
     header,
-    ...rows.map((row) => [
-      row.memberId,
-      row.applicationCode,
-      row.firstName,
-      row.lastName,
-      row.email,
-      row.applicationType === "member"
-        ? "General Member"
-        : row.applicationType === "officer"
-          ? "Officer"
-          : "Committee",
-      row.committee,
-      row.position ?? row.officerTitle,
-      row.verifiedAt?.toISOString() ?? "",
-    ]),
+    ...rows.map((row) => {
+      const academic = academicDetailsFromSection(row.section);
+      return [
+        row.memberId,
+        row.applicationCode,
+        row.firstName,
+        row.lastName,
+        row.email,
+        row.birthday,
+        row.gender,
+        row.facebookUrl,
+        academic.yearLevel,
+        academic.course,
+        row.section,
+        row.applicationType === "member"
+          ? "General Member"
+          : row.applicationType === "officer"
+            ? "Officer"
+            : "Committee",
+        row.committee,
+        row.position ?? row.officerTitle,
+        row.verifiedAt?.toISOString() ?? "",
+      ];
+    }),
   ]
     .map((row) => row.map(csvCell).join(","))
     .join("\r\n");

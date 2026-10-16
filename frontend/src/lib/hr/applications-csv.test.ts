@@ -70,6 +70,8 @@ test("exports only allowed fields and escapes spreadsheet input", () => {
   assert.match(csv, /"2006-01-01"/)
   assert.match(csv, /"female"/)
   assert.match(csv, /"https:\/\/facebook\.com\/formula\.tester"/)
+  assert.match(csv, /"3rd Year"/)
+  assert.match(csv, /"CS"/)
   assert.ok(!csv.includes("resume.pdf"))
   assert.ok(!csv.includes("drive.google.com"))
   assert.ok(!csv.includes("github.com"))

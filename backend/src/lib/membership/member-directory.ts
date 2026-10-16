@@ -20,6 +20,9 @@ export type MemberRole = "eb" | "director" | "adviser" | "ea" | "staff" | "gener
 export type DirectoryMember = {
   memberId: string;
   fullName: string;
+  birthday: string | null;
+  gender: string | null;
+  facebookUrl: string | null;
   studentNumber: string | null;
   section: string | null;
   role: MemberRole;
@@ -36,6 +39,9 @@ export async function listDirectoryMembers(): Promise<DirectoryMember[]> {
       firstName: applicants.firstName,
       lastName: applicants.lastName,
       studentNumber: applicants.studentNumber,
+      birthday: applicants.birthday,
+      gender: applicants.gender,
+      facebookUrl: applicants.facebookUrl,
       section: applicants.section,
       applicationType: applications.applicationType,
       applicationStatus: applications.status,
@@ -74,6 +80,9 @@ export async function listDirectoryMembers(): Promise<DirectoryMember[]> {
         {
           memberId: row.memberId,
           fullName: `${row.firstName} ${row.lastName}`,
+          birthday: row.birthday,
+          gender: row.gender,
+          facebookUrl: row.facebookUrl,
           studentNumber: row.studentNumber,
           section: row.section,
           role: row.officerKind,
@@ -94,6 +103,9 @@ export async function listDirectoryMembers(): Promise<DirectoryMember[]> {
       {
         memberId: row.memberId,
         fullName: `${row.firstName} ${row.lastName}`,
+        birthday: row.birthday,
+        gender: row.gender,
+        facebookUrl: row.facebookUrl,
         studentNumber: row.studentNumber,
         section: row.section,
         role,
@@ -113,6 +125,11 @@ async function listAdvisers(): Promise<DirectoryMember[]> {
       memberId: applications.memberId,
       firstName: applicants.firstName,
       lastName: applicants.lastName,
+      birthday: applicants.birthday,
+      gender: applicants.gender,
+      facebookUrl: applicants.facebookUrl,
+      studentNumber: applicants.studentNumber,
+      section: applicants.section,
       title: officerSeats.title,
       issuedAt: applications.submittedAt,
     })
@@ -132,8 +149,11 @@ async function listAdvisers(): Promise<DirectoryMember[]> {
           {
             memberId: row.memberId,
             fullName: `${row.firstName} ${row.lastName}`,
-            studentNumber: null,
-            section: null,
+            birthday: row.birthday,
+            gender: row.gender,
+            facebookUrl: row.facebookUrl,
+            studentNumber: row.studentNumber,
+            section: row.section,
             role: "adviser" as const,
             position: row.title,
             committee: null,
@@ -147,6 +167,9 @@ async function listAdvisers(): Promise<DirectoryMember[]> {
 /** A board member or director who has not paid yet: listed with the number held for their seat. */
 export type PendingOfficer = {
   fullName: string;
+  birthday: string | null;
+  gender: string | null;
+  facebookUrl: string | null;
   position: string;
   role: "eb" | "director" | "ea";
   committee: string;
@@ -172,6 +195,9 @@ export async function listPendingOfficers(
       applicationCode: applications.applicationCode,
       firstName: applicants.firstName,
       lastName: applicants.lastName,
+      birthday: applicants.birthday,
+      gender: applicants.gender,
+      facebookUrl: applicants.facebookUrl,
       studentNumber: applicants.studentNumber,
       section: applicants.section,
     })
@@ -205,6 +231,9 @@ export async function listPendingOfficers(
   const reservedByRow = new Map(numbered.map((row, index) => [row, reserved[index]]));
   return pending.map((row) => ({
     fullName: `${row.firstName} ${row.lastName}`,
+    birthday: row.birthday,
+    gender: row.gender,
+    facebookUrl: row.facebookUrl,
     position: row.title,
     role: row.kind,
     committee: row.committee,

@@ -17,6 +17,18 @@ export function isValidSection(value: string): boolean {
   return SECTION_RE.test(normalizeSection(value));
 }
 
+const YEAR_SUFFIXES = ["th", "st", "nd", "rd", "th", "th", "th"];
+
+export function academicDetailsFromSection(section: string | null) {
+  const normalized = normalizeSection(section ?? "");
+  if (!isValidSection(normalized)) return { yearLevel: null, course: null };
+  const year = Number(normalized[0]);
+  return {
+    yearLevel: `${year}${YEAR_SUFFIXES[year]} Year`,
+    course: normalized.slice(1, 3),
+  };
+}
+
 export function isValidStudentNumber(value: string): boolean {
   return STUDENT_NUMBER_RE.test(value.trim());
 }

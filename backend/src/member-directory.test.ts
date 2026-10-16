@@ -61,6 +61,10 @@ test("member directory", async () => {
       firstName: `Dir${index}`,
       lastName: runId,
       email: `dir-${index}-${id}@ust.edu.ph`,
+      birthday: "2005-06-15",
+      gender: "female" as const,
+      section: "3CSC",
+      facebookUrl: `https://facebook.com/dir-${index}-${runId}`,
     })),
   );
 
@@ -104,5 +108,9 @@ test("member directory", async () => {
       ["AWS-9899-0030", "staff", "Test Committee Staff"],
       ["AWS-9899-0050", "general", "General Member"],
     ],
+  );
+  assert.deepEqual(
+    [members[0].birthday, members[0].gender, members[0].section, members[0].facebookUrl],
+    ["2005-06-15", "female", "3CSC", `https://facebook.com/dir-0-${runId}`],
   );
 });

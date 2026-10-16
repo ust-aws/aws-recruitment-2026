@@ -103,7 +103,7 @@ test("membership payment workflow", async (t) => {
   await db.insert(committees).values({ id: ids.committee, name: `Payment ${ids.committee}` });
   await db.insert(positions).values({ id: ids.position, committeeId: ids.committee, name: "Payment Staff" });
   await db.insert(applicants).values([
-    { id: ids.acceptedApplicant, firstName: "Accepted", lastName: "Applicant", email: `accepted-${ids.acceptedApplicant}@ust.edu.ph` },
+    { id: ids.acceptedApplicant, firstName: "Accepted", lastName: "Applicant", email: `accepted-${ids.acceptedApplicant}@ust.edu.ph`, birthday: "2005-06-15", gender: "female" as const, section: "3CSC", facebookUrl: "https://facebook.com/accepted.applicant" },
     { id: ids.rejectedApplicant, firstName: "Rejected", lastName: "Applicant", email: `rejected-${ids.rejectedApplicant}@ust.edu.ph` },
     { id: ids.memberApplicant, firstName: "Member", lastName: "Applicant", email: `member-${ids.memberApplicant}@ust.edu.ph` },
     { id: ids.archivedApplicant, firstName: "Archived", lastName: "Applicant", email: `archived-${ids.archivedApplicant}@ust.edu.ph` },
@@ -184,6 +184,17 @@ test("membership payment workflow", async (t) => {
     assert.equal(opened.status, 200);
     const payload = (await opened.json()) as { eligible: number; created: number };
     assert.deepEqual(payload, { eligible: 3, officers: 0, members: 3, created: 3, emailDelivery: { queued: 3 } });
+    const dashboard = await staffRequest("/membership-payments", hrToken);
+    const dashboardBody = (await dashboard.json()) as {
+      payments: { applicationId: string; birthday: string | null; gender: string | null; section: string | null; facebookUrl: string | null }[];
+    };
+    const accepted = dashboardBody.payments.find((payment) => payment.applicationId === ids.acceptedApplication);
+    assert.deepEqual(accepted && [accepted.birthday, accepted.gender, accepted.section, accepted.facebookUrl], [
+      "2005-06-15",
+      "female",
+      "3CSC",
+      "https://facebook.com/accepted.applicant",
+    ]);
     // Email is switched off in tests, so the background outbox fails them.
     assert.deepEqual(await runEmailOutbox({ budgetMs: 5_000 }), {
       skipped: false,
@@ -258,6 +269,12 @@ test("membership payment workflow", async (t) => {
     assert.match(((await photoPresign.json()) as { key: string }).key, new RegExp(`^incoming/member-photos/${ids.acceptedApplication}/`));
     const [application] = await db.select({ memberId: applications.memberId }).from(applications).where(eq(applications.id, ids.acceptedApplication));
     assert.match(application.memberId ?? "", /^AWS-9697-\d{4}$/);
+
+    const exported = await staffRequest("/membership-payments/export", hrToken);
+    assert.equal(exported.status, 200);
+    const csv = await exported.text();
+    assert.match(csv, /"Birthday","Gender","Facebook link","Year level","Course","Section"/);
+    assert.match(csv, /"2005-06-15","female","https:\/\/facebook\.com\/accepted\.applicant","3rd Year","CS","3CSC"/);
   });
 
   await t.test("HR can reject a receipt for resubmission", async () => {

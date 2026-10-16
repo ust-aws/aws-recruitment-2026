@@ -8,6 +8,9 @@ export type MemberFilter = "all" | "eb" | "ea" | "director" | "staff" | "general
 export type MemberEntry = {
   key: string
   fullName: string
+  birthday: string | null
+  gender: string | null
+  facebookUrl: string | null
   position: string
   role: Exclude<MemberFilter, "all">
   /** The executive office or committee this person belongs to; null for general members. */
@@ -62,6 +65,9 @@ function staticOfficerEntries(): MemberEntry[] {
   ): MemberEntry => ({
     key: id,
     fullName: person.name,
+    birthday: null,
+    gender: null,
+    facebookUrl: null,
     position: person.title,
     role,
     committee,
@@ -87,6 +93,9 @@ function pendingOfficerEntry(officer: PendingOfficer): MemberEntry {
   return {
     key: `pending-${officer.applicationCode}`,
     fullName: officer.fullName,
+    birthday: officer.birthday,
+    gender: officer.gender,
+    facebookUrl: officer.facebookUrl,
     position: officer.position,
     role: officer.role,
     committee: officer.committee,
@@ -112,6 +121,9 @@ export function buildMemberEntries(
     ...verified.map((member) => ({
       key: member.memberId,
       fullName: member.fullName,
+      birthday: member.birthday,
+      gender: member.gender,
+      facebookUrl: member.facebookUrl,
       position: member.position,
       role: member.role,
       committee: member.committee,

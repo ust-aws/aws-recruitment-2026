@@ -1,4 +1,5 @@
 import type { HrApplication } from "@/lib/types/hr-application"
+import { academicDetailsFromSection } from "@/lib/apply/academic-details"
 
 const HEADERS = [
   "Application ID",
@@ -7,6 +8,8 @@ const HEADERS = [
   "Birthday",
   "Gender",
   "Student number",
+  "Year level",
+  "Course",
   "Section",
   "Contact number",
   "Facebook link",
@@ -32,6 +35,7 @@ export function escapeCell(value: string | null | undefined) {
 
 export function applicationsToCsv(applications: HrApplication[]) {
   const rows = applications.map((application) => {
+    const academic = academicDetailsFromSection(application.section)
     let first: (typeof application.choices)[number] | undefined
     let second: (typeof application.choices)[number] | undefined
     for (const choice of application.choices) {
@@ -45,6 +49,8 @@ export function applicationsToCsv(applications: HrApplication[]) {
       application.birthday,
       application.gender,
       application.studentNumber,
+      academic.yearLevel,
+      academic.course,
       application.section,
       application.contactNumber,
       application.facebookUrl,
