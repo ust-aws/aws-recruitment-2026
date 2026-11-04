@@ -25,7 +25,7 @@ export function MemberIdCardBack({ memberId, forExport = false }: MemberIdCardBa
   return (
     <div className={backClasses}>
       <Image
-        src="/member-id/back-bg.png"
+        src="/member-id/back-bg.webp"
         alt=""
         fill
         sizes={forExport ? "1183px" : "24rem"}
@@ -33,7 +33,7 @@ export function MemberIdCardBack({ memberId, forExport = false }: MemberIdCardBa
         className={backgroundClasses}
       />
       <Image
-        src="/member-id/back-logo.png"
+        src="/member-id/back-logo.webp"
         alt="AWS Builders – UST"
         width={900}
         height={540}

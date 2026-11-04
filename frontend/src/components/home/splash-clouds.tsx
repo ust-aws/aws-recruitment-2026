@@ -11,8 +11,8 @@ import {
 const stageClasses = "pointer-events-none absolute inset-0 z-0 overflow-hidden"
 const puffBaseClasses = "absolute"
 const puffMask = {
-  WebkitMaskImage: 'url("/hero/cloud.png")',
-  maskImage: 'url("/hero/cloud.png")',
+  WebkitMaskImage: 'url("/hero/cloud.webp")',
+  maskImage: 'url("/hero/cloud.webp")',
   WebkitMaskSize: "contain",
   maskSize: "contain",
   WebkitMaskRepeat: "no-repeat",

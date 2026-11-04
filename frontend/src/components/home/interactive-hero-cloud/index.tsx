@@ -55,7 +55,7 @@ export function InteractiveHeroCloud() {
           }
         >
           <Image
-            src="/hero/cloud.png"
+            src="/hero/cloud.webp"
             alt=""
             fill
             loading="lazy"

@@ -62,7 +62,7 @@ export function MemberIdCardFront({
       <span className={footStripClasses} aria-hidden />
       <div className={headerClasses}>
         <Image
-          src="/member-id/front-logo.png"
+          src="/member-id/front-logo.webp"
           alt=""
           width={360}
           height={287}

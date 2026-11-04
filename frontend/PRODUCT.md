@@ -48,7 +48,7 @@ The recruitment and membership system of AWS Builders – UST, "the first cloud 
 ## Brand Commitments
 
 - Name: **AWS Builders – UST**. Tagline: **"It's Always Day One"**.
-- Mascot: **Espi** (`frontend/public/espi.png`), used across the site, error pages, and the member ID.
+- Mascot: **Espi** (`frontend/public/espi.webp`), used across the site, error pages, and the member ID.
 - Email sign-off: "Yours in Thomasian Leadership, The AWS Builders - UST Executive Board".
 - The public website's visual system is recorded in the root `DESIGN.md` (Figma "AWS website draft").
 

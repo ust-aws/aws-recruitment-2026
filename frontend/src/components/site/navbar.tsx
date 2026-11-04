@@ -68,7 +68,7 @@ export function Navbar() {
             }}
           >
             <Image
-              src="/aws-logo.png"
+              src="/aws-logo.webp"
               alt="AWS Builders – UST"
               width={117}
               height={66}

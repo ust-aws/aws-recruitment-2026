@@ -52,7 +52,7 @@ export function MissionVision() {
         <figure className={figureClasses}>
           <div className={imageWrapperClasses}>
             <Image
-              src="/espi.png"
+              src="/espi.webp"
               alt="Espi, the AWS Builders – UST mascot"
               fill
               sizes="(min-width: 1024px) 26rem, 100vw"
