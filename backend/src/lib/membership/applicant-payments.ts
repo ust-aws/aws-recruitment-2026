@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, ne } from "drizzle-orm";
 import { db } from "../../db";
 import {
   applications,
@@ -388,6 +388,8 @@ export async function submitApplicantPayment(
           membershipPaymentSubmissions.referenceNumberNormalized,
           referenceNumberNormalized,
         ),
+        // The applicant's own earlier (rejected) attempts may reuse the reference.
+        ne(membershipPaymentSubmissions.paymentId, payment.paymentId),
       ),
     )
     .limit(1);

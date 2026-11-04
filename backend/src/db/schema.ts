@@ -11,6 +11,7 @@ import {
   timestamp,
   check,
   unique,
+  uniqueIndex,
   index,
 } from "drizzle-orm/pg-core";
 
@@ -820,10 +821,10 @@ export const membershipPaymentSubmissions = pgTable(
       t.paymentId,
       t.attemptNumber,
     ),
-    unique("membership_payment_submissions_reference_unique").on(
-      t.campaignId,
-      t.referenceNumberNormalized,
-    ),
+    // Rejected/reversed attempts free their reference so the same applicant can resubmit a valid one.
+    uniqueIndex("membership_payment_submissions_reference_unique")
+      .on(t.campaignId, t.referenceNumberNormalized)
+      .where(sql`${t.status} NOT IN ('rejected', 'reversed')`),
     check(
       "membership_payment_submissions_attempt_check",
       sql`${t.attemptNumber} > 0`,
