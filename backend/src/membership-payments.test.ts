@@ -425,4 +425,24 @@ test("membership payment workflow", async (t) => {
       await db.update(membershipPaymentCampaigns).set({ deadlineAt: campaign.deadlineAt }).where(eq(membershipPaymentCampaigns.id, campaign.id));
     }
   });
+
+  await t.test("a rejected applicant can resubmit the same reference, but nobody else can use it", async () => {
+    const submitAs = async (applicationId: string, applicationCode: string) => {
+      const { token } = await signApplicantToken({ applicationId, applicationCode });
+      return app.request("/applicant/payment/submit", {
+        method: "POST",
+        headers: { ...originHeaders(), "Content-Type": "application/json", Cookie: `applicant_token=${token}` },
+        body: JSON.stringify({ referenceNumber: "REF-810003", receiptUrl: "https://drive.google.com/file/d/receipt-810003/view" }),
+      });
+    };
+    const [payment] = await db.select().from(membershipPayments).where(eq(membershipPayments.applicationId, ids.memberApplication));
+    const rejected = await staffRequest(`/membership-payments/${payment.id}/reject`, hrToken, {
+      method: "POST",
+      body: JSON.stringify({ reason: "Payment has not reflected" }),
+    });
+    assert.equal(rejected.status, 200);
+    assert.equal((await submitAs(ids.memberApplication, "AP-2096-810003")).status, 201);
+    // The reversed officer payment is open for resubmission but must not take another applicant's reference.
+    assert.equal((await submitAs(ids.acceptedApplication, "AP-2096-810001")).status, 409);
+  });
 });
