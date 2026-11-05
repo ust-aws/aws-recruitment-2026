@@ -292,3 +292,35 @@ type above are unchanged, but the working areas differ from the public site.
   one section per page gets it. Motion utilities `trail-fill`,
   `trail-beacon` and `espi-rise` live in `globals.css` and stop under reduced
   motion.
+
+## Staff sign-in (`/login`)
+
+The shared sign-in for HR, Finance and Marketing officers
+(`frontend/src/app/(site)/login/`). One form; the account decides the
+dashboard.
+
+- **Split pane.** From `lg`, a solid `haiti` form column (`minmax(26rem,35rem)`,
+  hairline right border) beside a vector night sky drawn in the member-ID
+  painting's style (`login-sky-scene.tsx`: violet gradient, a deterministic
+  star field, three banks of puffy clouds each shaded as one shape), crisp at
+  any size; a 1600×1000 canvas sliced to the pane's height keeps the cloud line
+  steady on wide screens. Below `lg`, the sky is a 176px band above the
+  form and the brand row shows only the logo (name kept for screen readers).
+- **Sky.** "It's Always **Day One.**" at 60–96px, top left (hidden below `lg`);
+  a crescent moon (inline SVG) hangs high on the right, painted in the sky's
+  palette: `blue-chalk` lit edge falling through `prelude` to `biloba-flower`
+  horns, a crisp outer edge with a softly blurred terminator, and a violet
+  halo.
+- **Signature move: the dawn.** While the sign-in is pending, the whole sky
+  lifts toward `biloba-flower`, an `aquamarine` dawn rises from below, and each
+  cloud bank fades in an opaque dawn-lit copy of itself (screen blend), over
+  700ms;
+  the moon sinks toward the clouds and fades. All of it sinks back on error.
+  Reduced motion keeps opacity only. The moon rises once on load
+  (`espi-rise`).
+- **Accent.** `aquamarine` only on the Sign In button and "Day One."; the
+  `$ auth login --staff` eyebrow is `biloba-flower`. Caret `blue-chalk`,
+  selection `biloba-flower/35`.
+- **Copy.** "Good to see you, Builder.", "Email" (placeholder "Enter your
+  email"; never a real account address), "Password", "← Back to site". No password-reset link
+  until a reset flow exists.
