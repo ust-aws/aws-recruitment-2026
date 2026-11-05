@@ -73,3 +73,6 @@ yarn-error.log*
 **/.impeccable/live/deferred-svelte-component-accepts.json
 **/.impeccable/live/*.png
 # impeccable-ignore-end
+
+# Impeccable decision-round sketches and their server logs (local, throwaway)
+**/.impeccable/mocks/
