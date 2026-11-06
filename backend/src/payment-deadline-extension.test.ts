@@ -14,7 +14,9 @@ import {
 } from "./db/schema";
 import { prepareQueuedEmail } from "./lib/email/queued-emails";
 import type { AuthenticatedUser } from "./auth";
+import { getApplicantPayment } from "./lib/membership/applicant-payments";
 import { openCurrentPaymentCampaign, saveCurrentPaymentSchedule } from "./lib/membership/campaigns";
+import { listMembershipPayments } from "./lib/membership/reviews";
 
 const databaseUrl = process.env.DATABASE_URL ?? "";
 const databaseName = databaseUrl ? new URL(databaseUrl).pathname.replace(/^\/+/, "") : "";
@@ -213,5 +215,36 @@ test("extending the payment deadline", async (t) => {
     assert.equal(resubmit.status, "needs_resubmission");
     assert.equal(resubmit.resubmissionDeadlineAt?.toISOString(), "2097-01-01T00:00:00.000Z");
     assert.equal((await statusOf(paid.paymentId)).status, "verified");
+  });
+
+  await t.test("looking after the deadline shows expired but never saves it", async () => {
+    const deadline = new Date("2097-01-01T00:00:00.000Z");
+    await db.update(membershipPaymentCampaigns).set({ deadlineAt: new Date("2026-02-01T00:00:00.000Z") }).where(eq(membershipPaymentCampaigns.id, campaign.id));
+    try {
+      const shown = await getApplicantPayment(awaiting.applicationId);
+      assert.equal(shown?.paymentStatus, "expired");
+      assert.equal(shown?.canSubmit, false);
+      assert.equal((await statusOf(awaiting.paymentId)).status, "awaiting_payment");
+    } finally {
+      await db.update(membershipPaymentCampaigns).set({ deadlineAt: deadline }).where(eq(membershipPaymentCampaigns.id, campaign.id));
+    }
+    // Moving the deadline later is then enough on its own: nothing was stuck.
+    const shown = await getApplicantPayment(awaiting.applicationId);
+    assert.equal(shown?.paymentStatus, "awaiting_payment");
+    assert.equal(shown?.canSubmit, true);
+  });
+
+  await t.test("a payment older code saved as expired heals while payments are open", async () => {
+    const saveExpired = () => db.update(membershipPayments).set({ status: "expired" }).where(eq(membershipPayments.id, expiredNeverPaid.paymentId));
+    await saveExpired();
+    const shown = await getApplicantPayment(expiredNeverPaid.applicationId);
+    assert.equal(shown?.paymentStatus, "awaiting_payment");
+    assert.equal(shown?.canSubmit, true);
+    assert.equal((await statusOf(expiredNeverPaid.paymentId)).status, "awaiting_payment");
+
+    // HR opening the payments list heals them too.
+    await saveExpired();
+    await listMembershipPayments();
+    assert.equal((await statusOf(expiredNeverPaid.paymentId)).status, "awaiting_payment");
   });
 });
