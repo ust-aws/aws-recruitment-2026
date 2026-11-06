@@ -288,7 +288,7 @@ type above are unchanged, but the working areas differ from the public site.
   is aquamarine and pulses three times only when the applicant has something
   to do; otherwise it is biloba-flower. The newest milestone the applicant
   earned (their acceptance, or their ID once it exists) opens on the ID card's
-  night sky (`/member-id/back-bg.png`) with Espi rising from the clouds; only
+  night sky (`/member-id/back-bg.webp`) with Espi rising from the clouds; only
   one section per page gets it. Motion utilities `trail-fill`,
   `trail-beacon` and `espi-rise` live in `globals.css` and stop under reduced
   motion.

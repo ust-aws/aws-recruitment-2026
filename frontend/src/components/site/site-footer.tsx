@@ -25,7 +25,7 @@ export function SiteFooter() {
         <div>
           <div className={brandRowClasses}>
             <Image
-              src="/aws-logo.png"
+              src="/aws-logo.webp"
               alt=""
               width={117}
               height={66}

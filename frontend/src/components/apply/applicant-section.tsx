@@ -40,7 +40,7 @@ type ApplicantSectionProps = {
 function MilestoneBand({ area, title, titleId, status }: Omit<ApplicantSectionProps, "children" | "className" | "milestone">) {
   return (
     <div className={bandClasses}>
-      <Image src="/member-id/back-bg.png" alt="" fill sizes="(min-width: 768px) 56rem, 100vw" className={skyClasses} />
+      <Image src="/member-id/back-bg.webp" alt="" fill sizes="(min-width: 768px) 56rem, 100vw" className={skyClasses} />
       <span className={shadeClasses} aria-hidden />
       <div className={bandTextClasses}>
         <p className={bandAreaClasses}>{`// ${area}`}</p>
@@ -49,7 +49,7 @@ function MilestoneBand({ area, title, titleId, status }: Omit<ApplicantSectionPr
         </h3>
         {status ? <p className={bandStatusClasses}>{status}</p> : null}
       </div>
-      <Image src="/espi.png" alt="" width={1080} height={1080} sizes="9rem" className={espiClasses} aria-hidden />
+      <Image src="/espi.webp" alt="" width={1080} height={1080} sizes="9rem" className={espiClasses} aria-hidden />
     </div>
   )
 }

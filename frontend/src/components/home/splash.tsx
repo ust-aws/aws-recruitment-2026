@@ -69,7 +69,7 @@ function LoadingRing({ reducedMotion }: { reducedMotion: boolean | null }) {
 }
 
 export function HomeSplash() {
-  preload("/hero/cloud.png", { as: "image" })
+  preload("/hero/cloud.webp", { as: "image" })
   const skip = useSyncExternalStore(
     subscribeToSkipFlag,
     getSkipFlagSnapshot,
@@ -177,7 +177,7 @@ export function HomeSplash() {
         <LoadingRing reducedMotion={reducedMotion} />
         <div className={espiWrapClasses}>
           <Image
-            src="/espi.png"
+            src="/espi.webp"
             alt=""
             fill
             priority

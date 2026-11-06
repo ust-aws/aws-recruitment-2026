@@ -32,7 +32,8 @@ function displayStatus(row: {
 }) {
   if (
     (row.status === "awaiting_payment" || row.status === "needs_resubmission") &&
-    new Date() > (row.resubmissionDeadlineAt ?? row.deadlineAt)
+    // Same rule as the applicant side: a resubmission deadline only counts while resubmitting.
+    new Date() > (row.status === "needs_resubmission" && row.resubmissionDeadlineAt ? row.resubmissionDeadlineAt : row.deadlineAt)
   ) {
     return "expired" as const;
   }

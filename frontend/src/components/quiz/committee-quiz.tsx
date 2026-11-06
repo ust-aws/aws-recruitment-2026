@@ -94,7 +94,7 @@ export function CommitteeQuiz({ className }: CommitteeQuizProps) {
         <figure className={figureClasses}>
           <div className={imageWrapperClasses}>
             <Image
-              src="/espi.png"
+              src="/espi.webp"
               alt="Espi, the AWS Builders – UST mascot"
               fill
               sizes="(min-width: 1024px) 22rem, 100vw"

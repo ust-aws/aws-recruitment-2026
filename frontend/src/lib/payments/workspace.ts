@@ -165,6 +165,11 @@ export function formatPeso(amountCents: number) {
   return pesoFormatter.format(amountCents / 100)
 }
 
+/** Open and still before the deadline: a period whose deadline passed counts as closed. */
+export function acceptingPayments(campaign: PaymentCampaign, now = new Date()) {
+  return campaign.isOpen && now <= new Date(campaign.deadlineAt)
+}
+
 /** The one line under the page title: is the period open, how much, until when. */
 export function periodLine(campaign: PaymentCampaign | null) {
   if (!campaign) return "Not set up yet. Set the payment period, amount and GCash QRs in Payment Setup."
@@ -174,5 +179,5 @@ export function periodLine(campaign: PaymentCampaign | null) {
     day: "numeric",
     year: "numeric",
   })
-  return `${campaign.isOpen ? "Open" : "Closed"} · ${amount} · deadline ${deadline}`
+  return `${acceptingPayments(campaign) ? "Open" : "Closed"} · ${amount} · deadline ${deadline}`
 }

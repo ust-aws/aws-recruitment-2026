@@ -12,7 +12,7 @@ import {
 } from "../../db/schema";
 import type { AuthenticatedUser } from "../../auth";
 import { recruitmentYearInt } from "../applications/application-code";
-import { extendPaymentDeadline } from "./deadline-extension";
+import { extendPaymentDeadline, reopenExpiredPayments } from "./deadline-extension";
 import { MembershipPaymentError } from "./errors";
 import {
   createPaymentQrUpload,
@@ -370,6 +370,9 @@ export async function openCurrentPaymentCampaign(actor: AuthenticatedUser) {
       campaign.id,
       eligible.map((application) => application.id),
     );
+
+    // Reopening after a deadline passed: everyone who expired may pay again until the current deadline.
+    await reopenExpiredPayments(tx, campaign.id, campaign.deadlineAt);
 
     const openedAt = campaign.openedAt ?? now;
     await tx

@@ -1,4 +1,4 @@
-export const PERSON_AVATAR_PLACEHOLDER = "/people/person-placeholder.png"
+export const PERSON_AVATAR_PLACEHOLDER = "/people/person-placeholder.webp"
 
 import { staffCommitteeSeedNamesInOrgOrder } from "@/lib/apply/committee-groups"
 
@@ -35,25 +35,25 @@ const PREVIOUS_AY = "AY 2025-2026"
 
 /** Photos in `public/people/current-ebs/` keyed by `OfficerSeat.id`. */
 const CURRENT_EB_PHOTOS: Partial<Record<string, string>> = {
-  ceo: "/people/current-ebs/CEO_Padua.JPG",
-  coo: "/people/current-ebs/COO_Axalan.jpg",
-  cro: "/people/current-ebs/CRO_Olmedo.jpg",
-  "corp-sec": "/people/current-ebs/SEC_Muñoz.jpg",
-  cto: "/people/current-ebs/CTO_Casas.jpg",
-  chro: "/people/current-ebs/CHRO_Abas.jpg",
-  cfo: "/people/current-ebs/CFO_So.jpg",
-  cco: "/people/current-ebs/CCO_Escosia.png",
+  ceo: "/people/current-ebs/CEO_Padua.webp",
+  coo: "/people/current-ebs/COO_Axalan.webp",
+  cro: "/people/current-ebs/CRO_Olmedo.webp",
+  "corp-sec": "/people/current-ebs/SEC_Muñoz.webp",
+  cto: "/people/current-ebs/CTO_Casas.webp",
+  chro: "/people/current-ebs/CHRO_Abas.webp",
+  cfo: "/people/current-ebs/CFO_So.webp",
+  cco: "/people/current-ebs/CCO_Escosia.webp",
 }
 
 /** Outgoing EB photos in `public/people/previous-ebs/` keyed by `OfficerSeat.id`. */
 const PREVIOUS_EB_PHOTOS: Partial<Record<string, string>> = {
-  ceo: "/people/previous-ebs/CEO_Viray.JPG",
-  coo: "/people/previous-ebs/COO_Axalan.jpg",
-  cro: "/people/previous-ebs/CRO_Sigua.jpg",
-  "corp-sec": "/people/previous-ebs/Sec_Elleazar.JPG",
-  cfo: "/people/previous-ebs/CFO_Palanog.JPG",
-  chro: "/people/previous-ebs/CHRO_To.png",
-  cco: "/people/previous-ebs/CCO_Padua.JPG",
+  ceo: "/people/previous-ebs/CEO_Viray.webp",
+  coo: "/people/previous-ebs/COO_Axalan.webp",
+  cro: "/people/previous-ebs/CRO_Sigua.webp",
+  "corp-sec": "/people/previous-ebs/Sec_Elleazar.webp",
+  cfo: "/people/previous-ebs/CFO_Palanog.webp",
+  chro: "/people/previous-ebs/CHRO_To.webp",
+  cco: "/people/previous-ebs/CCO_Padua.webp",
 }
 
 /** Previous EB headshots that need a lower focal point in the avatar circle. */
@@ -67,20 +67,20 @@ const PREVIOUS_EB_PHOTO_OBJECT_POSITION: Partial<Record<string, string>> = {
 
 /** Committee director photos in `public/people/directors/` keyed by seeded committee name. */
 const DIRECTOR_PHOTOS_BY_COMMITTEE: Partial<Record<string, string>> = {
-  "Logistics Committee": "/people/directors/Logistics_Ladia.jpg",
+  "Logistics Committee": "/people/directors/Logistics_Ladia.webp",
   "Community Development Committee":
-    "/people/directors/ComDev_Mariveles.jpg",
-  "Sponsorship Committee": "/people/directors/Sponsorships_Paco.png",
-  "Marketing Committee": "/people/directors/Marketing_Lopez.jpg",
-  "External Affairs Committee": "/people/directors/Externals_Alcantara.PNG",
-  "Secretariat Committee": "/people/directors/Secretary_de%20Mesa.jpg",
-  "Technicals Committee": "/people/directors/Technicals_Lapuebla.jpeg",
-  "Development Committee": "/people/directors/Development_Ferrer.jpg",
-  "Finance Committee": "/people/directors/Finance_Gamban.jpg",
-  "Human Resources Committee": "/people/directors/HR_Tamondong.jpg",
-  "Documentation Committee": "/people/directors/Documentation_Agsunod.jpg",
-  "Media Committee": "/people/directors/Media_Estuista.jpg",
-  "Publicity Committee": "/people/directors/Publicity_Jarina.jpg",
+    "/people/directors/ComDev_Mariveles.webp",
+  "Sponsorship Committee": "/people/directors/Sponsorships_Paco.webp",
+  "Marketing Committee": "/people/directors/Marketing_Lopez.webp",
+  "External Affairs Committee": "/people/directors/Externals_Alcantara.webp",
+  "Secretariat Committee": "/people/directors/Secretary_de%20Mesa.webp",
+  "Technicals Committee": "/people/directors/Technicals_Lapuebla.webp",
+  "Development Committee": "/people/directors/Development_Ferrer.webp",
+  "Finance Committee": "/people/directors/Finance_Gamban.webp",
+  "Human Resources Committee": "/people/directors/HR_Tamondong.webp",
+  "Documentation Committee": "/people/directors/Documentation_Agsunod.webp",
+  "Media Committee": "/people/directors/Media_Estuista.webp",
+  "Publicity Committee": "/people/directors/Publicity_Jarina.webp",
 }
 
 const DIRECTOR_PHOTO_OBJECT_POSITION: Partial<Record<string, string>> = {
@@ -211,7 +211,7 @@ export const ADVISERS: AdviserSeat[] = [
       name: "Ronina Tayuan",
       title: "Asst. Prof., MSCS",
       academicYear: CURRENT_AY,
-      photo: "/advisers/Adviser_Tayuan.jpg",
+      photo: "/advisers/Adviser_Tayuan.webp",
     },
   },
   {
@@ -221,7 +221,7 @@ export const ADVISERS: AdviserSeat[] = [
       name: "John Matthew Domantay",
       title: "Technical Adviser",
       academicYear: CURRENT_AY,
-      photo: "/advisers/Adviser_Domantay.jpg",
+      photo: "/advisers/Adviser_Domantay.webp",
     },
   },
   {
@@ -231,7 +231,7 @@ export const ADVISERS: AdviserSeat[] = [
       name: "Edwin De Guzman",
       title: "Asst. Prof., MCP, DIT",
       academicYear: CURRENT_AY,
-      photo: "/advisers/Adviser_De%20Guzman.jpg",
+      photo: "/advisers/Adviser_De%20Guzman.webp",
     },
   },
 ].sort((a, b) => a.rank - b.rank)

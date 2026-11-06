@@ -36,7 +36,7 @@ export function MemberVerificationCard({
 }) {
   return (
     <section className={cardClasses} aria-labelledby="verify-title">
-      <Image src="/espi.png" alt="" width={1080} height={1080} className={espiClasses} />
+      <Image src="/espi.webp" alt="" width={1080} height={1080} className={espiClasses} />
       <p id="verify-title" className={eyebrowClasses}>
         AWS BUILDERS – UST · MEMBER CHECK
       </p>

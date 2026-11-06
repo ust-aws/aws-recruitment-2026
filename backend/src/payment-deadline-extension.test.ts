@@ -10,9 +10,11 @@ import {
   membershipPaymentCampaigns,
   membershipPayments,
   membershipPaymentSubmissions,
+  users,
 } from "./db/schema";
 import { prepareQueuedEmail } from "./lib/email/queued-emails";
-import { saveCurrentPaymentSchedule } from "./lib/membership/campaigns";
+import type { AuthenticatedUser } from "./auth";
+import { openCurrentPaymentCampaign, saveCurrentPaymentSchedule } from "./lib/membership/campaigns";
 
 const databaseUrl = process.env.DATABASE_URL ?? "";
 const databaseName = databaseUrl ? new URL(databaseUrl).pathname.replace(/^\/+/, "") : "";
@@ -24,11 +26,13 @@ process.env.RECRUITMENT_YEAR = "2095";
 
 const YEAR = 2095;
 const applicantIds: string[] = [];
+const hrUserId = randomUUID();
 
 after(async () => {
   try {
     await db.delete(membershipPaymentCampaigns).where(eq(membershipPaymentCampaigns.recruitmentYear, YEAR));
     if (applicantIds.length > 0) await db.delete(applicants).where(inArray(applicants.id, applicantIds));
+    await db.delete(users).where(eq(users.id, hrUserId));
   } finally {
     await db.$client.end();
   }
@@ -190,5 +194,24 @@ test("extending the payment deadline", async (t) => {
       .where(eq(membershipPaymentCampaigns.id, campaign.id));
     const saved = await saveCurrentPaymentSchedule(schedule(new Date("2097-01-01T00:00:00.000Z")));
     assert.equal(saved.extensionNotificationIds.length, 0);
+  });
+
+  await t.test("reopening payments lets everyone who expired pay again", async () => {
+    // Saved as expired by an applicant who looked after the old deadline, while payments were closed.
+    await db
+      .update(membershipPayments)
+      .set({ status: "expired", resubmissionDeadlineAt: new Date("2026-02-10T00:00:00.000Z") })
+      .where(inArray(membershipPayments.id, [expiredNeverPaid.paymentId, expiredRejected.paymentId]));
+    await db.insert(users).values({ id: hrUserId, email: `${hrUserId}@test.dev`, passwordHash: "x", firstName: "HR", lastName: "User", role: "hr" });
+
+    await openCurrentPaymentCampaign({ id: hrUserId, email: `${hrUserId}@test.dev`, role: "hr" } as AuthenticatedUser);
+
+    const reopened = await statusOf(expiredNeverPaid.paymentId);
+    assert.equal(reopened.status, "awaiting_payment");
+    assert.equal(reopened.resubmissionDeadlineAt, null);
+    const resubmit = await statusOf(expiredRejected.paymentId);
+    assert.equal(resubmit.status, "needs_resubmission");
+    assert.equal(resubmit.resubmissionDeadlineAt?.toISOString(), "2097-01-01T00:00:00.000Z");
+    assert.equal((await statusOf(paid.paymentId)).status, "verified");
   });
 });
