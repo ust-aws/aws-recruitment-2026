@@ -321,6 +321,6 @@ dashboard.
 - **Accent.** `aquamarine` only on the Sign In button and "Day One."; the
   `$ auth login --staff` eyebrow is `biloba-flower`. Caret `blue-chalk`,
   selection `biloba-flower/35`.
-- **Copy.** "Good to see you, Builder.", "Email" (placeholder "Enter your
+- **Copy.** "Good to see you, Builder." with no subtitle, "Email" (placeholder "Enter your
   email"; never a real account address), "Password", "← Back to site". No password-reset link
   until a reset flow exists.

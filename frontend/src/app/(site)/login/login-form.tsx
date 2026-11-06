@@ -20,7 +20,6 @@ const formClasses = "flex w-full max-w-sm flex-col"
 const eyebrowClasses = "font-mono text-xs font-medium tracking-wide text-biloba-flower"
 const titleClasses =
   "mt-3 font-sans text-4xl font-bold leading-[1.1] tracking-[-0.02em] text-balance text-blue-chalk md:text-[2.75rem]"
-const subtitleClasses = "mt-3 font-sans text-[0.9375rem] leading-relaxed text-prelude"
 const fieldClasses = "flex flex-col gap-2"
 const labelClasses = "font-mono text-xs normal-case text-prelude"
 const errorId = "login-error"
@@ -54,9 +53,6 @@ export function LoginForm() {
         <form action={formAction} className={formClasses} noValidate>
           <p className={eyebrowClasses}>$ auth login --staff</p>
           <h1 className={titleClasses}>Good to see you, Builder.</h1>
-          <p className={subtitleClasses}>
-            Sign in with your own officer account. We&rsquo;ll open the dashboard for your team.
-          </p>
 
           <div className={`${fieldClasses} mt-9`}>
             <Label htmlFor="email" className={labelClasses}>Email</Label>
