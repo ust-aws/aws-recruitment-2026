@@ -1,6 +1,7 @@
 import type { ReactNode } from "react"
 import { CircleCheckBig, SearchX, WalletCards } from "lucide-react"
 import type { PaymentCampaign } from "@/lib/api/payments"
+import { acceptingPayments } from "@/lib/payments/workspace"
 import { dashboardPanelClasses } from "@/lib/site/dashboard-surface"
 import { cn } from "@/lib/utils"
 
@@ -43,7 +44,7 @@ export function PaymentsNoMatch({ action }: { action: ReactNode }) {
 
 function noneBody(campaign: PaymentCampaign | null) {
   if (!campaign) return "There is no payment period yet. Set one up in Payment Setup, then open it to send invitations."
-  if (!campaign.isOpen) return "The payment period is closed and nobody has a payment yet. Open it in Payment Setup to send invitations."
+  if (!acceptingPayments(campaign)) return "The payment period is closed and nobody has a payment yet. Open it in Payment Setup to send invitations."
   return "The payment period is open, but nobody has a payment record yet."
 }
 

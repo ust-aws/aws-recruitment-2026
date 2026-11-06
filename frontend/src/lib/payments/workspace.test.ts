@@ -9,6 +9,7 @@ import {
   matchesPaymentEmail,
   paymentEmailCounts,
   nextAfterDecision,
+  acceptingPayments,
   periodLine,
   reviewQueue,
   sortPayments,
@@ -98,12 +99,22 @@ test("filters search names, codes and references; the list sorts work first", ()
 
 test("the page opens on the queue while receipts wait, and says where the period stands", () => {
   const summary = { totalEligible: 3, awaitingPayment: 0, pendingVerification: 2, verified: 1, needsResubmission: 0, expired: 0 }
-  const campaign = { isOpen: true, amountCents: 25000, deadlineAt: "2026-10-20T15:59:00.000Z" } as PaymentCampaign
+  const campaign = { isOpen: true, amountCents: 25000, deadlineAt: "2099-10-20T15:59:00.000Z" } as PaymentCampaign
   assert.equal(defaultPaymentTab(summary), "review")
   assert.equal(defaultPaymentTab({ ...summary, pendingVerification: 0 }), "all")
   assert.equal(defaultPaymentTab(null), "all")
   assert.equal(needsPaymentSetup(null), true)
   assert.equal(needsPaymentSetup({ ...campaign, amountCents: null }), true)
   assert.equal(needsPaymentSetup(campaign), false)
-  assert.match(periodLine(campaign), /^Open · ₱250\.00 · deadline Oct 20, 2026$/)
+  assert.match(periodLine(campaign), /^Open · ₱250\.00 · deadline Oct 20, 2099$/)
+})
+
+test("a period whose deadline has passed reads as closed, even before anyone closes it", () => {
+  const campaign = { isOpen: true, amountCents: 25000, deadlineAt: "2026-10-20T15:59:00.000Z" } as PaymentCampaign
+  const before = new Date("2026-10-20T15:00:00.000Z")
+  const after = new Date("2026-10-21T00:00:00.000Z")
+  assert.equal(acceptingPayments(campaign, before), true)
+  assert.equal(acceptingPayments(campaign, after), false)
+  assert.equal(acceptingPayments({ ...campaign, isOpen: false }, before), false)
+  assert.match(periodLine(campaign), /^Closed · ₱250\.00 · deadline Oct 20, 2026$/)
 })
