@@ -63,8 +63,10 @@ export function ApplicantPaymentPanel({ application, state, showGroupLinks, mile
 
 function paymentFacts(payment: ApplicantPayment) {
   const amount = pesoFormatter.format(payment.amountCents / 100)
-  const resubmit = payment.resubmissionDeadlineAt !== null
-  const deadline = formatDisplayDateTime(new Date(payment.resubmissionDeadlineAt ?? payment.deadlineAt), {
+  // A resubmission date only applies while resubmitting; otherwise the period's deadline.
+  const resubmit = payment.paymentStatus === "needs_resubmission"
+  const deadlineAt = resubmit && payment.resubmissionDeadlineAt ? payment.resubmissionDeadlineAt : payment.deadlineAt
+  const deadline = formatDisplayDateTime(new Date(deadlineAt), {
     dateStyle: "medium",
     timeStyle: "short",
   })
