@@ -14,6 +14,41 @@ type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 const OWING_STATUSES = ["awaiting_payment", "needs_resubmission"] as const;
 
 /**
+ * Lets everyone whose payment expired pay again until `deadline`: used when the
+ * deadline moves later and when HR reopens payments. Someone whose receipt was
+ * rejected or reversed goes back to resubmitting; everyone else to paying.
+ */
+export async function reopenExpiredPayments(tx: Tx, campaignId: string, deadline: Date) {
+  const hadRejection = sql`exists (
+    select 1 from ${membershipPaymentSubmissions}
+    where ${membershipPaymentSubmissions.paymentId} = ${membershipPayments.id}
+      and ${membershipPaymentSubmissions.status} in ('rejected', 'reversed')
+  )`;
+  await tx
+    .update(membershipPayments)
+    .set({
+      status: sql`case when ${hadRejection} then 'needs_resubmission'::membership_payment_status else 'awaiting_payment'::membership_payment_status end`,
+      // A stale resubmission deadline would expire them again on the next load.
+      resubmissionDeadlineAt: sql`case when ${hadRejection} then ${deadline.toISOString()}::timestamptz else null end`,
+      updatedAt: new Date(),
+    })
+    .where(and(eq(membershipPayments.campaignId, campaignId), eq(membershipPayments.status, "expired")));
+
+  // A resubmission deadline that the new date overtakes would still lock the applicant out.
+  await tx
+    .update(membershipPayments)
+    .set({ resubmissionDeadlineAt: deadline, updatedAt: new Date() })
+    .where(
+      and(
+        eq(membershipPayments.campaignId, campaignId),
+        eq(membershipPayments.status, "needs_resubmission"),
+        isNotNull(membershipPayments.resubmissionDeadlineAt),
+        lt(membershipPayments.resubmissionDeadlineAt, deadline),
+      ),
+    );
+}
+
+/**
  * When HR moves the payment deadline later: reopens payments that expired only
  * because of the old date, then queues one "deadline extended" email for
  * everyone who still owes a payment. People who paid, or whose receipt is
@@ -24,31 +59,7 @@ export async function extendPaymentDeadline(
   campaignId: string,
   newDeadline: Date,
 ): Promise<string[]> {
-  // Someone whose receipt was rejected or reversed goes back to resubmitting; everyone else to paying.
-  await tx
-    .update(membershipPayments)
-    .set({
-      status: sql`case when exists (
-        select 1 from ${membershipPaymentSubmissions}
-        where ${membershipPaymentSubmissions.paymentId} = ${membershipPayments.id}
-          and ${membershipPaymentSubmissions.status} in ('rejected', 'reversed')
-      ) then 'needs_resubmission'::membership_payment_status else 'awaiting_payment'::membership_payment_status end`,
-      updatedAt: new Date(),
-    })
-    .where(and(eq(membershipPayments.campaignId, campaignId), eq(membershipPayments.status, "expired")));
-
-  // A resubmission deadline that the new date overtakes would still lock the applicant out.
-  await tx
-    .update(membershipPayments)
-    .set({ resubmissionDeadlineAt: newDeadline, updatedAt: new Date() })
-    .where(
-      and(
-        eq(membershipPayments.campaignId, campaignId),
-        eq(membershipPayments.status, "needs_resubmission"),
-        isNotNull(membershipPayments.resubmissionDeadlineAt),
-        lt(membershipPayments.resubmissionDeadlineAt, newDeadline),
-      ),
-    );
+  await reopenExpiredPayments(tx, campaignId, newDeadline);
 
   const owing = await tx
     .select({ applicationId: applications.id, recipient: applicants.email })
