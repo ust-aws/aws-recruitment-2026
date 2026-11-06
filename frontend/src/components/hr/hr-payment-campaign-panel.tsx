@@ -9,6 +9,7 @@ import {
   openPaymentCampaign,
   type PaymentCampaign,
 } from "@/lib/api/payments"
+import { acceptingPayments } from "@/lib/payments/workspace"
 import { dashboardActionTargetClasses, dashboardPanelClasses } from "@/lib/site/dashboard-surface"
 import { cn } from "@/lib/utils"
 
@@ -45,6 +46,8 @@ export function HrPaymentCampaignPanel(props: CampaignPanelProps) {
 
 function PaymentPeriodPanel({ campaign, role, pending, onCampaign, onPending, onFeedback }: CampaignPanelProps) {
   const canManage = role === "hr" || role === "admin"
+  // Once the deadline passes the period is over, so the action is to open it again.
+  const accepting = campaign ? acceptingPayments(campaign) : false
   return (
     <section className={panelClasses} aria-labelledby="payment-period-title">
       <h2 id="payment-period-title" className={titleClasses}>Payment Period</h2>
@@ -52,12 +55,12 @@ function PaymentPeriodPanel({ campaign, role, pending, onCampaign, onPending, on
       {canManage && campaign ? (
         <Button
           type="button"
-          color={campaign.isOpen ? "danger" : "cyan"}
+          color={accepting ? "danger" : "cyan"}
           className={toggleClasses}
           disabled={pending}
-          onClick={() => void updatePaymentPeriod(!campaign.isOpen, campaign, onCampaign, onPending, onFeedback)}
+          onClick={() => void updatePaymentPeriod(!accepting, campaign, onCampaign, onPending, onFeedback)}
         >
-          {campaign.isOpen ? "Close payments" : "Open and send invitations"}
+          {accepting ? "Close payments" : "Open and send invitations"}
         </Button>
       ) : null}
       {canManage ? (
@@ -95,7 +98,8 @@ function PaymentDetailsPanel({ campaign, role, onCampaign, onFeedback }: Campaig
 function campaignStatus(campaign: PaymentCampaign | null) {
   if (!campaign) return "Set the payment period to begin."
   const detailsStatus = campaign.amountCents === null ? " · Payment details needed" : ""
-  return `${campaign.isOpen ? "Open" : "Closed"} · Recruitment year ${campaign.recruitmentYear}${detailsStatus}`
+  const state = acceptingPayments(campaign) ? "Open" : campaign.isOpen ? "Closed · deadline passed" : "Closed"
+  return `${state} · Recruitment year ${campaign.recruitmentYear}${detailsStatus}`
 }
 
 function openedMessage(result: Awaited<ReturnType<typeof openPaymentCampaign>>) {
