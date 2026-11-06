@@ -22,6 +22,7 @@ import {
   type MemberPlacement,
 } from "../core/member-id";
 import { UNCERTAIN_PREFIX } from "../email/outbox";
+import { healSavedExpiry } from "./deadline-extension";
 import { MembershipPaymentError } from "./errors";
 import { createPaymentReceiptDownload } from "./receipts";
 
@@ -78,6 +79,7 @@ async function invitationStatuses(applicationIds: string[]) {
 }
 
 export async function listMembershipPayments() {
+  await healSavedExpiry();
   const recruitmentYear = recruitmentYearInt();
   const rows = await db
     .select({

@@ -4,9 +4,11 @@ import {
   applicants,
   applications,
   emailNotifications,
+  membershipPaymentCampaigns,
   membershipPaymentSubmissions,
   membershipPayments,
 } from "../../db/schema";
+import { recruitmentYearInt } from "../applications/application-code";
 
 type Tx = Parameters<Parameters<typeof db.transaction>[0]>[0];
 
@@ -46,6 +48,29 @@ export async function reopenExpiredPayments(tx: Tx, campaignId: string, deadline
         lt(membershipPayments.resubmissionDeadlineAt, deadline),
       ),
     );
+}
+
+/**
+ * "Expired" is worked out from the deadline and is no longer saved, but older
+ * code saved it, and those rows stay stuck once payments reopen. While payments
+ * are open and before the deadline, this lets them pay again. Cheap when none.
+ */
+export async function healSavedExpiry(campaignId?: string) {
+  const [campaign] = await db
+    .select({
+      id: membershipPaymentCampaigns.id,
+      isOpen: membershipPaymentCampaigns.isOpen,
+      deadlineAt: membershipPaymentCampaigns.deadlineAt,
+    })
+    .from(membershipPaymentCampaigns)
+    .where(
+      campaignId
+        ? eq(membershipPaymentCampaigns.id, campaignId)
+        : eq(membershipPaymentCampaigns.recruitmentYear, recruitmentYearInt()),
+    )
+    .limit(1);
+  if (!campaign?.isOpen || new Date() > campaign.deadlineAt) return;
+  await db.transaction((tx) => reopenExpiredPayments(tx, campaign.id, campaign.deadlineAt));
 }
 
 /**

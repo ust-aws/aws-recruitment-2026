@@ -9,6 +9,7 @@ import {
   officerSeats,
   positions,
 } from "../../db/schema";
+import { healSavedExpiry } from "./deadline-extension";
 import { MembershipPaymentError } from "./errors";
 import { normalizeDriveReceiptUrl } from "./receipt-link";
 import {
@@ -121,20 +122,31 @@ async function loadApplicantPayment(applicationId: string) {
     );
   }
 
+  // Saved as expired by older code but payments are open again: let them pay.
+  if (row.paymentStatus === "expired" && row.isOpen && new Date() <= row.deadlineAt) {
+    await healSavedExpiry(row.campaignId);
+    const [healed] = await db
+      .select({
+        status: membershipPayments.status,
+        resubmissionDeadlineAt: membershipPayments.resubmissionDeadlineAt,
+      })
+      .from(membershipPayments)
+      .where(eq(membershipPayments.id, row.paymentId));
+    row.paymentStatus = healed.status;
+    row.resubmissionDeadlineAt = healed.resubmissionDeadlineAt;
+  }
+
   const deadline = effectiveDeadline({
     deadlineAt: row.deadlineAt,
     status: row.paymentStatus,
     resubmissionDeadlineAt: row.resubmissionDeadlineAt,
   });
+  // Shown as expired, never saved as expired: a saved status got stuck when payments reopened.
   if (
     (row.paymentStatus === "awaiting_payment" ||
       row.paymentStatus === "needs_resubmission") &&
     new Date() > deadline
   ) {
-    await db
-      .update(membershipPayments)
-      .set({ status: "expired", updatedAt: new Date() })
-      .where(eq(membershipPayments.id, row.paymentId));
     row.paymentStatus = "expired";
   }
 
