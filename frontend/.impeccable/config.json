@@ -1,0 +1,53 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/dawn.html"
+        ],
+        "createdAt": "2026-11-04T18:11:30.428Z",
+        "reason": "agent: decision sketches must be fixed 1440x900 with overflow hidden per the concept-seed PRESENTATION spec; not shipped UI"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/perched.html"
+        ],
+        "createdAt": "2026-11-04T18:11:30.848Z",
+        "reason": "agent: decision sketches must be fixed 1440x900 with overflow hidden per the concept-seed PRESENTATION spec; not shipped UI"
+      },
+      {
+        "rule": "clipped-overflow-container",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/constellations.html"
+        ],
+        "createdAt": "2026-11-04T18:11:31.420Z",
+        "reason": "agent: decision sketches must be fixed 1440x900 with overflow hidden per the concept-seed PRESENTATION spec; not shipped UI"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/perched.html"
+        ],
+        "createdAt": "2026-11-04T18:20:29.705Z",
+        "reason": "agent: unchosen throwaway decision sketch (user locked dawn); never shipped"
+      },
+      {
+        "rule": "low-contrast",
+        "value": "*",
+        "files": [
+          ".impeccable/mocks/decision/constellations.html"
+        ],
+        "createdAt": "2026-11-04T18:20:31.915Z",
+        "reason": "agent: unchosen throwaway decision sketch (user locked dawn); never shipped"
+      }
+    ]
+  }
+}
