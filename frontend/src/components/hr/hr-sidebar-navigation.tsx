@@ -62,9 +62,8 @@ export function HrSidebarNavigation({ role }: { role: HrRole }) {
 
   return (
     <nav className={navigationWrapperClasses} aria-label="Dashboard">
-      {hrNavigationSections
-        .filter((section) => section.visible(role))
-        .map((section) => (
+      {hrNavigationSections.map((section) =>
+        section.visible(role) ? (
           <SidebarGroup
             key={section.label ?? section.fold?.label ?? "home"}
             className={cn(
@@ -82,7 +81,8 @@ export function HrSidebarNavigation({ role }: { role: HrRole }) {
               <SectionBody section={section} pathname={pathname} source={source} />
             </SidebarGroupContent>
           </SidebarGroup>
-        ))}
+        ) : null,
+      )}
     </nav>
   )
 }

@@ -32,12 +32,12 @@ function groupPositionsByOffice(positions: PositionApprovalTarget[]) {
     ...COMMITTEE_OFFICE_GROUPS.map((group) => group.office),
     "Other",
   ]
-  return orderedOffices
-    .filter((office) => byOffice.has(office))
-    .map((office) => ({
-      office,
-      positions: byOffice.get(office) ?? [],
-    }))
+  const groups = []
+  for (const office of orderedOffices) {
+    const positions = byOffice.get(office)
+    if (positions) groups.push({ office, positions })
+  }
+  return groups
 }
 
 type HrPositionApprovalTargetsProps = {

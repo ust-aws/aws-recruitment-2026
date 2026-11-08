@@ -156,8 +156,10 @@ export function isExecutiveOfficeCommittee(name: string): boolean {
 
 export function groupedOfficesForCommitteeNames(committeeNames: string[]) {
   const open = new Set(committeeNames)
-  return COMMITTEE_OFFICE_GROUPS.map((group) => ({
-    office: group.office,
-    committees: group.committees.filter((committee) => open.has(committee)),
-  })).filter((group) => group.committees.length > 0)
+  const groups = []
+  for (const group of COMMITTEE_OFFICE_GROUPS) {
+    const committees = group.committees.filter((committee) => open.has(committee))
+    if (committees.length > 0) groups.push({ office: group.office, committees })
+  }
+  return groups
 }
