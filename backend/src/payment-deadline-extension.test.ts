@@ -16,6 +16,7 @@ import { prepareQueuedEmail } from "./lib/email/queued-emails";
 import type { AuthenticatedUser } from "./auth";
 import { getApplicantPayment } from "./lib/membership/applicant-payments";
 import { openCurrentPaymentCampaign, saveCurrentPaymentSchedule } from "./lib/membership/campaigns";
+import { allowLatePayment, closeLatePayment } from "./lib/membership/late-payment";
 import { listMembershipPayments } from "./lib/membership/reviews";
 
 const databaseUrl = process.env.DATABASE_URL ?? "";
@@ -246,5 +247,55 @@ test("extending the payment deadline", async (t) => {
     await saveExpired();
     await listMembershipPayments();
     assert.equal((await statusOf(expiredNeverPaid.paymentId)).status, "awaiting_payment");
+  });
+
+  await t.test("HR can quietly let chosen people pay after the period closed", async () => {
+    // The period is closed and its deadline has passed.
+    await db
+      .update(membershipPaymentCampaigns)
+      .set({ isOpen: false, deadlineAt: new Date("2026-02-01T00:00:00.000Z") })
+      .where(eq(membershipPaymentCampaigns.id, campaign.id));
+    await db.delete(emailNotifications).where(inArray(emailNotifications.applicationId, everyone));
+    await db.update(membershipPayments).set({ status: "expired" }).where(eq(membershipPayments.id, expiredRejected.paymentId));
+
+    const until = new Date("2098-01-01T15:59:59.999Z");
+    const result = await allowLatePayment([awaiting.paymentId, expiredRejected.paymentId, paid.paymentId], until);
+    assert.deepEqual(result, { opened: 2, skipped: 1 });
+
+    const chosen = await getApplicantPayment(awaiting.applicationId);
+    assert.equal(chosen?.canSubmit, true);
+    assert.equal(chosen?.deadlineAt, until.toISOString());
+    // Saved as expired by older code: back to resubmitting, with the new date.
+    const resubmitting = await statusOf(expiredRejected.paymentId);
+    assert.equal(resubmitting.status, "needs_resubmission");
+    assert.equal((await getApplicantPayment(expiredRejected.applicationId))?.canSubmit, true);
+
+    // Everyone else stays closed, and the paid person is untouched.
+    assert.equal((await getApplicantPayment(expiredNeverPaid.applicationId))?.canSubmit, false);
+    assert.equal((await statusOf(paid.paymentId)).status, "verified");
+    // Nobody is emailed.
+    assert.equal((await extensionEmailsFor(everyone)).size, 0);
+    // HR's list shows them as still owing, not expired.
+    const listed = (await listMembershipPayments()).payments.find((row) => row.paymentId === awaiting.paymentId);
+    assert.equal(listed?.status, "awaiting_payment");
+    assert.equal(listed?.personalDeadlineAt, until.toISOString());
+
+    await assert.rejects(allowLatePayment([awaiting.paymentId], new Date("2020-01-01T00:00:00.000Z")), /has not passed yet/);
+  });
+
+  await t.test("HR can close a late payment for one person, quietly", async () => {
+    const result = await closeLatePayment([awaiting.paymentId, paid.paymentId]);
+    assert.deepEqual(result, { closed: 1 });
+
+    const closed = await getApplicantPayment(awaiting.applicationId);
+    assert.equal(closed?.canSubmit, false);
+    assert.equal(closed?.paymentStatus, "expired");
+    // Only the person HR closed: the other late payer can still pay.
+    assert.equal((await getApplicantPayment(expiredRejected.applicationId))?.canSubmit, true);
+    assert.equal((await extensionEmailsFor(everyone)).size, 0);
+    // Expired is shown, never saved, so letting them pay again still works.
+    assert.equal((await statusOf(awaiting.paymentId)).status, "awaiting_payment");
+    await allowLatePayment([awaiting.paymentId], new Date("2098-01-01T15:59:59.999Z"));
+    assert.equal((await getApplicantPayment(awaiting.applicationId))?.canSubmit, true);
   });
 });
