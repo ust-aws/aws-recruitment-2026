@@ -39,26 +39,6 @@ async function applicantAuthFetch<T>(
   return response.json() as Promise<T>
 }
 
-export async function getApplicantAuthMe() {
-  const response = await fetch(`${API_BASE}/me`, {
-    method: "GET",
-    credentials: "include",
-  })
-  if (response.status === 401) return null
-  if (!response.ok) {
-    const serverMessage = await readApiErrorMessage(response)
-    throw new ApiError(
-      response.status,
-      userFacingApiError(
-        response.status,
-        serverMessage,
-        "Could not verify your session."
-      )
-    )
-  }
-  return response.json() as Promise<{ applicationCode: string }>
-}
-
 export function requestApplicantCode(identity: ApplicantIdentity) {
   return applicantAuthFetch<{ message: string }>("/request-code", identity)
 }

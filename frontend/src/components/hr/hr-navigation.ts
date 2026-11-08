@@ -61,13 +61,6 @@ export function hrRoundFromPath(pathname: string): HrRound {
   return pathname.startsWith("/admin/hr/officer-hunt") ? "officer_hunt" : "r101"
 }
 
-/** Every item in a group, whichever round it belongs to. */
-export function allItems(section: HrNavigationSection): HrNavigationItem[] {
-  return hasRounds(section.items)
-    ? [...section.items.r101, ...section.items.officer_hunt]
-    : section.items
-}
-
 /**
  * Where the switch sends you: the same kind of page in the other round
  * (Results to Results), or that round's first page from anywhere else.

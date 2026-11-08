@@ -25,7 +25,7 @@ type WeekNavProps = {
   onNext: () => void
 }
 
-export function ApplicantInterviewWeekNav({
+function ApplicantInterviewWeekNav({
   weekLabel,
   disabled,
   canGoPrev,

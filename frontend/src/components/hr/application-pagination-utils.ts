@@ -6,11 +6,6 @@ export function pageCount(total: number, pageSize = APPLICATION_PAGE_SIZE) {
   return Math.max(1, Math.ceil(total / pageSize))
 }
 
-export function pageSlice<T>(items: T[], page: number) {
-  const start = (page - 1) * APPLICATION_PAGE_SIZE
-  return items.slice(start, start + APPLICATION_PAGE_SIZE)
-}
-
 export function buildPageList(
   current: number,
   total: number

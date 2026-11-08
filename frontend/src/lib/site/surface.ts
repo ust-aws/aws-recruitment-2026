@@ -45,6 +45,3 @@ export const subheaderLabelClasses =
 
 export const ghostPillButtonClasses =
   "h-10 rounded-pill border border-blue-chalk/25 bg-transparent px-5 font-mono text-xs text-blue-chalk hover:bg-blue-chalk/10"
-
-export const positionsLinkClasses =
-  "text-center font-sans text-sm text-prelude underline-offset-4 hover:text-blue-chalk hover:underline"
