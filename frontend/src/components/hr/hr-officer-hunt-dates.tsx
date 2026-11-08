@@ -33,10 +33,10 @@ type DatesProps = {
 /** The term the hunt fills, when people may apply, and when interviews run. */
 export function HrOfficerHuntDates({ settings, onSaved }: DatesProps) {
   const [termYear, setTermYear] = useState(settings?.termYear ? String(settings.termYear) : "")
-  const [applyStart, setApplyStart] = useState(recruitmentWeekYmdFromIso(settings?.applicationsOpenAt ?? null))
-  const [applyEnd, setApplyEnd] = useState(recruitmentWeekYmdFromIso(settings?.applicationsCloseAt ?? null))
-  const [interviewStart, setInterviewStart] = useState(interviewSeasonYmdFromIso(settings?.interviewsStartAt ?? null))
-  const [interviewEnd, setInterviewEnd] = useState(interviewSeasonYmdFromIso(settings?.interviewsEndAt ?? null))
+  const [applyStart, setApplyStart] = useState(() => recruitmentWeekYmdFromIso(settings?.applicationsOpenAt ?? null))
+  const [applyEnd, setApplyEnd] = useState(() => recruitmentWeekYmdFromIso(settings?.applicationsCloseAt ?? null))
+  const [interviewStart, setInterviewStart] = useState(() => interviewSeasonYmdFromIso(settings?.interviewsStartAt ?? null))
+  const [interviewEnd, setInterviewEnd] = useState(() => interviewSeasonYmdFromIso(settings?.interviewsEndAt ?? null))
   const [message, setMessage] = useState("")
   const [error, setError] = useState("")
   const [pending, setPending] = useState(false)
