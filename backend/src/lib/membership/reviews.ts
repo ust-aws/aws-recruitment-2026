@@ -26,15 +26,22 @@ import { healSavedExpiry } from "./deadline-extension";
 import { MembershipPaymentError } from "./errors";
 import { createPaymentReceiptDownload } from "./receipts";
 
+/** The later of two dates; a personal deadline only ever gives someone more time. */
+function laterOf(date: Date, other: Date | null) {
+  return other && other > date ? other : date;
+}
+
 function displayStatus(row: {
   status: (typeof membershipPayments.$inferSelect)["status"];
   deadlineAt: Date;
   resubmissionDeadlineAt: Date | null;
+  personalDeadlineAt: Date | null;
 }) {
+  // Same rule as the applicant side: a resubmission deadline only counts while resubmitting.
+  const base = row.status === "needs_resubmission" && row.resubmissionDeadlineAt ? row.resubmissionDeadlineAt : row.deadlineAt;
   if (
     (row.status === "awaiting_payment" || row.status === "needs_resubmission") &&
-    // Same rule as the applicant side: a resubmission deadline only counts while resubmitting.
-    new Date() > (row.status === "needs_resubmission" && row.resubmissionDeadlineAt ? row.resubmissionDeadlineAt : row.deadlineAt)
+    new Date() > laterOf(base, row.personalDeadlineAt)
   ) {
     return "expired" as const;
   }
@@ -101,6 +108,7 @@ export async function listMembershipPayments() {
       membershipStatus: membershipPayments.membershipStatus,
       verifiedAt: membershipPayments.verifiedAt,
       resubmissionDeadlineAt: membershipPayments.resubmissionDeadlineAt,
+      personalDeadlineAt: membershipPayments.personalDeadlineAt,
       deadlineAt: membershipPaymentCampaigns.deadlineAt,
       finalPosition: positions.name,
       committee: committees.name,
@@ -155,6 +163,7 @@ export async function listMembershipPayments() {
     archivedAt: row.archivedAt?.toISOString() ?? null,
     verifiedAt: row.verifiedAt?.toISOString() ?? null,
     resubmissionDeadlineAt: row.resubmissionDeadlineAt?.toISOString() ?? null,
+    personalDeadlineAt: row.personalDeadlineAt?.toISOString() ?? null,
     deadlineAt: row.deadlineAt.toISOString(),
     latestSubmission: latestByPayment.has(row.paymentId)
       ? {
@@ -268,6 +277,7 @@ async function lockedPendingSubmission(
       memberId: applications.memberId,
       archivedAt: applications.archivedAt,
       deadlineAt: membershipPaymentCampaigns.deadlineAt,
+      personalDeadlineAt: membershipPayments.personalDeadlineAt,
     })
     .from(membershipPayments)
     .innerJoin(applications, eq(membershipPayments.applicationId, applications.id))
@@ -427,7 +437,7 @@ export async function rejectMembershipPayment(
   return db.transaction(async (tx) => {
     const { payment, submission } = await lockedPendingSubmission(tx, paymentId);
     const reviewedAt = new Date();
-    assertDeadlineAllowsResubmission(payment.deadlineAt, reviewedAt);
+    assertDeadlineAllowsResubmission(laterOf(payment.deadlineAt, payment.personalDeadlineAt), reviewedAt);
     await tx
       .update(membershipPaymentSubmissions)
       .set({
@@ -469,6 +479,7 @@ export async function reverseMembershipPayment(
         status: membershipPayments.status,
         applicationId: membershipPayments.applicationId,
         deadlineAt: membershipPaymentCampaigns.deadlineAt,
+        personalDeadlineAt: membershipPayments.personalDeadlineAt,
       })
       .from(membershipPayments)
       .innerJoin(
@@ -485,7 +496,7 @@ export async function reverseMembershipPayment(
         409,
       );
     }
-    assertDeadlineAllowsResubmission(payment.deadlineAt, new Date());
+    assertDeadlineAllowsResubmission(laterOf(payment.deadlineAt, payment.personalDeadlineAt), new Date());
     const [submission] = await tx
       .select({ id: membershipPaymentSubmissions.id })
       .from(membershipPaymentSubmissions)
