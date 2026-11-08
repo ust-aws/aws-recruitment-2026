@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Image from "next/image"
 import ReactCrop, { type PercentCrop } from "react-image-crop"
 import "react-image-crop/dist/ReactCrop.css"
 import { Button } from "@/components/ui/button"
@@ -26,6 +27,7 @@ const cropAreaClasses = "mt-2 flex justify-center overflow-hidden rounded-[16px]
 // Show the whole photo; the square is dragged over it instead of the photo moving.
 // ReactCrop's CSS gives the image `max-height: inherit`, so the cap goes on the wrapper.
 const cropperClasses = "max-h-[55vh]"
+const cropImageClasses = "h-auto w-auto"
 const zoomRowClasses = "mt-4 flex items-center gap-3"
 const zoomLabelClasses = "font-mono text-[10px] tracking-[0.14em] text-prelude"
 const errorClasses = "mt-2 font-sans text-xs text-rose-glow"
@@ -103,11 +105,14 @@ export function MemberPhotoCropDialog({
             keepSelection
             onChange={(_, percent) => { if (image) setCrop(toPixels(percent, image)) }}
           >
-            {/* Local object URLs can't go through next/image. */}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            {/* A local object URL loads as is; w-auto/h-auto keep its natural size inside ReactCrop. */}
+            <Image
               src={imageSrc}
               alt="Your upload, ready to crop"
+              width={0}
+              height={0}
+              unoptimized
+              className={cropImageClasses}
               onLoad={(event) => {
                 const size = { width: event.currentTarget.naturalWidth, height: event.currentTarget.naturalHeight }
                 setImage(size)

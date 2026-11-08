@@ -78,9 +78,17 @@ export function MemberIdCardFront({
         <span className={ruleClasses} aria-hidden />
         <div className={photoFrameClasses}>
           {photoUrl ? (
-            // Signed S3 URLs are dynamic, so next/image cannot optimize them.
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={photoUrl} alt={fullName} className={photoClasses} />
+            // Signed S3 or export data: URLs can't go through the optimizer, so they load as is.
+            // The export copy is off screen, so it must not wait to scroll into view.
+            <Image
+              src={photoUrl}
+              alt={fullName}
+              width={600}
+              height={600}
+              unoptimized
+              loading={forExport ? "eager" : undefined}
+              className={photoClasses}
+            />
           ) : (
             <UserRound className={photoPlaceholderClasses} aria-hidden />
           )}
