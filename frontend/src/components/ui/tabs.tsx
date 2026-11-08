@@ -27,7 +27,8 @@ const tabsListVariants = cva(
         // Pill group on a tinted track.
         default: "gap-1 rounded-pill bg-meteorite/40 p-1",
         // Plain labels on a hairline, the active one underlined (dashboard scope tabs).
-        line: "w-full gap-6 border-b border-blue-chalk/15",
+        // Scrolls sideways when the labels don't fit on a phone.
+        line: "w-full gap-6 overflow-x-auto border-b border-blue-chalk/15 [scrollbar-width:none]",
       },
     },
     defaultVariants: {
@@ -55,8 +56,9 @@ const tabTriggerClasses = [
   "relative inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap px-1 font-sans text-sm font-medium text-prelude outline-none transition-colors",
   "hover:text-blue-chalk focus-visible:ring-2 focus-visible:ring-aquamarine/60 data-active:text-blue-chalk",
   "disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0",
-  // The underline sits on the list's hairline.
-  "after:absolute after:inset-x-0 after:bottom-[-1px] after:h-0.5 after:bg-blue-chalk after:opacity-0 after:transition-opacity data-active:after:opacity-100",
+  // The underline sits on the list's hairline, inside it so a scrolling list doesn't clip it.
+  "group-data-[variant=line]/tabs-list:focus-visible:ring-inset",
+  "after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 after:bg-blue-chalk after:opacity-0 after:transition-opacity data-active:after:opacity-100",
   "group-data-[variant=default]/tabs-list:rounded-pill group-data-[variant=default]/tabs-list:px-4 group-data-[variant=default]/tabs-list:after:hidden group-data-[variant=default]/tabs-list:data-active:bg-daisy-bush/60",
 ].join(" ")
 
