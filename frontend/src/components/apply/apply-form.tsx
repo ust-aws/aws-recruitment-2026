@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useCallback, useEffect, useReducer, useRef, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -38,7 +38,7 @@ import { applyMappedServerError } from "@/components/apply/apply-form-server-fie
 import { Button } from "@/components/ui/button"
 import { SectionHeader } from "@/components/shared/section-header"
 import { listOpenPositions } from "@/lib/api"
-import { submitApplyForm } from "@/components/apply/apply-form-submit"
+import { submitApplyForm, type ApplyFormSubmitSuccess } from "@/components/apply/apply-form-submit"
 import { ApplyFormSteps } from "@/components/apply/apply-form-steps"
 import { UST_EMAIL_DOMAIN } from "@/lib/constants"
 import { RecruitmentTrackProvider } from "@/lib/recruitment-track"
@@ -52,6 +52,37 @@ import {
 import { cn } from "@/lib/utils"
 
 type FormStep = 1 | 2 | 3 | 4 | 5 | 6
+
+// The step, which way the slide animates, and what the success step shows all move together.
+type Wizard = { step: FormStep; direction: number; success: ApplyFormSubmitSuccess }
+type WizardAction =
+  | { type: "next" }
+  | { type: "back" }
+  | { type: "jump"; step: FormStep }
+  | { type: "submitted"; success: ApplyFormSubmitSuccess }
+
+const initialWizard: Wizard = {
+  step: 1,
+  direction: 1,
+  success: {
+    applicationCode: "",
+    applicationType: "position",
+    successChoices: { firstCommittee: "", secondCommittee: "", firstTitle: "", secondTitle: "" },
+  },
+}
+
+function wizardReducer(wizard: Wizard, action: WizardAction): Wizard {
+  switch (action.type) {
+    case "next":
+      return { ...wizard, step: (wizard.step + 1) as FormStep, direction: 1 }
+    case "back":
+      return { ...wizard, step: (wizard.step - 1) as FormStep, direction: -1 }
+    case "jump":
+      return { ...wizard, step: action.step }
+    case "submitted":
+      return { step: 6, direction: 1, success: action.success }
+  }
+}
 type CompletedUploadSession = { fingerprint: string; id: string; expiresAt: string }
 
 const panelShellClasses = `mx-auto w-full min-w-0 max-w-full overflow-x-clip ${glassPanelClasses} px-4 py-8 md:px-8`
@@ -102,22 +133,13 @@ function ApplyFormBody({ initialPositionId, mode, track }: Required<Omit<ApplyFo
   const noDraft = hrMode || hunt
   const router = useRouter()
   const reducedMotion = useReducedMotion() ?? false
-  const [step, setStep] = useState<FormStep>(1)
-  const [direction, setDirection] = useState(1)
+  const [{ step, direction, success }, dispatch] = useReducer(wizardReducer, initialWizard)
+  // Stable: the draft restore effect depends on it.
+  const jumpToStep = useCallback((target: FormStep) => dispatch({ type: "jump", step: target }), [])
   const [serverError, setServerError] = useState("")
   const [submitting, setSubmitting] = useState(false)
   const submittingRef = useRef(false)
   const completedUploadRef = useRef<CompletedUploadSession | null>(null)
-  const [applicationCode, setApplicationCode] = useState("")
-  const [successApplicationType, setSuccessApplicationType] = useState<
-    "position" | "member"
-  >("position")
-  const [successChoices, setSuccessChoices] = useState({
-    firstCommittee: "",
-    secondCommittee: "",
-    firstTitle: "",
-    secondTitle: "",
-  })
   const {
     formState: { errors },
     getValues,
@@ -144,7 +166,7 @@ function ApplyFormBody({ initialPositionId, mode, track }: Required<Omit<ApplyFo
     watch,
     getValues,
     setValue,
-    onRestoreStep: setStep,
+    onRestoreStep: jumpToStep,
   })
 
   const updatePrivacy = (patch: Partial<PrivacyValues>) => {
@@ -173,14 +195,12 @@ function ApplyFormBody({ initialPositionId, mode, track }: Required<Omit<ApplyFo
   async function goNext() {
     setServerError("")
     if (!(await trigger(STEP_FIELD[step], { shouldFocus: true }))) return
-    setDirection(1)
-    setStep((current) => (current + 1) as FormStep)
+    dispatch({ type: "next" })
   }
 
   function goBack() {
     setServerError("")
-    setDirection(-1)
-    setStep((current) => (current - 1) as FormStep)
+    dispatch({ type: "back" })
   }
 
   async function submit() {
@@ -203,16 +223,12 @@ function ApplyFormBody({ initialPositionId, mode, track }: Required<Omit<ApplyFo
           router.replace("/admin/hr?notice=added")
           return
         }
-        setApplicationCode(result.applicationCode)
-        setSuccessApplicationType(result.applicationType)
-        setSuccessChoices(result.successChoices)
-        setStep(6)
-        setDirection(1)
+        dispatch({ type: "submitted", success: result })
       } catch (error) {
         applyMappedServerError(
           error instanceof Error ? error.message : "Could not submit application.",
           setError,
-          setStep,
+          jumpToStep,
           setServerError,
           Boolean(values.upload.resume && values.upload.registration),
         )
@@ -270,9 +286,9 @@ function ApplyFormBody({ initialPositionId, mode, track }: Required<Omit<ApplyFo
               updateCommittee={updateCommittee}
               updateUpload={updateUpload}
               currentStepErrors={currentStepErrors}
-              applicationCode={applicationCode}
-              successApplicationType={successApplicationType}
-              successChoices={successChoices}
+              applicationCode={success.applicationCode}
+              successApplicationType={success.applicationType}
+              successChoices={success.successChoices}
             />
           </div>
           {step !== 6 ? (
