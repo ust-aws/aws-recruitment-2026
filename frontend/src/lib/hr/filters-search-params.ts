@@ -1,4 +1,4 @@
-import type { HrFilters } from "@/components/hr/application-filters"
+import type { HrFilters } from "@/components/hr/applications/application-filters"
 import type { ApplicationStatus, ApplicationType } from "@/lib/types/application"
 
 const STATUSES: HrFilters["status"][] = [

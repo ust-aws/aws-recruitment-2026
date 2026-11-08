@@ -1,4 +1,4 @@
-import { HrPaymentSetupPage } from "@/components/hr/hr-payment-setup-page"
+import { HrPaymentSetupPage } from "@/components/hr/payments/setup/hr-payment-setup-page"
 
 export default function PaymentSetupPage() {
   return <HrPaymentSetupPage />

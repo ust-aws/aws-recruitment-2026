@@ -1,4 +1,4 @@
-import { HrResultsPage } from "@/components/hr/hr-results-page"
+import { HrResultsPage } from "@/components/hr/results/hr-results-page"
 
 export default function OfficerHuntResultsPage() {
   return <HrResultsPage />

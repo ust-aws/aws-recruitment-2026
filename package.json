@@ -20,7 +20,7 @@
     "test:payments-ui": "pnpm --filter backend exec tsx --tsconfig ../frontend/tsconfig.json --test ../frontend/src/lib/payments/workspace.test.ts",
     "test:csv": "pnpm --filter backend exec tsx --tsconfig ../frontend/tsconfig.json --test ../frontend/src/lib/hr/applications-csv.test.ts",
     "test:validation": "pnpm --filter backend test:validation",
-    "test:schemas": "pnpm --filter backend test:schemas && pnpm --filter backend exec tsx --tsconfig ../frontend/tsconfig.json --test ../frontend/src/components/apply/apply-schema.test.ts",
+    "test:schemas": "pnpm --filter backend test:schemas && pnpm --filter backend exec tsx --tsconfig ../frontend/tsconfig.json --test ../frontend/src/components/apply/form/apply-schema.test.ts",
     "test:uploads": "pnpm --filter backend test:uploads"
   },
   "dependencies": {

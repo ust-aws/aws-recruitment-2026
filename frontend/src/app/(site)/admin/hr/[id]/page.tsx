@@ -1,6 +1,6 @@
 import { Suspense } from "react"
-import { HrApplicationDetail } from "@/components/hr/application-detail"
-import { HrApplicationDetailSkeleton } from "@/components/hr/application-detail-skeleton"
+import { HrApplicationDetail } from "@/components/hr/applications/detail/application-detail"
+import { HrApplicationDetailSkeleton } from "@/components/hr/applications/detail/application-detail-skeleton"
 
 export default function HrApplicationDetailPage() {
   return (

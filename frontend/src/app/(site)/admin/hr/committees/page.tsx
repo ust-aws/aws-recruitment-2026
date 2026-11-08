@@ -1,4 +1,4 @@
-import { HrCommitteesPage } from "@/components/hr/hr-committees-page"
+import { HrCommitteesPage } from "@/components/hr/committees/hr-committees-page"
 
 export default function AdminHrCommitteesPage() {
   return <HrCommitteesPage />
