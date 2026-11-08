@@ -8,7 +8,7 @@ import { PaymentsReviewSubmissions } from "@/components/hr/payments-review-submi
 import { usePaymentReview, type ReviewDecision } from "@/components/hr/use-payment-review"
 import type { PaymentListItem } from "@/lib/api/payments"
 import { formatDisplayDateTime } from "@/lib/datetime/display"
-import { fullName, paysAsLabel } from "@/lib/payments/workspace"
+import { fullName, paymentDueAt, paysAsLabel } from "@/lib/payments/workspace"
 import { cn } from "@/lib/utils"
 
 const panelClasses = "flex h-full min-h-0 flex-col"
@@ -61,7 +61,7 @@ export function PaymentsReviewPanel({ payment, position, total, onPrevious, onNe
   useEffect(() => {
     headingRef.current?.focus({ preventScroll: true })
   }, [])
-  const deadline = payment.resubmissionDeadlineAt ?? payment.deadlineAt
+  const deadline = paymentDueAt(payment)
 
   return (
     <div className={panelClasses} data-review-panel>
@@ -88,7 +88,7 @@ export function PaymentsReviewPanel({ payment, position, total, onPrevious, onNe
           <Fact label="Placement" wide>
             {[payment.committee, payment.finalPosition].filter(Boolean).join(" · ") || "—"}
           </Fact>
-          <Fact label={payment.resubmissionDeadlineAt ? "Resubmit by" : "Pay by"}>
+          <Fact label={payment.status === "needs_resubmission" ? "Resubmit by" : "Pay by"}>
             {formatDisplayDateTime(new Date(deadline), { dateStyle: "medium", timeStyle: "short" })}
           </Fact>
           <Fact label="Member ID">{payment.memberId ?? "Not yet"}</Fact>

@@ -8,7 +8,7 @@ import type {
 import { formatDisplayDate } from "@/lib/datetime/display"
 
 /** The Payments page: clear the receipt queue, see everyone, or check who has been sent the payment email. */
-export type PaymentTab = "review" | "all" | "emails"
+export type PaymentTab = "review" | "all" | "emails" | "late"
 
 export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
   pending_verification: "Pending verification",
@@ -144,7 +144,23 @@ export function nextAfterDecision(queue: PaymentListItem[], id: string) {
 }
 
 export function parsePaymentTab(value: string | string[] | undefined): PaymentTab | null {
-  return value === "review" || value === "all" || value === "emails" ? value : null
+  return value === "review" || value === "all" || value === "emails" || value === "late" ? value : null
+}
+
+/** Still owes a payment and is not archived: the people HR can let pay late. */
+export function owesPayment(payment: PaymentListItem) {
+  return (
+    !payment.archivedAt &&
+    (payment.status === "awaiting_payment" || payment.status === "needs_resubmission" || payment.status === "expired")
+  )
+}
+
+/** When this person must pay by: a resubmission date while resubmitting, else the period's, unless HR let them pay later. */
+export function paymentDueAt(payment: PaymentListItem) {
+  const base =
+    payment.status === "needs_resubmission" && payment.resubmissionDeadlineAt ? payment.resubmissionDeadlineAt : payment.deadlineAt
+  const late = payment.personalDeadlineAt
+  return late && new Date(late) > new Date(base) ? late : base
 }
 
 /** The queue while anything waits; otherwise everyone. */

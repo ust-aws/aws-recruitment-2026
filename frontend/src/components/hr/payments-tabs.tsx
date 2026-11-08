@@ -14,10 +14,12 @@ type PaymentsTabsProps = {
   allCount: number
   /** People still to be sent the payment email. */
   emailCount: number
+  /** People who still owe a payment. */
+  lateCount: number
   actions: ReactNode
 }
 
-export function PaymentsTabs({ tab, onTabChange, reviewCount, allCount, emailCount, actions }: PaymentsTabsProps) {
+export function PaymentsTabs({ tab, onTabChange, reviewCount, allCount, emailCount, lateCount, actions }: PaymentsTabsProps) {
   return (
     <div className={rowClasses}>
       <Tabs value={tab} onValueChange={(next) => onTabChange(next as PaymentTab)}>
@@ -30,6 +32,9 @@ export function PaymentsTabs({ tab, onTabChange, reviewCount, allCount, emailCou
           </TabsTrigger>
           <TabsTrigger value="emails">
             Payment Emails <span className={countClasses}>{emailCount}</span>
+          </TabsTrigger>
+          <TabsTrigger value="late">
+            Late Payments <span className={countClasses}>{lateCount}</span>
           </TabsTrigger>
         </TabsList>
       </Tabs>

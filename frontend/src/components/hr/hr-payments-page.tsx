@@ -5,6 +5,7 @@ import { PaymentsCollectionActions } from "@/components/hr/payments-collection-a
 import { PaymentsLoadError } from "@/components/hr/payments-empty"
 import { PaymentsListArea } from "@/components/hr/payments-list-area"
 import { PaymentsEmailsPanel } from "@/components/hr/payments-emails-panel"
+import { PaymentsLatePanel } from "@/components/hr/payments-late-panel"
 import { PaymentsStatusStrip } from "@/components/hr/payments-status-strip"
 import { PaymentsTabs } from "@/components/hr/payments-tabs"
 import { useHrPaymentWorkspace, type HrPaymentWorkspace } from "@/components/hr/use-hr-payment-workspace"
@@ -17,6 +18,7 @@ import type { PaymentCampaign } from "@/lib/api/payments"
 import {
   PAYMENT_SETUP_HREF,
   needsPaymentSetup,
+  owesPayment,
   paymentEmailCounts,
   periodLine,
   type PaymentTab,
@@ -87,11 +89,14 @@ function PaymentsLoaded({ workspace, view }: { workspace: HrPaymentWorkspace; vi
         reviewCount={view.queue.length}
         allCount={view.payments.length}
         emailCount={paymentEmailCounts(view.payments).unsent}
+        lateCount={view.payments.filter(owesPayment).length}
         actions={<PaymentsCollectionActions pending={pending} onRun={runBatch} />}
       />
       {feedback ? <ActionFeedback type={feedback.type} message={feedback.message} /> : null}
       {view.tab === "emails" ? (
         <PaymentsEmailsPanel payments={view.payments} onChanged={refresh} />
+      ) : view.tab === "late" ? (
+        <PaymentsLatePanel payments={view.payments} onChanged={refresh} />
       ) : (
         <PaymentsListArea
           view={view}
