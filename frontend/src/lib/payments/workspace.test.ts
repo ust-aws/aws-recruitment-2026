@@ -98,6 +98,18 @@ test("filters search names, codes and references; the list sorts work first", ()
   assert.deepEqual(sortPayments(rows).map((r) => r.paymentId), ["b", "c", "a"])
 })
 
+test("the list can sort newest verified or newest paid first, undated people last", () => {
+  const rows = [
+    payment("early", { status: "verified", verifiedAt: "2026-10-02T00:00:00.000Z", ...submittedAt("2026-10-01T00:00:00.000Z") }),
+    payment("none", { status: "awaiting_payment", latestSubmission: null }),
+    payment("late", { status: "verified", verifiedAt: "2026-10-09T00:00:00.000Z", ...submittedAt("2026-10-03T00:00:00.000Z") }),
+    payment("pending", { ...submittedAt("2026-10-08T00:00:00.000Z") }),
+  ]
+  const ids = (sort: "verified" | "paid") => sortPayments(rows, sort).map((r) => r.paymentId)
+  assert.deepEqual(ids("verified"), ["late", "early", "pending", "none"])
+  assert.deepEqual(ids("paid"), ["pending", "late", "early", "none"])
+})
+
 test("the page opens on the queue while receipts wait, and says where the period stands", () => {
   const summary = { totalEligible: 3, awaitingPayment: 0, pendingVerification: 2, verified: 1, needsResubmission: 0, expired: 0 }
   const campaign = { isOpen: true, amountCents: 25000, deadlineAt: "2099-10-20T15:59:00.000Z" } as PaymentCampaign
