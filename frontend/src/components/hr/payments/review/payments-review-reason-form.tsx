@@ -36,7 +36,7 @@ export function PaymentsReviewReasonForm({ review, mode }: ReasonFormProps) {
         />
         <p className={hintClasses}>
           The applicant sees this note on their dashboard and in an email, and can resubmit until the payment
-          deadline.
+          deadline.{reversing ? " After the deadline you can still reverse; no email is sent then." : ""}
         </p>
       </div>
       <div className={rowClasses}>

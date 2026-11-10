@@ -24,5 +24,9 @@ export function decisionMessage(
       : "They were emailed what to fix."
   const type = delivery && delivery.failed > 0 ? "error" : "success"
   if (decision === "rejected") return { type, message: `Rejected ${name}'s receipt. ${emailed} They can resubmit from their dashboard.${tail}` }
+  // No email means payments were closed: they can't resubmit, so nobody was told to.
+  if (!delivery) {
+    return { type: "success", message: `Reversed ${name}'s verification. Payments are closed, so no email was sent. Use Late Payments if they should pay again.${tail}` }
+  }
   return { type, message: `Reversed ${name}'s verification. ${emailed}${tail}` }
 }
