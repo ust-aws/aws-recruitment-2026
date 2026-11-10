@@ -17,7 +17,7 @@ import type { AuthenticatedUser } from "./auth";
 import { getApplicantPayment } from "./lib/membership/applicant-payments";
 import { openCurrentPaymentCampaign, saveCurrentPaymentSchedule } from "./lib/membership/campaigns";
 import { allowLatePayment, closeLatePayment } from "./lib/membership/late-payment";
-import { listMembershipPayments } from "./lib/membership/reviews";
+import { listMembershipPayments, reverseMembershipPayment } from "./lib/membership/reviews";
 
 const databaseUrl = process.env.DATABASE_URL ?? "";
 const databaseName = databaseUrl ? new URL(databaseUrl).pathname.replace(/^\/+/, "") : "";
@@ -297,5 +297,19 @@ test("extending the payment deadline", async (t) => {
     assert.equal((await statusOf(awaiting.paymentId)).status, "awaiting_payment");
     await allowLatePayment([awaiting.paymentId], new Date("2098-01-01T15:59:59.999Z"));
     assert.equal((await getApplicantPayment(awaiting.applicationId))?.canSubmit, true);
+  });
+
+  await t.test("HR can reverse a verification after the period closed, without emailing", async () => {
+    const hr = { id: hrUserId, email: `${hrUserId}@test.dev`, role: "hr" } as AuthenticatedUser;
+    const result = await reverseMembershipPayment(paid.paymentId, hr, "The transfer was refunded");
+    assert.equal(result.notificationId, null);
+    const [row] = await db
+      .select({ status: membershipPayments.status, membershipStatus: membershipPayments.membershipStatus })
+      .from(membershipPayments)
+      .where(eq(membershipPayments.id, paid.paymentId));
+    assert.deepEqual(row, { status: "needs_resubmission", membershipStatus: "revoked" });
+    // Nothing tells them to resubmit, since they can't once payments are over.
+    assert.equal((await extensionEmailsFor([paid.applicationId])).size, 0);
+    assert.equal((await getApplicantPayment(paid.applicationId))?.canSubmit, false);
   });
 });
