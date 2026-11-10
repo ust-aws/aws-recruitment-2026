@@ -3,11 +3,13 @@
 import { useMemo, useState } from "react"
 import type { MembersScope, MembersView } from "@/components/hr/members/members-tabs"
 import type { DirectoryMember, PaymentListItem, PendingOfficer } from "@/lib/api/payments"
+import { dateSortOptions, newestFirst, type DateSort } from "@/lib/datetime/date-sort"
 import { membersToCsv, unpaidToCsv } from "@/lib/members/csv"
 import {
   buildMemberEntries,
   countByFilter,
   filterMemberEntries,
+  MEMBER_DATES,
   splitByMemberId,
   type MemberFilter,
 } from "@/lib/members/directory"
@@ -30,13 +32,18 @@ export function useMembersView(data: Data | null) {
   const [role, setRoleState] = useState<MemberFilter>("all")
   const [unpaidStatus, setUnpaidStatusState] = useState<UnpaidFilter>("all")
   const [query, setQueryState] = useState("")
+  const [sort, setSortState] = useState<DateSort>("default")
   const [page, setPage] = useState(1)
 
   const entries = useMemo(() => buildMemberEntries(data?.verified ?? [], data?.pendingOfficers ?? []), [data])
   const unpaid = useMemo(() => buildUnpaidEntries(data?.payments ?? []), [data])
   const roleCounts = useMemo(() => countByFilter(entries), [entries])
   const unpaidCounts = useMemo(() => countByUnpaidStatus(unpaid), [unpaid])
-  const paidVisible = useMemo(() => filterMemberEntries(entries, role, query), [entries, role, query])
+  const paidFiltered = useMemo(() => filterMemberEntries(entries, role, query), [entries, role, query])
+  const paidVisible = useMemo(
+    () => (sort === "default" ? paidFiltered : newestFirst(paidFiltered, MEMBER_DATES[sort])),
+    [paidFiltered, sort],
+  )
   const unpaidVisible = useMemo(() => filterUnpaidEntries(unpaid, unpaidStatus, query), [unpaid, unpaidStatus, query])
   const groups = useMemo(() => buildCommitteeGroups(paidVisible), [paidVisible])
 
@@ -61,6 +68,8 @@ export function useMembersView(data: Data | null) {
     role,
     unpaidStatus,
     query,
+    sort,
+    sortOptions: dateSortOptions(paidFiltered, MEMBER_DATES),
     page: safePage,
     total,
     setScope: reset(setScopeState),
@@ -68,6 +77,7 @@ export function useMembersView(data: Data | null) {
     setRole: reset(setRoleState),
     setUnpaidStatus: reset(setUnpaidStatusState),
     setQuery: reset(setQueryState),
+    setSort: reset(setSortState),
     setPage,
     split: splitByMemberId(entries),
     roleCounts,

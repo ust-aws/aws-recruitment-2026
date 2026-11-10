@@ -7,6 +7,7 @@ import { MembersViewSwitch } from "@/components/hr/members/members-tabs"
 import { MembersToolbar } from "@/components/hr/members/members-toolbar"
 import type { MembersViewState } from "@/components/hr/members/use-members-view"
 import { Button } from "@/components/ui/button"
+import type { DateSort } from "@/lib/datetime/date-sort"
 import { FILTER_LABELS, type MemberFilter } from "@/lib/members/directory"
 import { UNPAID_FILTER_LABELS, type UnpaidFilter } from "@/lib/members/unpaid"
 
@@ -65,7 +66,7 @@ function ScopeShortcut({ members }: { members: MembersViewState }) {
   )
 }
 
-/** Search, the filter for this scope, and the CSV export. */
+/** Search, the filter for this scope, the date sort for members, and the CSV export. */
 export function MembersPageToolbar({ members }: { members: MembersViewState }) {
   const paid = members.scope === "paid"
   const filtered = paid ? members.role !== "all" : members.unpaidStatus !== "all"
@@ -81,6 +82,16 @@ export function MembersPageToolbar({ members }: { members: MembersViewState }) {
           <div className={filterWidthClasses}>
             <ScopeFilter members={members} />
           </div>
+          {paid ? (
+            <div className={filterWidthClasses}>
+              <MembersFilterSelect
+                label="Sort by date"
+                value={members.sort}
+                options={members.sortOptions}
+                onChange={(value) => members.setSort(value as DateSort)}
+              />
+            </div>
+          ) : null}
           <ScopeShortcut members={members} />
         </>
       }

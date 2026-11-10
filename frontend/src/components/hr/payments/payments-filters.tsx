@@ -5,7 +5,9 @@ import { MembersFilterSelect, type FilterOption } from "@/components/hr/members/
 import { MembersToolbar } from "@/components/hr/members/members-toolbar"
 import type { PaymentListItem } from "@/lib/api/payments"
 import { groupedCommitteesForPicker } from "@/lib/apply/committee-groups"
+import { dateSortOptions, type DateSort } from "@/lib/datetime/date-sort"
 import {
+  PAYMENT_DATES,
   PAYMENT_STATUS_LABELS,
   PAYMENT_STATUS_ORDER,
   type PaymentFilters,
@@ -52,7 +54,7 @@ function options(payments: PaymentListItem[]) {
     groups: committeeGroups(committees),
     counts: Object.fromEntries(committees.map((name) => [name, count(payments, (p) => p.committee === name)])),
   }
-  return { status, type, result, committee }
+  return { status, type, result, committee, sort: dateSortOptions(payments, PAYMENT_DATES) }
 }
 
 type PaymentsFiltersProps = {
@@ -61,7 +63,7 @@ type PaymentsFiltersProps = {
   onFiltersChange: (filters: PaymentFilters) => void
 }
 
-/** Search plus the four filters for the All payments tab, on the Members toolbar. */
+/** Search, the four filters and the date sort for the All payments tab, on the Members toolbar. */
 export function PaymentsFilters({ payments, filters, onFiltersChange }: PaymentsFiltersProps) {
   const all = options(payments)
   const set = (patch: Partial<PaymentFilters>) => onFiltersChange({ ...filters, ...patch })
@@ -92,6 +94,9 @@ export function PaymentsFilters({ payments, filters, onFiltersChange }: Payments
               total={payments.length}
               onChange={(committee) => set({ committee: committee || "all" })}
             />
+          </div>
+          <div className={selectWrapClasses}>
+            <MembersFilterSelect label="Sort by date" value={filters.sort} options={all.sort} onChange={(value) => set({ sort: value as DateSort })} />
           </div>
         </>
       }

@@ -5,6 +5,7 @@ import type {
   PaymentListItem,
   PaymentStatus,
 } from "@/lib/api/payments"
+import { newestFirst, type DateSort } from "@/lib/datetime/date-sort"
 import { formatDisplayDate } from "@/lib/datetime/display"
 
 /** The Payments page: clear the receipt queue, see everyone, or check who has been sent the payment email. */
@@ -65,6 +66,7 @@ export type PaymentFilters = {
   type: "all" | PaymentListItem["applicationType"]
   result: "all" | "approved" | "rejected"
   committee: string
+  sort: DateSort
 }
 
 export const EMPTY_PAYMENT_FILTERS: PaymentFilters = {
@@ -73,6 +75,7 @@ export const EMPTY_PAYMENT_FILTERS: PaymentFilters = {
   type: "all",
   result: "all",
   committee: "all",
+  sort: "default",
 }
 
 export function fullName(payment: Pick<PaymentListItem, "firstName" | "lastName">) {
@@ -111,15 +114,22 @@ export function filterPayments(payments: PaymentListItem[], filters: PaymentFilt
   })
 }
 
-/** Status order first, then by name, so the list reads like a worklist. */
-export function sortPayments(payments: PaymentListItem[]) {
+/** The dates the All Payments list can be sorted by. Paid is when they sent their latest receipt. */
+export const PAYMENT_DATES = {
+  verified: (payment: PaymentListItem) => payment.verifiedAt,
+  paid: (payment: PaymentListItem) => payment.latestSubmission?.submittedAt ?? null,
+}
+
+/** Status order first, then by name, so the list reads like a worklist; or newest first by a date. */
+export function sortPayments(payments: PaymentListItem[], sort: DateSort = "default") {
   const rank = (status: PaymentStatus) => PAYMENT_STATUS_ORDER.indexOf(status)
-  return [...payments].sort(
+  const worklist = [...payments].sort(
     (a, b) =>
       rank(a.status) - rank(b.status) ||
       a.lastName.localeCompare(b.lastName) ||
       a.firstName.localeCompare(b.firstName),
   )
+  return sort === "default" ? worklist : newestFirst(worklist, PAYMENT_DATES[sort])
 }
 
 /** Receipts waiting for a decision, oldest submission first: first in, first checked. */

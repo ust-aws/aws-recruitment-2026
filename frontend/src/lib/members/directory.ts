@@ -22,6 +22,14 @@ export type MemberEntry = {
   section: string | null
   /** When the Member ID was issued (the payment was verified); null when there is no ID. */
   issuedAt: string | null
+  /** When they sent the receipt that was verified; null when they have not paid. */
+  paidAt: string | null
+}
+
+/** The dates the Members list can be sorted by. */
+export const MEMBER_DATES = {
+  verified: (entry: MemberEntry) => entry.issuedAt,
+  paid: (entry: MemberEntry) => entry.paidAt,
 }
 
 export const ROLE_LABELS: Record<Exclude<MemberFilter, "all">, string> = {
@@ -76,6 +84,7 @@ function staticOfficerEntries(): MemberEntry[] {
     studentNumber: null,
     section: null,
     issuedAt: null,
+    paidAt: null,
   })
   // Director seats are built in the same order as the staff committees.
   const committees = staffCommitteeSeedNamesInOrgOrder()
@@ -104,6 +113,7 @@ function pendingOfficerEntry(officer: PendingOfficer): MemberEntry {
     studentNumber: officer.studentNumber,
     section: officer.section,
     issuedAt: null,
+    paidAt: null,
   }
 }
 
@@ -132,6 +142,7 @@ export function buildMemberEntries(
       studentNumber: member.studentNumber,
       section: member.section,
       issuedAt: member.verifiedAt,
+      paidAt: member.paidAt,
     })),
     ...(seeded ? pendingOfficers.map(pendingOfficerEntry) : staticOfficerEntries()),
   ]
