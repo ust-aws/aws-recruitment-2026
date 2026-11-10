@@ -18,6 +18,7 @@ import { getApplicantPayment } from "./lib/membership/applicant-payments";
 import { openCurrentPaymentCampaign, saveCurrentPaymentSchedule } from "./lib/membership/campaigns";
 import { allowLatePayment, closeLatePayment } from "./lib/membership/late-payment";
 import { listMembershipPayments, reverseMembershipPayment } from "./lib/membership/reviews";
+import { allocateMemberId } from "./lib/core/member-id";
 
 const databaseUrl = process.env.DATABASE_URL ?? "";
 const databaseName = databaseUrl ? new URL(databaseUrl).pathname.replace(/^\/+/, "") : "";
@@ -301,6 +302,11 @@ test("extending the payment deadline", async (t) => {
 
   await t.test("HR can reverse a verification after the period closed, without emailing", async () => {
     const hr = { id: hrUserId, email: `${hrUserId}@test.dev`, role: "hr" } as AuthenticatedUser;
+    const nextFreeId = () => db.transaction((tx) => allocateMemberId(tx, YEAR, { kind: "general" }));
+    const issued = await nextFreeId();
+    await db.update(applications).set({ memberId: issued }).where(eq(applications.id, paid.applicationId));
+    assert.notEqual(await nextFreeId(), issued);
+
     const result = await reverseMembershipPayment(paid.paymentId, hr, "The transfer was refunded");
     assert.equal(result.notificationId, null);
     const [row] = await db
@@ -310,6 +316,30 @@ test("extending the payment deadline", async (t) => {
     assert.deepEqual(row, { status: "needs_resubmission", membershipStatus: "revoked" });
     // Nothing tells them to resubmit, since they can't once payments are over.
     assert.equal((await extensionEmailsFor([paid.applicationId])).size, 0);
-    assert.equal((await getApplicantPayment(paid.applicationId))?.canSubmit, false);
+    const dashboard = await getApplicantPayment(paid.applicationId);
+    assert.equal(dashboard?.canSubmit, false);
+    // Back to the payment portal: no ID card, no Member ID.
+    assert.equal(dashboard?.memberCard, null);
+    const [application] = await db
+      .select({ memberId: applications.memberId })
+      .from(applications)
+      .where(eq(applications.id, paid.applicationId));
+    assert.equal(application.memberId, null);
+    // Their number is free again, so the next person verified takes it.
+    assert.equal(await nextFreeId(), issued);
+  });
+
+  await t.test("only a verified payment's reversal frees a Member ID", async () => {
+    const hr = { id: hrUserId, email: `${hrUserId}@test.dev`, role: "hr" } as AuthenticatedUser;
+    // Someone reversed before IDs were freed: not verified, still holding a number.
+    const oldId = "AWS-9596-0999";
+    await db.update(applications).set({ memberId: oldId }).where(eq(applications.id, expiredRejected.applicationId));
+    assert.notEqual((await statusOf(expiredRejected.paymentId)).status, "verified");
+    await assert.rejects(reverseMembershipPayment(expiredRejected.paymentId, hr, "Again"), /Only verified payments/);
+    const [application] = await db
+      .select({ memberId: applications.memberId })
+      .from(applications)
+      .where(eq(applications.id, expiredRejected.applicationId));
+    assert.equal(application.memberId, oldId);
   });
 });
