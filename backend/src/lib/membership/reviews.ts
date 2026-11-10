@@ -534,6 +534,12 @@ export async function reverseMembershipPayment(
         updatedAt: reversedAt,
       })
       .where(eq(membershipPayments.id, paymentId));
+    // Their ID is revoked and its number goes back in the pool: the next person
+    // verified in that block takes it (allocation picks the first free number).
+    await tx
+      .update(applications)
+      .set({ memberId: null, updatedAt: reversedAt })
+      .where(eq(applications.id, payment.applicationId));
     return {
       paymentId,
       status: "needs_resubmission" as const,
