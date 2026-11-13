@@ -76,3 +76,6 @@ yarn-error.log*
 
 # Impeccable decision-round sketches and their server logs (local, throwaway)
 **/.impeccable/mocks/
+
+# Personal details for db:seed-members (local only)
+backend/members.local.json
