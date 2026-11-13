@@ -37,7 +37,7 @@ export function usePaymentsView(
 
   const payments = useMemo(() => dashboard?.payments ?? [], [dashboard])
   const queue = useMemo(() => reviewQueue(payments), [payments])
-  const filtered = useMemo(() => sortPayments(filterPayments(payments, filters)), [payments, filters])
+  const filtered = useMemo(() => sortPayments(filterPayments(payments, filters), filters.sort), [payments, filters])
   const tab = chosenTab ?? defaultPaymentTab(dashboard?.summary ?? null)
   const visible = tab === "review" ? queue : tab === "all" ? filtered : []
   const selected = payments.find((payment) => payment.paymentId === selectedId) ?? null

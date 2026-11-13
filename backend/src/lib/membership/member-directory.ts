@@ -1,10 +1,11 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, sql } from "drizzle-orm";
 import { db } from "../../db";
 import {
   applicants,
   applications,
   committees,
   membershipPaymentCampaigns,
+  membershipPaymentSubmissions,
   membershipPayments,
   officerSeats,
   positions,
@@ -29,6 +30,8 @@ export type DirectoryMember = {
   position: string;
   committee: string | null;
   verifiedAt: string | null;
+  /** When they sent the receipt that was verified; null for advisers, who do not pay. */
+  paidAt: string | null;
 };
 
 /** Everyone whose membership is verified and active for the current recruitment year. */
@@ -51,6 +54,11 @@ export async function listDirectoryMembers(): Promise<DirectoryMember[]> {
       officerKind: officerSeats.kind,
       officerCommittee: officerSeats.committee,
       verifiedAt: membershipPayments.verifiedAt,
+      paidAt: sql<Date | null>`(
+        select max(${membershipPaymentSubmissions.submittedAt}) from ${membershipPaymentSubmissions}
+        where ${membershipPaymentSubmissions.paymentId} = ${membershipPayments.id}
+          and ${membershipPaymentSubmissions.status} = 'verified'
+      )`.mapWith(membershipPaymentSubmissions.submittedAt),
     })
     .from(membershipPayments)
     .innerJoin(applications, eq(membershipPayments.applicationId, applications.id))
@@ -89,6 +97,7 @@ export async function listDirectoryMembers(): Promise<DirectoryMember[]> {
           position: row.officerTitle ?? "Officer",
           committee: row.officerCommittee,
           verifiedAt: row.verifiedAt?.toISOString() ?? null,
+          paidAt: row.paidAt?.toISOString() ?? null,
         },
       ];
     }
@@ -112,6 +121,7 @@ export async function listDirectoryMembers(): Promise<DirectoryMember[]> {
         position,
         committee: inCommittee ? row.committeeName : null,
         verifiedAt: row.verifiedAt?.toISOString() ?? null,
+        paidAt: row.paidAt?.toISOString() ?? null,
       },
     ];
   });
@@ -158,6 +168,7 @@ async function listAdvisers(): Promise<DirectoryMember[]> {
             position: row.title,
             committee: null,
             verifiedAt: row.issuedAt.toISOString(),
+            paidAt: null,
           },
         ]
       : [],

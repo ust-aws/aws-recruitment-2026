@@ -22,6 +22,7 @@ function member(patch: Partial<DirectoryMember>): DirectoryMember {
     position: "General Member",
     committee: null,
     verifiedAt: "2026-10-06T00:00:00.000Z",
+    paidAt: "2026-10-05T00:00:00.000Z",
     ...patch,
   }
 }

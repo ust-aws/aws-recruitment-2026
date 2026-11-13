@@ -458,6 +458,8 @@ membershipPaymentRoutes.post(
         getCurrentUser(c),
         parsed.data.reason,
       );
+      // No email after the deadline: they could not resubmit, so there is nothing to tell them to do.
+      if (!notificationId) return c.json({ ...reversed, emailDelivery: null });
       const emailDelivery = await sendQueuedNow([notificationId]);
       if (emailDelivery.queued > 0) await kickEmailOutbox();
       return c.json({ ...reversed, emailDelivery });

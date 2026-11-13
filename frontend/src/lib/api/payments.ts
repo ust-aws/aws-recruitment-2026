@@ -287,6 +287,8 @@ export type DirectoryMember = {
   position: string
   committee: string | null
   verifiedAt: string | null
+  /** When they sent the receipt that was verified; null for advisers. */
+  paidAt: string | null
 }
 
 /** A board member or director who has not paid yet, with the Member ID held for their seat. */

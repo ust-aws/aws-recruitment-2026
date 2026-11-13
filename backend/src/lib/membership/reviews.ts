@@ -479,6 +479,7 @@ export async function reverseMembershipPayment(
         status: membershipPayments.status,
         applicationId: membershipPayments.applicationId,
         deadlineAt: membershipPaymentCampaigns.deadlineAt,
+        isOpen: membershipPaymentCampaigns.isOpen,
         personalDeadlineAt: membershipPayments.personalDeadlineAt,
       })
       .from(membershipPayments)
@@ -496,7 +497,12 @@ export async function reverseMembershipPayment(
         409,
       );
     }
-    assertDeadlineAllowsResubmission(laterOf(payment.deadlineAt, payment.personalDeadlineAt), new Date());
+    // Revoking a membership works at any time. Only the "send a new receipt"
+    // email needs them to still be able to pay; otherwise HR uses Late Payments.
+    const now = new Date();
+    const canResubmit =
+      (payment.isOpen || (payment.personalDeadlineAt !== null && now <= payment.personalDeadlineAt)) &&
+      now <= laterOf(payment.deadlineAt, payment.personalDeadlineAt);
     const [submission] = await tx
       .select({ id: membershipPaymentSubmissions.id })
       .from(membershipPaymentSubmissions)
@@ -509,7 +515,7 @@ export async function reverseMembershipPayment(
       .orderBy(desc(membershipPaymentSubmissions.attemptNumber))
       .for("update")
       .limit(1);
-    const reversedAt = new Date();
+    const reversedAt = now;
     if (submission) {
       await tx
         .update(membershipPaymentSubmissions)
@@ -528,10 +534,16 @@ export async function reverseMembershipPayment(
         updatedAt: reversedAt,
       })
       .where(eq(membershipPayments.id, paymentId));
+    // Their ID is revoked and its number goes back in the pool: the next person
+    // verified in that block takes it (allocation picks the first free number).
+    await tx
+      .update(applications)
+      .set({ memberId: null, updatedAt: reversedAt })
+      .where(eq(applications.id, payment.applicationId));
     return {
       paymentId,
       status: "needs_resubmission" as const,
-      notificationId: await queueResubmissionEmail(tx, payment.applicationId),
+      notificationId: canResubmit ? await queueResubmissionEmail(tx, payment.applicationId) : null,
     };
   });
 }

@@ -360,7 +360,7 @@ test("membership payment workflow", async (t) => {
     assert.equal(dashboard.payment.committeeChatLink, "https://m.me/j/committee-test");
   });
 
-  await t.test("HR can reverse verification and Member ID is retained", async () => {
+  await t.test("HR can reverse verification and their Member ID is freed", async () => {
     const [payment] = await db.select().from(membershipPayments).where(eq(membershipPayments.applicationId, ids.acceptedApplication));
     const body = JSON.stringify({ reason: "Wrong receipt was verified" });
     assert.equal((await staffRequest(`/membership-payments/${payment.id}/reverse`, financeToken, { method: "POST", body })).status, 401);
@@ -369,7 +369,7 @@ test("membership payment workflow", async (t) => {
     const [application] = await db.select({ memberId: applications.memberId }).from(applications).where(eq(applications.id, ids.acceptedApplication));
     assert.equal(reversed.membershipStatus, "revoked");
     assert.equal(reversed.status, "needs_resubmission");
-    assert.match(application.memberId ?? "", /^AWS-9697-\d{4}$/);
+    assert.equal(application.memberId, null);
   });
 
   await t.test("applicant submits a Google Drive receipt link that HR can open", async () => {

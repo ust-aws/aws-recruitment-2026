@@ -8,6 +8,7 @@ import {
   applications,
   committees,
   membershipPaymentCampaigns,
+  membershipPaymentSubmissions,
   membershipPayments,
   positions,
 } from "./db/schema";
@@ -91,13 +92,36 @@ test("member directory", async () => {
       finalPositionId: spec.positionId,
       archivedAt: spec.archived ? new Date() : null,
     });
-    await db.insert(membershipPayments).values({
-      campaignId,
-      applicationId,
-      status: spec.unverified ? "pending_verification" : "verified",
-      membershipStatus: spec.unverified ? "inactive" : "active",
-      verifiedAt: spec.unverified ? null : new Date("2098-10-06T00:00:00.000Z"),
-    });
+    const [payment] = await db
+      .insert(membershipPayments)
+      .values({
+        campaignId,
+        applicationId,
+        status: spec.unverified ? "pending_verification" : "verified",
+        membershipStatus: spec.unverified ? "inactive" : "active",
+        verifiedAt: spec.unverified ? null : new Date("2098-10-06T00:00:00.000Z"),
+      })
+      .returning({ id: membershipPayments.id });
+    // The first member was rejected once, then paid again: paid is the verified receipt.
+    if (index === 0) {
+      for (const [attemptNumber, status, submittedAt] of [
+        [1, "rejected", "2098-10-01T00:00:00.000Z"],
+        [2, "verified", "2098-10-03T00:00:00.000Z"],
+      ] as const) {
+        await db.insert(membershipPaymentSubmissions).values({
+          paymentId: payment.id,
+          campaignId,
+          attemptNumber,
+          method: "gcash",
+          referenceNumber: `DIR-${attemptNumber}-${runId}`,
+          referenceNumberNormalized: `dir${attemptNumber}${runId}`.toLowerCase(),
+          amountCents: 25000,
+          receiptUrl: "https://drive.google.com/file/d/test/view",
+          status,
+          submittedAt: new Date(submittedAt),
+        });
+      }
+    }
   }
 
   const members = (await listDirectoryMembers()).filter((member) => member.fullName.endsWith(runId));
@@ -113,4 +137,6 @@ test("member directory", async () => {
     [members[0].birthday, members[0].gender, members[0].section, members[0].facebookUrl],
     ["2005-06-15", "female", "3CSC", `https://facebook.com/dir-0-${runId}`],
   );
+  assert.equal(members[0].paidAt, "2098-10-03T00:00:00.000Z");
+  assert.equal(members[1].paidAt, null);
 });
