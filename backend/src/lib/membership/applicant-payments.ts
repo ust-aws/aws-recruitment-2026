@@ -34,14 +34,22 @@ function normalizeReferenceNumber(value: string) {
   return value.replace(/[^a-z0-9]/gi, "").toUpperCase();
 }
 
+function laterOf(date: Date, other: Date | null) {
+  return other && other > date ? other : date;
+}
+
 function effectiveDeadline(row: {
   deadlineAt: Date;
   status: string;
   resubmissionDeadlineAt: Date | null;
+  personalDeadlineAt: Date | null;
 }) {
-  return row.status === "needs_resubmission" && row.resubmissionDeadlineAt
-    ? row.resubmissionDeadlineAt
-    : row.deadlineAt;
+  const base =
+    row.status === "needs_resubmission" && row.resubmissionDeadlineAt
+      ? row.resubmissionDeadlineAt
+      : row.deadlineAt;
+  // HR may have quietly let this person pay later than everyone else.
+  return laterOf(base, row.personalDeadlineAt);
 }
 
 function canSubmit(
@@ -51,12 +59,15 @@ function canSubmit(
     deadlineAt: Date;
     status: string;
     resubmissionDeadlineAt: Date | null;
+    personalDeadlineAt: Date | null;
     archivedAt: Date | null;
   },
   now = new Date(),
 ) {
+  // A personal deadline lets them pay even after HR closes the period for everyone else.
+  const open = row.isOpen || (row.personalDeadlineAt !== null && now <= row.personalDeadlineAt);
   return (
-    row.isOpen &&
+    open &&
     !row.archivedAt &&
     now >= row.opensAt &&
     now <= effectiveDeadline(row) &&
@@ -88,6 +99,7 @@ async function loadApplicantPayment(applicationId: string) {
       paymentStatus: membershipPayments.status,
       membershipStatus: membershipPayments.membershipStatus,
       resubmissionDeadlineAt: membershipPayments.resubmissionDeadlineAt,
+      personalDeadlineAt: membershipPayments.personalDeadlineAt,
       amountCents: membershipPaymentCampaigns.amountCents,
       opensAt: membershipPaymentCampaigns.opensAt,
       deadlineAt: membershipPaymentCampaigns.deadlineAt,
@@ -137,6 +149,7 @@ async function loadApplicantPayment(applicationId: string) {
   }
 
   const deadline = effectiveDeadline({
+    personalDeadlineAt: row.personalDeadlineAt,
     deadlineAt: row.deadlineAt,
     status: row.paymentStatus,
     resubmissionDeadlineAt: row.resubmissionDeadlineAt,
@@ -294,8 +307,11 @@ export async function getApplicantPayment(applicationId: string) {
     membershipStatus: row.membershipStatus,
     amountCents: row.amountCents,
     opensAt: row.opensAt.toISOString(),
-    deadlineAt: row.deadlineAt.toISOString(),
-    resubmissionDeadlineAt: row.resubmissionDeadlineAt?.toISOString() ?? null,
+    // Their own deadline when HR let them pay late.
+    deadlineAt: laterOf(row.deadlineAt, row.personalDeadlineAt).toISOString(),
+    resubmissionDeadlineAt: row.resubmissionDeadlineAt
+      ? laterOf(row.resubmissionDeadlineAt, row.personalDeadlineAt).toISOString()
+      : null,
     paymentMethods: {
       gcash: row.gcashAccountNumber || gcashQrImageUrl
         ? {
@@ -318,6 +334,7 @@ export async function getApplicantPayment(applicationId: string) {
       deadlineAt: row.deadlineAt,
       status: row.paymentStatus,
       resubmissionDeadlineAt: row.resubmissionDeadlineAt,
+      personalDeadlineAt: row.personalDeadlineAt,
       archivedAt: row.archivedAt,
     }),
     latestSubmission: row.latestSubmission
@@ -384,6 +401,7 @@ export async function submitApplicantPayment(
       deadlineAt: payment.deadlineAt,
       status: payment.paymentStatus,
       resubmissionDeadlineAt: payment.resubmissionDeadlineAt,
+      personalDeadlineAt: payment.personalDeadlineAt,
       archivedAt: payment.archivedAt,
     })
   ) {
@@ -419,6 +437,7 @@ export async function submitApplicantPayment(
           id: membershipPayments.id,
           status: membershipPayments.status,
           resubmissionDeadlineAt: membershipPayments.resubmissionDeadlineAt,
+          personalDeadlineAt: membershipPayments.personalDeadlineAt,
           isOpen: membershipPaymentCampaigns.isOpen,
           opensAt: membershipPaymentCampaigns.opensAt,
           deadlineAt: membershipPaymentCampaigns.deadlineAt,

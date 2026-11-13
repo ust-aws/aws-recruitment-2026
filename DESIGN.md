@@ -267,7 +267,7 @@ type above are unchanged, but the working areas differ from the public site.
   directly. Every group below Overview is set off by a hairline. Rows are
   compact (36px, 44px on touch); the only lit things are the current page's
   pill and its aquamarine icon. Navigation lives in
-  `frontend/src/components/hr/hr-navigation.ts`, drawn by
+  `frontend/src/components/hr/shell/hr-navigation.ts`, drawn by
   `hr-sidebar-navigation.tsx`, `hr-round-switch.tsx` and `hr-sidebar-fold.tsx`.
 - **Applicant dashboard.** One column of solid sections in a fixed order:
   identity, result or application (choices, interview, edit choices),

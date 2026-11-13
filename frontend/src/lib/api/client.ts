@@ -305,10 +305,6 @@ export function peekOpenPositions(track: RecruitmentTrack = "r101") {
   return typeof window === "undefined" ? null : (openPositionsCaches[track] ?? null);
 }
 
-export function peekBrowserPositions(track: RecruitmentTrack = "r101") {
-  return typeof window === "undefined" ? null : (browserPositionsCaches[track] ?? null);
-}
-
 export function listOpenPositions(track: RecruitmentTrack = "r101") {
   if (typeof window === "undefined") {
     return apiFetch<PositionApiRow[]>(withTrack("/positions", track)).then((rows) =>
@@ -326,13 +322,6 @@ export function listAllPositions(track: RecruitmentTrack = "r101") {
       openSlots: row.openSlots,
     })),
   );
-}
-
-export function listBrowserPositions(track: RecruitmentTrack = "r101") {
-  if (typeof window === "undefined") {
-    return apiFetch<PositionApiRow[]>(withTrack("/positions", track)).then((rows) => rows.map(mapBrowserPosition));
-  }
-  return ensurePositionsLoaded(track).then(() => browserPositionsCaches[track] ?? []);
 }
 
 export function listCommitteeApplicationStatuses() {
@@ -608,12 +597,6 @@ export function getResultEmailStatus(track?: RecruitmentTrack) {
   return apiFetch<ResultEmailStatus>(withTrack("/results/emails/status", track));
 }
 
-type LoginResponse = {
-  email: string;
-  role: "hr" | "admin";
-  expiresAt: string;
-};
-
 export async function getSession(): Promise<{
   email: string;
   role: "hr" | "admin";
@@ -621,32 +604,3 @@ export async function getSession(): Promise<{
   return apiFetch("/auth/me");
 }
 
-export async function login(
-  email: string,
-  password: string,
-): Promise<LoginResponse> {
-  try {
-    return await apiFetch<LoginResponse>("/auth/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-    });
-  } catch (err) {
-    if (err instanceof TypeError) {
-      throw new ApiError(0, "Could not reach the API");
-    }
-    if (err instanceof ApiError && err.status === 401) {
-      throw new ApiError(401, "Invalid credentials");
-    }
-    throw err;
-  }
-}
-
-export async function logout(): Promise<void> {
-  try {
-    await apiFetch<void>("/auth/logout", {
-      method: "POST",
-    });
-  } catch {
-    // Client still navigates away even if the request fails.
-  }
-}

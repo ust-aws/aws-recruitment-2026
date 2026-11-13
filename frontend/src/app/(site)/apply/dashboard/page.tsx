@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { ApplicantDashboard } from "@/components/apply/applicant-dashboard"
+import { ApplicantDashboard } from "@/components/apply/dashboard/applicant-dashboard"
 import {
   getApplicantApplicationServer,
   getApplicantPaymentServer,

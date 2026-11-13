@@ -1,4 +1,4 @@
-import { HrApplicationList } from "@/components/hr/application-list"
+import { HrApplicationList } from "@/components/hr/applications/application-list"
 import {
   firstSearchParam,
   hrListSearchFromPageSearchParams,

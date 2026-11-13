@@ -1,4 +1,4 @@
-import { ApplicantAccessForm } from "@/components/apply/applicant-access-form"
+import { ApplicantAccessForm } from "@/components/apply/access/applicant-access-form"
 import { SectionHeader } from "@/components/shared/section-header"
 import { pageShellClasses } from "@/lib/site/surface"
 

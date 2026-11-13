@@ -60,6 +60,8 @@ export type PaymentListItem = {
   membershipStatus: "inactive" | "active" | "revoked"
   verifiedAt: string | null
   resubmissionDeadlineAt: string | null
+  /** Set when HR quietly let this person pay late: they may pay until then. */
+  personalDeadlineAt: string | null
   deadlineAt: string
   finalPosition: string | null
   committee: string | null
@@ -235,6 +237,22 @@ export function reversePayment(paymentId: string, body: { reason: string }) {
 /** Sends the payment email to these people: a first one, or another for one already sent or that failed. */
 export function sendPaymentInvitations(paymentIds: string[]) {
   return apiFetch<{ queued: number; alreadyWaiting: number }>("/membership-payments/emails/send-invitations", {
+    method: "POST",
+    body: JSON.stringify({ paymentIds }),
+  })
+}
+
+/** Quietly lets these people pay until `until` (ISO), even after the period closes. Sends no email. */
+export function allowLatePayment(paymentIds: string[], until: string) {
+  return apiFetch<{ opened: number; skipped: number }>("/membership-payments/late-payment", {
+    method: "POST",
+    body: JSON.stringify({ paymentIds, until }),
+  })
+}
+
+/** Takes back these people's late payment. Sends no email. */
+export function closeLatePayment(paymentIds: string[]) {
+  return apiFetch<{ closed: number }>("/membership-payments/late-payment/close", {
     method: "POST",
     body: JSON.stringify({ paymentIds }),
   })

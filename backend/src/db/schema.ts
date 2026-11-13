@@ -732,6 +732,10 @@ export const membershipPayments = pgTable(
     resubmissionDeadlineAt: timestamp("resubmission_deadline_at", {
       withTimezone: true,
     }),
+    /** HR let this person pay late, quietly: they may pay until then even after the period closes. */
+    personalDeadlineAt: timestamp("personal_deadline_at", {
+      withTimezone: true,
+    }),
     verifiedAt: timestamp("verified_at", { withTimezone: true }),
     verifiedBy: uuid("verified_by").references(() => users.id, {
       onDelete: "set null",

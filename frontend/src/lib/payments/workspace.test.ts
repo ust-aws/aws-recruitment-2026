@@ -36,6 +36,7 @@ function payment(id: string, patch: Partial<PaymentListItem> = {}): PaymentListI
     membershipStatus: "inactive",
     verifiedAt: null,
     resubmissionDeadlineAt: null,
+    personalDeadlineAt: null,
     deadlineAt: "2026-10-20T15:59:00.000Z",
     finalPosition: null,
     committee: "Creatives",

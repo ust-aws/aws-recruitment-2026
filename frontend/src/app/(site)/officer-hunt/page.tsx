@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { OfficerHuntGate } from "@/components/apply/officer-hunt-gate"
+import { OfficerHuntGate } from "@/components/apply/form/officer-hunt-gate"
 
 export const metadata: Metadata = {
   title: "Officer Hunt",

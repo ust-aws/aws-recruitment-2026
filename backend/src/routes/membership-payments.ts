@@ -24,6 +24,7 @@ import {
   sendPaymentInvitations,
 } from "../lib/membership/email-delivery";
 import { MembershipPaymentError } from "../lib/membership/errors";
+import { allowLatePayment, closeLatePayment } from "../lib/membership/late-payment";
 import { listDirectoryMembers, listPendingOfficers } from "../lib/membership/member-directory";
 import {
   getMembershipPaymentDetails,
@@ -79,6 +80,7 @@ const completePaymentQrSchema = paymentQrSchema.extend({
   fileName: z.string().trim().max(255).optional(),
 });
 const paymentSelectionSchema = z.object({ paymentIds: z.array(z.uuid()).min(1).max(500) });
+const latePaymentSchema = paymentSelectionSchema.extend({ until: z.iso.datetime() });
 const reviewSchema = z.object({
   reason: z.string().trim().min(1).max(1000),
 });
@@ -262,6 +264,33 @@ membershipPaymentRoutes.post(
       const result = paymentError(error);
       return c.json(result.body, result.status);
     }
+  },
+);
+
+/** Quietly lets the ticked people who still owe pay until a date. Sends no email. */
+membershipPaymentRoutes.post(
+  "/late-payment",
+  requireRoles("hr", "admin"),
+  async (c) => {
+    const parsed = latePaymentSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "Pick at least one person and a date." }, 400);
+    try {
+      return c.json(await allowLatePayment(parsed.data.paymentIds, new Date(parsed.data.until)));
+    } catch (error) {
+      const result = paymentError(error);
+      return c.json(result.body, result.status);
+    }
+  },
+);
+
+/** Takes back the ticked people's late payment, quietly. */
+membershipPaymentRoutes.post(
+  "/late-payment/close",
+  requireRoles("hr", "admin"),
+  async (c) => {
+    const parsed = paymentSelectionSchema.safeParse(await c.req.json().catch(() => null));
+    if (!parsed.success) return c.json({ error: "Pick at least one person." }, 400);
+    return c.json(await closeLatePayment(parsed.data.paymentIds));
   },
 );
 

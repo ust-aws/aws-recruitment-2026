@@ -1,4 +1,4 @@
-import { ApplyForm } from "@/components/apply/apply-form"
+import { ApplyForm } from "@/components/apply/form/apply-form"
 
 export default function AddHrApplicantPage() {
   return <ApplyForm mode="hr" />

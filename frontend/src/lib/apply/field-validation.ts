@@ -97,12 +97,6 @@ export function isValidGithubUrl(value: string): boolean {
   return GITHUB_USERNAME_RE.test(segments[0])
 }
 
-export const googleDriveUrlFormatError =
-  "Use a Google Drive or Docs share link (drive.google.com/file/d/… or docs.google.com/document/d/…)."
-
-export const githubProfileUrlFormatError =
-  "Use your GitHub profile link only (https://github.com/username), not a repository URL."
-
 export function lastNameFileToken(lastName: string): string {
   return lastName
     .replace(/\s+/g, "")

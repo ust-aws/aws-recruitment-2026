@@ -48,17 +48,13 @@ function loadApplication(id: string) {
 export {
   ApiError,
   getSession,
-  login,
-  logout,
   listOpenPositions,
-  listBrowserPositions,
   listPositionInterviewSlots,
   listCommitteeApplicationStatuses,
   patchCommitteeApplicationStatus,
   listPositionApprovalTargets,
   patchPositionApprovalTarget,
   peekOpenPositions,
-  peekBrowserPositions,
   getRecruitmentWindow,
   patchRecruitmentWindow,
   getInterviewWindow,
@@ -304,17 +300,6 @@ export function patchApplicationRedirectPlacement(
 
 export function fullName(app: Application) {
   return `${app.firstName} ${app.lastName}`
-}
-
-export function firstChoiceCommittee(app: Application) {
-  if (app.applicationType === "member") return "Member-only"
-  return (
-    app.choices.find((choice) => choice.preferenceRank === 1)?.committee ?? "—"
-  )
-}
-
-export function hasCommittee(app: Application, committee: string) {
-  return app.choices.some((choice) => choice.committee === committee)
 }
 
 export function formatAppliedDate(iso: string) {

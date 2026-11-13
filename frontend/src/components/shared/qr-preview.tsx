@@ -1,6 +1,7 @@
 "use client"
 
 import { Expand } from "lucide-react"
+import Image from "next/image"
 import {
   Dialog,
   DialogContent,
@@ -19,7 +20,7 @@ const expandBadgeClasses =
 const captionClasses = "mt-1 text-center font-sans text-[11px] text-prelude"
 const dialogClasses = "sm:max-w-lg"
 const fullFrameClasses = "mt-2 grid place-items-center rounded-[14px] bg-white p-4"
-const fullImageClasses = "max-h-[70svh] w-auto object-contain"
+const fullImageClasses = "h-auto max-h-[70svh] w-auto object-contain"
 const openLinkClasses =
   "mt-3 inline-flex w-fit font-mono text-xs text-prelude underline-offset-4 hover:text-blue-chalk hover:underline"
 
@@ -46,9 +47,8 @@ export function QrPreview({
     <figure>
       <Dialog>
         <DialogTrigger className={cn(thumbnailClasses, widthClassName)} aria-label={`View ${alt} full size`}>
-          {/* Signed S3 and blob URLs are dynamic, so next/image cannot optimize them. */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={src} alt={alt} className={thumbnailImageClasses} />
+          {/* Signed S3 and blob URLs can't go through the optimizer, so they load as is; CSS sets the size. */}
+          <Image src={src} alt={alt} width={0} height={0} unoptimized className={thumbnailImageClasses} />
           <span className={expandBadgeClasses} aria-hidden>
             <Expand className="size-3.5" />
           </span>
@@ -59,8 +59,7 @@ export function QrPreview({
             <DialogDescription>{fileName ?? caption}</DialogDescription>
           </DialogHeader>
           <div className={fullFrameClasses}>
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={src} alt={alt} className={fullImageClasses} />
+            <Image src={src} alt={alt} width={0} height={0} unoptimized className={fullImageClasses} />
           </div>
           <a href={src} target="_blank" rel="noopener noreferrer" className={openLinkClasses}>
             Open in a new tab

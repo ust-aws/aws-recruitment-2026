@@ -168,8 +168,8 @@ flowchart TD
 - `frontend/src/lib/api-client.ts` — browser HR API requests include credentials and redirect after protected-route 401 responses.
 - `backend/src/app.ts` — defines HR `/auth/login`, `/auth/me`, and `/auth/logout`; mounts applicant routes.
 - `backend/src/auth.ts` — HR credential comparison, JWT signing/verification, cookie options, and `requireAuth`.
-- `frontend/src/components/apply/applicant-access-form.tsx` — starts applicant OTP verification.
-- `frontend/src/components/apply/applicant-code-form.tsx` — verifies the OTP and opens the applicant dashboard.
+- `frontend/src/components/apply/access/applicant-access-form.tsx` — starts applicant OTP verification.
+- `frontend/src/components/apply/access/applicant-code-form.tsx` — verifies the OTP and opens the applicant dashboard.
 - `frontend/src/lib/applicant-auth-api.ts` — frontend calls for applicant OTP and session endpoints.
 - `backend/src/routes/applicant-auth.ts` — applicant OTP request, verification, session, and logout routes.
 - `backend/src/lib/applicant-otp.ts` — applicant lookup, OTP limits, hashed challenge storage, verification, and consumption.

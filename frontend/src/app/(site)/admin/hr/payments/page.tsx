@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { HrPaymentsPage } from "@/components/hr/hr-payments-page"
+import { HrPaymentsPage } from "@/components/hr/payments/hr-payments-page"
 import { PAYMENT_SETUP_HREF, parsePaymentTab } from "@/lib/payments/workspace"
 
 export default async function PaymentsPage({ searchParams }: PageProps<"/admin/hr/payments">) {

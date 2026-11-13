@@ -1,4 +1,4 @@
-import { ApplyFormGate } from "@/components/apply/apply-form-gate"
+import { ApplyFormGate } from "@/components/apply/form/apply-form-gate"
 
 export default async function ApplyFormPage({
   searchParams,

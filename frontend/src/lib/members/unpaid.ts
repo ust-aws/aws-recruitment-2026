@@ -1,4 +1,5 @@
 import type { PaymentListItem, PaymentStatus } from "@/lib/api/payments"
+import { paymentDueAt } from "@/lib/payments/workspace"
 
 export type UnpaidStatus = Exclude<PaymentStatus, "verified">
 export type UnpaidFilter = "all" | UnpaidStatus
@@ -42,6 +43,7 @@ function positionLabel(payment: PaymentListItem) {
   return payment.applicationType === "member" ? "General Member" : "No position yet"
 }
 
+/** The later of two ISO dates. */
 export function buildUnpaidEntries(payments: PaymentListItem[]): UnpaidEntry[] {
   return payments
     .filter((payment): payment is PaymentListItem & { status: UnpaidStatus } =>
@@ -58,9 +60,7 @@ export function buildUnpaidEntries(payments: PaymentListItem[]): UnpaidEntry[] {
       position: positionLabel(payment),
       committee: payment.committee,
       status: payment.status,
-      dueAt: payment.status === "needs_resubmission" && payment.resubmissionDeadlineAt
-        ? payment.resubmissionDeadlineAt
-        : payment.deadlineAt,
+      dueAt: paymentDueAt(payment),
       lastSubmittedAt: payment.latestSubmission?.submittedAt ?? null,
     }))
     .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status] || a.fullName.localeCompare(b.fullName))
